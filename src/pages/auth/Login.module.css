@@ -1,0 +1,178 @@
+/* src/pages/auth/Login.module.css */
+
+/* --- LAYOUT WRAPPER --- */
+.pageWrapper {
+  display: flex; /* This is what puts them side-by-side */
+  min-height: 100vh;
+  width: 100%;
+  font-family: 'Inter', sans-serif;
+}
+
+/* --- LEFT PANEL: Branding --- */
+.brandSide {
+  flex: 1; /* Takes up 50% of the screen */
+  background: linear-gradient(270deg, #0B1EAE 0%, #152286 23.56%, #0D1767 63.46%, #050C48 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  color: white;
+  text-align: center;
+}
+
+.brandLogo {
+  max-width: 320px;
+  margin-bottom: 2rem;
+  filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.3));
+}
+
+.brandSide h2 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-top: 1rem;
+  text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* --- RIGHT PANEL: Form Side --- */
+.formSide {
+  flex: 1; /* Takes up the other 50% of the screen */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  
+  /* Your Background Image */
+  background-image: linear-gradient(rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.92)), 
+                    url("../../assets/Bg image.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* --- FORM & CARD STYLES --- */
+.headerArea {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  z-index: 2;
+}
+
+.welcomeText {
+  font-size: 3rem;
+  font-weight: 900;
+  color: #0B1EAE;
+  margin-bottom: 0.25rem;
+}
+
+.subText {
+  font-size: 1.1rem;
+  color: #0B1EAE;
+  font-weight: 400;
+}
+
+.loginCard {
+  width: 100%;
+  max-width: 420px;
+  padding: 2.5rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  z-index: 2;
+}
+
+/* --- TOGGLE BUTTONS --- */
+.toggleContainer {
+  display: flex;
+  background-color: #e5e7eb;
+  border-radius: 8px;
+  padding: 4px;
+  margin-bottom: 2rem;
+}
+
+.toggleBtn {
+  flex: 1;
+  padding: 0.75rem;
+  text-align: center;
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: #6b7280;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  background: transparent;
+}
+
+.toggleBtnActive {
+  background-color: white;
+  color: #111827;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+/* --- INPUT FIELDS --- */
+.inputGroup {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.inputIcon {
+  position: absolute;
+  left: 1rem;
+  top: 36px;
+  color: #cbd5e1;
+}
+
+.inputField {
+  width: 100%;
+  padding: 0.875rem 1rem 0.875rem 2.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background-color: #f8fafc;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+}
+
+.inputField:focus {
+  outline: none;
+  border-color: #0B1EAE;
+  box-shadow: 0 0 0 3px rgba(11, 30, 174, 0.1);
+  background-color: white;
+}
+
+.inputError {
+  border-color: #ef4444;
+}
+
+.errorText {
+  color: #ef4444;
+  font-size: 0.75rem;
+  margin-top: 0.35rem;
+  display: block;
+}
+
+.loginBtn {
+  width: 100%;
+  padding: 0.875rem;
+  background-color: #0B1EAE;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 1rem;
+}
+
+.loginBtn:hover {
+  background-color: #050C48;
+}
+
+.loginBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}

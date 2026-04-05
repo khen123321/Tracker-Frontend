@@ -1,0 +1,129 @@
+/* src/components/layout/DashboardLayout.module.css */
+
+.layoutWrapper {
+  display: flex;
+  height: 100vh;
+  background-color: #f8fafc; /* Light gray background for the app */
+  overflow: hidden;
+  font-family: 'Inter', sans-serif;
+}
+
+/* --- SIDEBAR --- */
+.sidebar {
+  width: 260px;
+  background: linear-gradient(180deg, #002277 0%, #050C48 100%); /* CLIMBS Dark Blue */
+  color: white;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 4px 0 10px rgba(0, 0, 0, 0.05);
+  z-index: 10;
+}
+
+.brand {
+  /* Removed the fixed height so it can grow with the logo */
+  padding: 1.5rem .5rem 0.5rem 0.5rem; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Optional: keeps a subtle line separating the logo from the menu */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.brandLogo {
+  max-width: 180px; /* Adjust this number to make the logo bigger/smaller */
+  height: auto;
+  /* Adds a subtle shadow so it pops against the dark blue */
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2)); 
+}
+
+.navMenu {
+  flex: 1;
+  padding: 1.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.navSectionLabel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 1.5rem 1.5rem 0.5rem 1.5rem;
+  margin-top: 0.5rem;
+}
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem; 
+  padding: 0.875rem 1.25rem;
+  
+  /* This keeps it pushed slightly away from the left edge */
+  margin-left: 1.25rem; 
+  
+  color: #ffffff; 
+  text-decoration: none;
+  font-size: 1.05rem;
+  font-weight: 300; 
+  transition: all 0.2s ease-in-out;
+  
+  /* Your exact Figma Border Radius */
+  border-radius: 8px 0 0 8px; 
+}
+
+.navItem:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* --- THE ACTIVE STATE --- */
+.navItemActive {
+  /* Your exact Figma Gradient */
+  background: linear-gradient(90deg, #999 0%, #CCC 45.19%, #FFF 100%);
+  
+  /* Keep the text/icon dark blue so it's readable against the light background */
+  color: #002277; 
+  font-weight: 500; 
+}
+/* --- MAIN CONTENT AREA --- */
+.mainWrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.topbar {
+  height: 70px;
+  background-color: white;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end; /* Pushes content to the right */
+  padding: 0 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.logoutBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #ef4444; /* Red */
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.logoutBtn:hover {
+  background-color: #fef2f2;
+}
+
+.contentArea {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto; /* Allows scrolling only inside the content */
+}

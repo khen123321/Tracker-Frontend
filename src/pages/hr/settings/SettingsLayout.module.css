@@ -1,0 +1,62 @@
+/* src/pages/dashboard/settings/SettingsLayout.module.css */
+
+.pageHeader {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: #0f172a;
+  margin-bottom: 2rem;
+}
+
+.settingsContainer {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+/* The White Sub-Sidebar */
+.subSidebar {
+  width: 240px;
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem 0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+}
+
+.subNavItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  color: #475569;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s;
+  border-bottom: 2px solid transparent; /* Hidden by default */
+}
+
+.subNavItem:hover {
+  background-color: #f8fafc;
+}
+
+/* Matches the Figma active state: Blue text, Blue Icon, Blue underline */
+.subNavItemActive {
+  color: #003399; /* CLIMBS Blue */
+}
+
+/* This targets the text specifically to put the underline under it */
+.activeText {
+  border-bottom: 2px solid #003399;
+  padding-bottom: 2px;
+}
+
+/* The area where the actual forms will go */
+.settingsContent {
+  flex: 1;
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  min-height: 400px;
+}
