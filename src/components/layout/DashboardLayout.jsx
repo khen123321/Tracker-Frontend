@@ -50,10 +50,6 @@ export default function DashboardLayout() {
             <Users size={20} /> Interns List
           </NavLink>
 
-          <NavLink to="/dashboard/profile" className={({ isActive }) => isActive ? `${styles.navItem} ${styles.navItemActive}` : styles.navItem}>
-            <UserCircle size={20} /> Intern Profile
-          </NavLink>
-
           <NavLink to="/dashboard/time-tracker" className={({ isActive }) => isActive ? `${styles.navItem} ${styles.navItemActive}` : styles.navItem}>
             <Clock size={20} /> Time Tracker
           </NavLink>

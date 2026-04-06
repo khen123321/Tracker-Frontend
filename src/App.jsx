@@ -1,4 +1,3 @@
-// src/App.jsx
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 // --- AUTH & PROTECTION IMPORTS ---
@@ -13,12 +12,13 @@ import InternsList from './pages/hr/interns/InternsList';
 import RoleManagement from './pages/hr/rolemanagement/RoleManagement';
 import ExportReports from './pages/hr/export/Exportreports';
 import SettingsLayout from './pages/hr/settings/SettingsLayout'; 
+import TimeTracker from './pages/hr/timetracker/TimeTracker'; // Imported correctly
 
 // --- INTERN IMPORTS ---
 import InternLayout from './components/layout/InternLayout';
 import InternDashboardHome from './pages/intern/InternDashboardHome';
+import Attendance from './pages/intern/attendance/Attendance';
 
-// --- PLACEHOLDER FOR UNFINISHED PAGES ---
 const PlaceholderPage = ({ title }) => (
   <div className="p-8">
     <h2 className="text-3xl font-bold text-slate-800">{title}</h2>
@@ -30,52 +30,38 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        
-        {/* PUBLIC ROUTES */}
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/login" element={<LoginPage />} />
 
-        {/* PROTECTED ROUTES (Requires Login) */}
         <Route element={<ProtectedRoute />}>
-          
-          {/* ========================================== */}
-          {/* HR ADMIN ROUTES (/dashboard)                 */}
-          {/* ========================================== */}
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<DashboardHome />} />
             <Route path="interns" element={<InternsList />} />
-            <Route path="profile" element={<PlaceholderPage title="Intern Profile" />} />
-            <Route path="time-tracker" element={<PlaceholderPage title="Time Tracker" />} />
-            <Route path="events" element={<PlaceholderPage title="Events Calendar" />} />
             
-            {/* The newly added Admin Features */}
+            {/* FIX: Pointed to the real TimeTracker component */}
+            <Route path="time-tracker" element={<TimeTracker />} /> 
+            
+            <Route path="events" element={<PlaceholderPage title="Events Calendar" />} />
             <Route path="role-management" element={<RoleManagement />} />
             <Route path="export" element={<ExportReports />} />
             
             <Route path="settings" element={<SettingsLayout />}>
               <Route index element={<Navigate to="/dashboard/settings/account" replace />} />
               <Route path="account" element={<PlaceholderPage title="Account Settings" />} />
-              <Route path="schedule" element={<PlaceholderPage title="Schedule Management" />} />
-              <Route path="department" element={<PlaceholderPage title="Department Management" />} />
-              <Route path="notification" element={<PlaceholderPage title="Notification Preferences" />} />
               <Route path="about" element={<PlaceholderPage title="About CIMS" />} />
             </Route>
           </Route>
 
-          {/* ========================================== */}
-          {/* INTERN ROUTES (/intern-dashboard)            */}
-          {/* ========================================== */}
           <Route path="/intern-dashboard" element={<InternLayout />}>
             <Route index element={<InternDashboardHome />} />
-            <Route path="time-logs" element={<PlaceholderPage title="My Time Logs" />} />
-            <Route path="profile" element={<PlaceholderPage title="My Profile Settings" />} />
+            <Route index element={<InternDashboardHome />} />
+    <Route path="attendance" element={<Attendance />} />
+    <Route path="history" element={<PlaceholderPage title="History" />} />
+    <Route path="announcements" element={<PlaceholderPage title="Announcements" />} />
           </Route>
-
         </Route>
 
-        {/* CATCH-ALL ROUTE (Redirects lost users to login) */}
         <Route path="*" element={<Navigate to="/login" replace />} />
-        
       </Routes>
     </BrowserRouter>
   );

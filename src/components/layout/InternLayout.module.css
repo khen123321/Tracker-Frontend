@@ -1,0 +1,39 @@
+.layout { display: flex; min-height: 100vh; background: #f1f5f9; }
+
+.sidebar {
+    width: 260px; background: #0f172a; color: #cbd5e1;
+    display: flex; flex-direction: column; padding: 1.5rem;
+    position: fixed; height: 100vh;
+}
+
+.brand { display: flex; align-items: center; gap: 12px; margin-bottom: 2.5rem; padding-left: 8px; }
+.logoBox { background: #2563eb; color: white; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-weight: bold; }
+.brandName { font-size: 1.2rem; font-weight: 700; color: white; }
+
+.navigation { display: flex; flex-direction: column; gap: 6px; flex-grow: 1; }
+
+.navLink, .active {
+    display: flex; align-items: center; gap: 12px; padding: 12px;
+    border-radius: 8px; text-decoration: none; color: #94a3b8; transition: 0.3s;
+}
+
+.navLink:hover { background: #1e293b; color: #f1f5f9; }
+.active { background: #2563eb; color: white; }
+
+.logoutBtn {
+    margin-top: auto; display: flex; align-items: center; gap: 12px;
+    background: none; border: none; color: #f87171; cursor: pointer;
+    padding: 12px; border-radius: 8px; transition: 0.2s;
+}
+
+.logoutBtn:hover { background: #fee2e220; }
+
+.content { margin-left: 260px; flex-grow: 1; display: flex; flex-direction: column; }
+
+.topbar {
+    height: 64px; background: white; border-bottom: 1px solid #e2e8f0;
+    display: flex; justify-content: space-between; align-items: center; padding: 0 2rem;
+}
+
+.profileArea { display: flex; align-items: center; gap: 10px; font-weight: 500; color: #475569; }
+.pageBody { padding: 2rem; }

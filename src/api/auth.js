@@ -1,4 +1,3 @@
-// src/api/auth.js
 import api from './axios';
 
 export const login = async (email, password, role) => {
@@ -18,4 +17,4 @@ export const logout = async () => {
 export const getMe = async () => {
   const response = await api.get('/auth/me');
   return response.data;
-};
+};  
