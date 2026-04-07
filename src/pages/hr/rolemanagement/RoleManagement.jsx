@@ -15,12 +15,11 @@ const RoleManagement = () => {
     role: 'hr_intern'
   });
 
-  // 1. Fetch Users (We'll update the backend for this in a second)
   const fetchUsers = async () => {
     try {
       const { data } = await api.get('/hr/all-users');
       setUsers(data);
-    } catch  {
+    } catch {
       toast.error("Failed to load user list.");
     } finally {
       setLoading(false);
@@ -31,17 +30,31 @@ const RoleManagement = () => {
     fetchUsers();
   }, []);
 
-  // 2. Handle Creation of HR Intern
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       await api.post('/hr/sub-users', formData);
-      toast.success("HR Intern account created!");
+      toast.success("Account created successfully!");
       setShowForm(false);
-      fetchUsers(); // Refresh the table
+      fetchUsers(); 
       setFormData({ first_name: '', last_name: '', email: '', password: '', role: 'hr_intern' });
     } catch (err) {
       toast.error(err.response?.data?.message || "Check fields and try again.");
+    }
+  };
+
+  // NEW: Handle changing roles directly from the table
+  const handleRoleChange = async (userId, newRole, currentStatus) => {
+    const loadingToast = toast.loading("Updating role...");
+    try {
+        await api.post(`/hr/update-permissions/${userId}`, {
+            role: newRole,
+            status: currentStatus || 'active'
+        });
+        toast.success("User role updated!", { id: loadingToast });
+        fetchUsers(); 
+    } catch (error) {
+        toast.error(error.response?.data?.message || 'Failed to update user.', { id: loadingToast });
     }
   };
 
@@ -62,15 +75,14 @@ const RoleManagement = () => {
           className="bg-[#0B1EAE] text-white px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-blue-800 transition-all font-semibold shadow-md"
         >
           <UserPlus size={18} />
-          {showForm ? 'Close Form' : 'Add HR Intern'}
+          {showForm ? 'Close Form' : 'Add HR Staff'}
         </button>
       </div>
 
-      {/* CREATE SUB-HR FORM */}
       {showForm && (
         <div className="mb-8 bg-white p-6 rounded-2xl border border-blue-200 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
-          <h2 className="text-lg font-bold text-slate-800 mb-4">Register New HR Intern</h2>
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <h2 className="text-lg font-bold text-slate-800 mb-4">Register New Staff Member</h2>
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <input 
               type="text" placeholder="First Name" className="p-2 border rounded-lg outline-[#0B1EAE]"
               value={formData.first_name} onChange={e => setFormData({...formData, first_name: e.target.value})} required
@@ -87,21 +99,28 @@ const RoleManagement = () => {
               type="password" placeholder="Password" className="p-2 border rounded-lg outline-[#0B1EAE]"
               value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} required
             />
-            <button className="md:col-span-2 lg:col-span-4 bg-emerald-500 text-white py-2 rounded-lg font-bold hover:bg-emerald-600">
+            <select 
+              className="p-2 border rounded-lg outline-[#0B1EAE] bg-white"
+              value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}
+            >
+              <option value="hr_intern">HR Intern</option>
+              <option value="hr">HR Staff</option>
+              <option value="superadmin">Superadmin</option>
+            </select>
+            <button className="md:col-span-2 lg:col-span-5 bg-emerald-500 text-white py-2 rounded-lg font-bold hover:bg-emerald-600 transition-colors">
               Confirm & Create Account
             </button>
           </form>
         </div>
       )}
 
-      {/* USER TABLE */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200">
               <th className="p-4 text-sm font-bold text-slate-600">Name</th>
               <th className="p-4 text-sm font-bold text-slate-600">Email</th>
-              <th className="p-4 text-sm font-bold text-slate-600">Current Role</th>
+              <th className="p-4 text-sm font-bold text-slate-600">Access Level</th>
               <th className="p-4 text-sm font-bold text-slate-600">Status</th>
               <th className="p-4 text-sm font-bold text-slate-600 text-center">Actions</th>
             </tr>
@@ -114,12 +133,21 @@ const RoleManagement = () => {
                 <td className="p-4 text-slate-700 font-medium">{user.first_name} {user.last_name}</td>
                 <td className="p-4 text-slate-500 text-sm">{user.email}</td>
                 <td className="p-4">
-                  <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
-                    user.role === 'hr' ? 'bg-blue-100 text-blue-700' : 
-                    user.role === 'hr_intern' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'
-                  }`}>
-                    {user.role.replace('_', ' ')}
-                  </span>
+                  {/* NEW: Interactive Dropdown */}
+                  <select 
+                      className={`text-xs font-bold uppercase rounded-lg px-2 py-1 outline-none cursor-pointer border ${
+                        user.role === 'superadmin' ? 'bg-amber-50 text-amber-700 border-amber-200' : 
+                        user.role === 'hr' ? 'bg-blue-50 text-blue-700 border-blue-200' : 
+                        'bg-slate-50 text-slate-700 border-slate-200'
+                      }`}
+                      value={user.role}
+                      onChange={(e) => handleRoleChange(user.id, e.target.value, user.status)}
+                      disabled={user.email === 'testadmin123@gmail.com'} 
+                  >
+                      <option value="hr_intern">HR Intern</option>
+                      <option value="hr">HR Staff</option>
+                      <option value="superadmin">Superadmin</option>
+                  </select>
                 </td>
                 <td className="p-4">
                   <div className="flex items-center gap-1">
@@ -132,9 +160,9 @@ const RoleManagement = () => {
                 </td>
                 <td className="p-4">
                   <div className="flex justify-center gap-2">
-                    <button className="p-1.5 text-slate-400 hover:text-blue-600 transition-colors"><Edit size={16} /></button>
-                    {user.role !== 'hr' && (
-                      <button className="p-1.5 text-slate-400 hover:text-rose-600 transition-colors"><Trash2 size={16} /></button>
+                    <button className="p-1.5 text-slate-400 hover:text-blue-600 transition-colors" title="Edit User"><Edit size={16} /></button>
+                    {user.email !== 'testadmin123@gmail.com' && (
+                      <button className="p-1.5 text-slate-400 hover:text-rose-600 transition-colors" title="Deactivate User"><Trash2 size={16} /></button>
                     )}
                   </div>
                 </td>
