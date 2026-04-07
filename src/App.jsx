@@ -10,7 +10,7 @@ import DashboardLayout from './components/layout/DashboardLayout';
 import DashboardHome from './pages/hr/DashboardHome';
 import InternsList from './pages/hr/interns/InternsList';
 import RoleManagement from './pages/hr/rolemanagement/RoleManagement';
-import ExportReports from './pages/hr/export/Exportreports';
+import ExportReports from './pages/hr/export/ExportReports';
 import SettingsLayout from './pages/hr/settings/SettingsLayout'; 
 import TimeTracker from './pages/hr/timetracker/TimeTracker'; 
 import HREventsPage from './pages/hr/events/EventsPage'; // Real HR Events
