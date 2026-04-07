@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Webcam from 'react-webcam';
-import api from '../../api/axios'; // Use our standardized axios instance
-import { Calendar, Clock, MapPin, Camera } from 'lucide-react';
+import api from '../../api/axios'; 
+import { Calendar, Clock, MapPin, Camera, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import styles from './InternDashboardHome.module.css';
 
@@ -11,13 +11,15 @@ const InternDashboardHome = () => {
     const [loading, setLoading] = useState(false);
     const [statusMsg, setStatusMsg] = useState({ type: '', text: '' });
     const [upcomingEvents, setUpcomingEvents] = useState([]);
+    
+    // Get user data
+    const user = JSON.parse(localStorage.getItem('user')) || {};
 
-    // Fetch a few upcoming events to show on the dashboard
     useEffect(() => {
         const fetchBriefEvents = async () => {
             try {
                 const { data } = await api.get('/events');
-                setUpcomingEvents(data.slice(0, 2)); // Just show the next 2
+                setUpcomingEvents(data.slice(0, 2)); 
             } catch {
                 console.error("Dashboard event sync failed");
             }
@@ -35,14 +37,12 @@ const InternDashboardHome = () => {
                 const imageSrc = webcamRef.current.getScreenshot();
 
                 try {
-                    // Use the 'api' instance - it already knows the Base URL and Token!
                     const response = await api.post('/attendance/log', {
                         type: clockType,
                         lat: latitude,
                         lng: longitude,
                         image: imageSrc
                     });
-
                     setStatusMsg({ type: 'success', text: response.data.message });
                 } catch (error) {
                     setStatusMsg({ 
@@ -64,13 +64,19 @@ const InternDashboardHome = () => {
         <div className={styles.container}>
             <header className="mb-8 flex justify-between items-end">
                 <div>
-                    <h1 className={styles.title}>Welcome back, Intern!</h1>
+                    <h1 className={styles.title}>
+                        Welcome back, {user.first_name || 'Admin'}!
+                    </h1>
                     <p className="text-slate-500 flex items-center gap-2">
-                        <MapPin size={16} /> CLIMBS HQ - Cagayan de Oro
+                        {user.role === 'superadmin' ? (
+                            <ShieldCheck size={16} className="text-blue-600" />
+                        ) : (
+                            <MapPin size={16} />
+                        )} 
+                        {user.role === 'superadmin' ? 'System Administrator' : 'CLIMBS HQ - Cagayan de Oro'}
                     </p>
                 </div>
                 
-                {/* QUICK CALENDAR ACCESS */}
                 <button 
                     onClick={() => navigate('/intern-dashboard/events')}
                     className="flex items-center gap-2 text-sm bg-white border border-slate-200 px-4 py-2 rounded-xl hover:bg-slate-50 transition-all shadow-sm"
@@ -81,8 +87,6 @@ const InternDashboardHome = () => {
             </header>
             
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                {/* CAMERA SECTION */}
                 <div className="lg:col-span-2">
                     <div className={styles.cameraWrapper}>
                         <Webcam
@@ -105,24 +109,14 @@ const InternDashboardHome = () => {
                     )}
 
                     <div className={styles.actionGrid}>
-                        <button onClick={() => captureAttendance('time_in')} disabled={loading} className={styles.btnIn}>
-                            TIME IN
-                        </button>
-                        <button onClick={() => captureAttendance('lunch_out')} disabled={loading} className={styles.btnLunch}>
-                            LUNCH OUT
-                        </button>
-                        <button onClick={() => captureAttendance('lunch_in')} disabled={loading} className={styles.btnLunch}>
-                            LUNCH IN
-                        </button>
-                        <button onClick={() => captureAttendance('time_out')} disabled={loading} className={styles.btnOut}>
-                            TIME OUT
-                        </button>
+                        <button onClick={() => captureAttendance('time_in')} disabled={loading} className={styles.btnIn}>TIME IN</button>
+                        <button onClick={() => captureAttendance('lunch_out')} disabled={loading} className={styles.btnLunch}>LUNCH OUT</button>
+                        <button onClick={() => captureAttendance('lunch_in')} disabled={loading} className={styles.btnLunch}>LUNCH IN</button>
+                        <button onClick={() => captureAttendance('time_out')} disabled={loading} className={styles.btnOut}>TIME OUT</button>
                     </div>
                 </div>
 
-                {/* INFO SIDEBAR */}
                 <div className="space-y-6">
-                    {/* UPCOMING EVENTS PREVIEW */}
                     <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                         <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
                             <Calendar size={18} /> Upcoming
@@ -143,10 +137,12 @@ const InternDashboardHome = () => {
 
                     <div className="bg-[#0B1EAE] p-5 rounded-2xl text-white shadow-lg">
                         <h3 className="font-bold mb-2 flex items-center gap-2">
-                            <Clock size={18} /> Duty Reminder
+                            <Clock size={18} /> {user.role === 'superadmin' ? 'Admin Note' : 'Duty Reminder'}
                         </h3>
                         <p className="text-sm opacity-90 leading-relaxed">
-                            Ensure your face is clearly visible in the camera before clicking "Time In". 
+                            {user.role === 'superadmin' 
+                                ? "You are logged in as a Superadmin. You can perform all actions and bypass standard restrictions."
+                                : "Ensure your face is clearly visible in the camera before clicking Time In."}
                         </p>
                     </div>
                 </div>

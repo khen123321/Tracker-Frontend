@@ -5,9 +5,13 @@ import styles from './InternLayout.module.css';
 
 const InternLayout = () => {
     const navigate = useNavigate();
+    
+    // Get actual user data from localStorage
+    const user = JSON.parse(localStorage.getItem('user')) || {};
 
     const handleLogout = () => {
         localStorage.removeItem('cims_token');
+        localStorage.removeItem('user');
         navigate('/login');
     };
 
@@ -16,7 +20,9 @@ const InternLayout = () => {
             <aside className={styles.sidebar}>
                 <div className={styles.brand}>
                     <div className={styles.logoBox}>C</div>
-                    <span className={styles.brandName}>CIMS <small>Intern</small></span>
+                    <span className={styles.brandName}>
+                        CIMS <small>{user.role === 'superadmin' ? 'Admin' : 'Intern'}</small>
+                    </span>
                 </div>
 
                 <nav className={styles.navigation}>
@@ -44,10 +50,20 @@ const InternLayout = () => {
 
             <main className={styles.content}>
                 <header className={styles.topbar}>
-                    <div className={styles.breadcrumb}>Portal / Intern Dashboard</div>
+                    <div className={styles.breadcrumb}>
+                        Portal / {user.role === 'superadmin' ? 'Superadmin' : 'Intern'} Dashboard
+                    </div>
                     <div className={styles.profileArea}>
-                        <span>Khen Joshua</span>
-                        <UserCircle size={28} color="#64748b" />
+                        {/* Dynamically show the logged in user's name */}
+                        <div className="text-right mr-2">
+                            <p className="text-sm font-bold text-slate-700 leading-none">
+                                {user.first_name} {user.last_name}
+                            </p>
+                            <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider">
+                                {user.role}
+                            </p>
+                        </div>
+                        <UserCircle size={32} color="#0B1EAE" />
                     </div>
                 </header>
                 <div className={styles.pageBody}>

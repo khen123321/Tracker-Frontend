@@ -9,12 +9,12 @@ import styles from './DashboardLayout.module.css';
 const DashboardLayout = () => {
     const navigate = useNavigate();
     
-    // 1. Get user data
+    // 1. Get user data - Ensuring we use the correct key from your login storage
     const user = JSON.parse(localStorage.getItem('cims_user')) || {};
     const permissions = user.permissions || [];
     
-    // 2. THE MASTER KEY: This email ignores all permission restrictions
-    const isSuperAdmin = user.email === 'admin@climbs.com.ph';
+    // 2. THE DYNAMIC MASTER KEY: Checks the role instead of a hardcoded email
+    const isSuperAdmin = user.role === 'superadmin';
 
     const handleLogout = () => {
         localStorage.removeItem('cims_token');
@@ -64,12 +64,12 @@ const DashboardLayout = () => {
 
                     {/* Attendance Logs: Super Admin OR Permission */}
                     {(isSuperAdmin || permissions.includes('view_time_tracker')) && (
-    <NavLink 
-        to="/dashboard/time-tracker" 
-        className={({ isActive }) => isActive ? `${styles.navItem} ${styles.navItemActive}` : styles.navItem}
-    >
-        <ClipboardList size={20} /> <span>Time Tracker</span>
-    </NavLink>
+                        <NavLink 
+                            to="/dashboard/time-tracker" 
+                            className={({ isActive }) => isActive ? `${styles.navItem} ${styles.navItemActive}` : styles.navItem}
+                        >
+                            <ClipboardList size={20} /> <span>Time Tracker</span>
+                        </NavLink>
                     )}
 
                     {/* --- ADMINISTRATION SECTION --- */}
@@ -106,11 +106,11 @@ const DashboardLayout = () => {
                         <div className="text-right">
                             <p className="text-sm font-bold text-slate-700">
                                 {user.first_name} {user.last_name}
-                                {isSuperAdmin && <span className="ml-2 text-[8px] bg-amber-100 text-amber-700 px-1 rounded">SUPER</span>}
+                                {isSuperAdmin && <span className="ml-2 text-[10px] bg-amber-500 text-white font-bold px-2 py-0.5 rounded-full shadow-sm">SUPERADMIN</span>}
                             </p>
-                            <p className="text-[10px] text-slate-400 uppercase">{user.role?.replace('_', ' ')}</p>
+                            <p className="text-[10px] text-slate-400 uppercase font-medium">{user.role?.replace('_', ' ')}</p>
                         </div>
-                        <UserCircle size={32} className="text-slate-400" />
+                        <UserCircle size={32} className={isSuperAdmin ? "text-amber-500" : "text-slate-400"} />
                     </div>
                 </header>
 
