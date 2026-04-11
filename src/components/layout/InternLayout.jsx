@@ -1,6 +1,7 @@
 import React from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Clock, History, Megaphone, LogOut, UserCircle } from 'lucide-react';
+// ✅ Added FileText icon for the Forms link
+import { LayoutDashboard, Clock, History, Megaphone, LogOut, UserCircle, FileText } from 'lucide-react';
 import styles from './InternLayout.module.css';
 
 const InternLayout = () => {
@@ -34,6 +35,11 @@ const InternLayout = () => {
                         <Clock size={20} /> <span>Attendance</span>
                     </NavLink>
 
+                    {/* ✅ Added Forms & Requests Link */}
+                    <NavLink to="/intern-dashboard/forms" className={({ isActive }) => isActive ? styles.active : styles.navLink}>
+                        <FileText size={20} /> <span>Forms & Requests</span>
+                    </NavLink>
+
                     <NavLink to="/intern-dashboard/history" className={({ isActive }) => isActive ? styles.active : styles.navLink}>
                         <History size={20} /> <span>History Request</span>
                     </NavLink>
@@ -54,7 +60,6 @@ const InternLayout = () => {
                         Portal / {user.role === 'superadmin' ? 'Superadmin' : 'Intern'} Dashboard
                     </div>
                     <div className={styles.profileArea}>
-                        {/* Dynamically show the logged in user's name */}
                         <div className="text-right mr-2">
                             <p className="text-sm font-bold text-slate-700 leading-none">
                                 {user.first_name} {user.last_name}

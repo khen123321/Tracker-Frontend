@@ -1,129 +1,141 @@
-/* src/components/layout/DashboardLayout.module.css */
-
+/* ─── Wrapper ─────────────────────────────────────────────────── */
 .layoutWrapper {
   display: flex;
   height: 100vh;
-  background-color: #f8fafc; /* Light gray background for the app */
+  background-color: #f8f9fc;
   overflow: hidden;
-  font-family: 'Inter', sans-serif;
+  font-family: system-ui, -apple-system, sans-serif;
 }
 
-/* --- SIDEBAR --- */
+/* ══════════════════════════════════════════════════════════════
+   SIDEBAR
+══════════════════════════════════════════════════════════════ */
 .sidebar {
   width: 260px;
-  background: linear-gradient(180deg, #002277 0%, #050C48 100%); /* CLIMBS Dark Blue */
+  background: var(--Main-color,
+    linear-gradient(270deg, #0B1EAE 0%, #152286 23.56%, #0D1767 63.46%, #050C48 100%)
+  );
   color: white;
   display: flex;
   flex-direction: column;
-  box-shadow: 4px 0 10px rgba(0, 0, 0, 0.05);
-  z-index: 10;
+  flex-shrink: 0;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.12);
+  z-index: 20;
 }
 
+/* Logo */
 .brand {
-  /* Removed the fixed height so it can grow with the logo */
-  padding: 1.5rem .5rem 0.5rem 0.5rem; 
+  padding: 1.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Optional: keeps a subtle line separating the logo from the menu */
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  margin-bottom: 0.5rem;
 }
 
-.brandLogo {
-  max-width: 180px; /* Adjust this number to make the logo bigger/smaller */
+.logoImage {
+  width: 150px;
   height: auto;
-  /* Adds a subtle shadow so it pops against the dark blue */
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2)); 
+  object-fit: contain;
 }
 
+/* Nav */
 .navMenu {
   flex: 1;
-  padding: 1.5rem 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  padding-left: 1rem;
+  gap: 0.25rem;
 }
-.navSectionLabel {
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.4);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  padding: 1.5rem 1.5rem 0.5rem 1.5rem;
-  margin-top: 0.5rem;
-}
+
 .navItem {
   display: flex;
   align-items: center;
-  gap: 1rem; 
-  padding: 0.875rem 1.25rem;
-  
-  /* This keeps it pushed slightly away from the left edge */
-  margin-left: 1.25rem; 
-  
-  color: #ffffff; 
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  color: #cbd5e1;
   text-decoration: none;
-  font-size: 1.05rem;
-  font-weight: 300; 
-  transition: all 0.2s ease-in-out;
-  
-  /* Your exact Figma Border Radius */
-  border-radius: 8px 0 0 8px; 
+  border-radius: 8px 0 0 8px;
+  font-size: 0.9rem;
+  font-weight: 400;
+  transition: all 0.2s ease;
 }
 
 .navItem:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
 }
 
-/* --- THE ACTIVE STATE --- */
+/* White gradient cutout — active */
 .navItemActive {
-  /* Your exact Figma Gradient */
-  background: linear-gradient(90deg, #999 0%, #CCC 45.19%, #FFF 100%);
-  
-  /* Keep the text/icon dark blue so it's readable against the light background */
-  color: #002277; 
-  font-weight: 500; 
+  background: linear-gradient(90deg, #999 0%, #ccc 45.19%, #fff 100%);
+  color: #061178;
+  font-weight: 700;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
 }
-/* --- MAIN CONTENT AREA --- */
-.mainWrapper {
-  flex: 1;
+
+.navItemActive:hover {
+  background: linear-gradient(90deg, #999 0%, #ccc 45.19%, #fff 100%);
+  color: #061178;
+}
+
+/* Bottom profile */
+.bottomProfile {
+  padding: 0.75rem 1rem;
+  margin: 1rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.bottomProfile:hover {
+  background-color: rgba(255, 255, 255, 0.16);
+}
+
+.profileInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.profileAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  background-color: #1e3a8a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
   overflow: hidden;
 }
 
-.topbar {
-  height: 70px;
-  background-color: white;
-  border-bottom: 1px solid #e2e8f0;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end; /* Pushes content to the right */
-  padding: 0 2rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+.profileAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-.logoutBtn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #ef4444; /* Red */
-  font-weight: 600;
-  font-size: 0.875rem;
-  cursor: pointer;
-  background: none;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  transition: background 0.2s;
+.profileName {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: white;
 }
 
-.logoutBtn:hover {
-  background-color: #fef2f2;
-}
-
-.contentArea {
+/* ══════════════════════════════════════════════════════════════
+   MAIN WRAPPER
+   — flex-1 so it fills remaining width
+   — overflow-y: auto so the page inside can scroll
+══════════════════════════════════════════════════════════════ */
+.mainWrapper {
   flex: 1;
-  padding: 2rem;
-  overflow-y: auto; /* Allows scrolling only inside the content */
+  overflow-y: auto;
+  position: relative;
+  background-color: #f8f9fc;
 }

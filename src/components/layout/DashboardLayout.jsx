@@ -1,125 +1,107 @@
 import React from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { 
-  LayoutDashboard, Users, Calendar, ShieldCheck, 
-  LogOut, UserCircle, ClipboardList, Settings 
+import {
+  LayoutDashboard, Search, Clock, CalendarDays,
+  FileUp, UserCog, Settings, MoreHorizontal,
 } from 'lucide-react';
 import styles from './DashboardLayout.module.css';
+import logoImage from '../../assets/logo.png';
 
 const DashboardLayout = () => {
-    const navigate = useNavigate();
-    
-    // 1. Get user data - Ensuring we use the correct key from your login storage
-    const user = JSON.parse(localStorage.getItem('cims_user')) || {};
-    const permissions = user.permissions || [];
-    
-    // 2. THE DYNAMIC MASTER KEY: Checks the role instead of a hardcoded email
-    const isSuperAdmin = user.role === 'superadmin';
+  const navigate = useNavigate();
 
-    const handleLogout = () => {
-        localStorage.removeItem('cims_token');
-        localStorage.removeItem('cims_user');
-        navigate('/login');
-    };
+  const user         = JSON.parse(localStorage.getItem('cims_user')) || {};
+  const permissions  = user.permissions || [];
+  const isSuperAdmin = user.role === 'superadmin';
 
-    return (
-        <div className={styles.layoutWrapper}>
-            <aside className={styles.sidebar}>
-                <div className={styles.brand}>
-                    <div className={styles.logoBox}>C</div> 
-                    <span className="font-bold ml-2 text-white">CIMS Admin</span>
-                </div>
+  const handleLogout = () => {
+    if (window.confirm('Are you sure you want to log out?')) {
+      localStorage.removeItem('cims_token');
+      localStorage.removeItem('cims_user');
+      navigate('/login');
+    }
+  };
 
-                <nav className={styles.navMenu}>
-                    <div className={styles.navSectionLabel}>Main Menu</div>
+  const navCls = ({ isActive }) =>
+    isActive ? `${styles.navItem} ${styles.navItemActive}` : styles.navItem;
 
-                    {/* Dashboard: Everyone sees this */}
-                    <NavLink 
-                        to="/dashboard" 
-                        end 
-                        className={({ isActive }) => isActive ? `${styles.navItem} ${styles.navItemActive}` : styles.navItem}
-                    >
-                        <LayoutDashboard size={20} /> <span>Main Dashboard</span>
-                    </NavLink>
-                    
-                    {/* Intern List: Super Admin OR Permission */}
-                    {(isSuperAdmin || permissions.includes('view_interns')) && (
-                        <NavLink 
-                            to="/dashboard/interns" 
-                            className={({ isActive }) => isActive ? `${styles.navItem} ${styles.navItemActive}` : styles.navItem}
-                        >
-                            <Users size={20} /> <span>Intern List</span>
-                        </NavLink>
-                    )}
+  return (
+    <div className={styles.layoutWrapper}>
 
-                    {/* Events Calendar: Super Admin OR Permission */}
-                    {(isSuperAdmin || permissions.includes('manage_events')) && (
-                        <NavLink 
-                            to="/dashboard/events" 
-                            className={({ isActive }) => isActive ? `${styles.navItem} ${styles.navItemActive}` : styles.navItem}
-                        >
-                            <Calendar size={20} /> <span>Events Calendar</span>
-                        </NavLink>
-                    )}
-
-                    {/* Attendance Logs: Super Admin OR Permission */}
-                    {(isSuperAdmin || permissions.includes('view_time_tracker')) && (
-                        <NavLink 
-                            to="/dashboard/time-tracker" 
-                            className={({ isActive }) => isActive ? `${styles.navItem} ${styles.navItemActive}` : styles.navItem}
-                        >
-                            <ClipboardList size={20} /> <span>Time Tracker</span>
-                        </NavLink>
-                    )}
-
-                    {/* --- ADMINISTRATION SECTION --- */}
-                    {/* ONLY the Super Admin can see this whole section */}
-                    {isSuperAdmin && (
-                        <>
-                            <div className={styles.navSectionLabel}>System Control</div>
-                            
-                            <NavLink 
-                                to="/dashboard/role-management" 
-                                className={({ isActive }) => isActive ? `${styles.navItem} ${styles.navItemActive}` : styles.navItem}
-                            >
-                                <ShieldCheck size={20} /> <span>Role Management</span>
-                            </NavLink>
-
-                            <NavLink 
-                                to="/dashboard/settings" 
-                                className={({ isActive }) => isActive ? `${styles.navItem} ${styles.navItemActive}` : styles.navItem}
-                            >
-                                <Settings size={20} /> <span>System Settings</span>
-                            </NavLink>
-                        </>
-                    )}
-                </nav>
-
-                <button onClick={handleLogout} className={styles.logoutBtn}>
-                    <LogOut size={18} /> <span>Logout</span>
-                </button>
-            </aside>
-
-            <div className={styles.mainWrapper}>
-                <header className={styles.topbar}>
-                    <div className="flex items-center gap-3">
-                        <div className="text-right">
-                            <p className="text-sm font-bold text-slate-700">
-                                {user.first_name} {user.last_name}
-                                {isSuperAdmin && <span className="ml-2 text-[10px] bg-amber-500 text-white font-bold px-2 py-0.5 rounded-full shadow-sm">SUPERADMIN</span>}
-                            </p>
-                            <p className="text-[10px] text-slate-400 uppercase font-medium">{user.role?.replace('_', ' ')}</p>
-                        </div>
-                        <UserCircle size={32} className={isSuperAdmin ? "text-amber-500" : "text-slate-400"} />
-                    </div>
-                </header>
-
-                <main className={styles.contentArea}>
-                    <Outlet />
-                </main>
-            </div>
+      {/* ─── SIDEBAR ─── */}
+      <aside className={styles.sidebar}>
+        <div className={styles.brand}>
+          <img src={logoImage} alt="CLIMBS Logo" className={styles.logoImage} />
         </div>
-    );
+
+        <nav className={styles.navMenu}>
+          <NavLink to="/dashboard" end className={navCls}>
+            <LayoutDashboard size={20} strokeWidth={1.5} />
+            <span>Dashboard</span>
+          </NavLink>
+
+          {(isSuperAdmin || permissions.includes('view_interns')) && (
+            <NavLink to="/dashboard/interns" className={navCls}>
+              <Search size={20} strokeWidth={1.5} />
+              <span>Intern</span>
+            </NavLink>
+          )}
+
+          {(isSuperAdmin || permissions.includes('view_time_tracker')) && (
+            <NavLink to="/dashboard/time-tracker" className={navCls}>
+              <Clock size={20} strokeWidth={1.5} />
+              <span>Time Tracker</span>
+            </NavLink>
+          )}
+
+          {(isSuperAdmin || permissions.includes('manage_events')) && (
+            <NavLink to="/dashboard/events" className={navCls}>
+              <CalendarDays size={20} strokeWidth={1.5} />
+              <span>Events</span>
+            </NavLink>
+          )}
+
+          <NavLink to="/dashboard/export" className={navCls}>
+            <FileUp size={20} strokeWidth={1.5} />
+            <span>Reports</span>
+          </NavLink>
+
+          {isSuperAdmin && (
+            <NavLink to="/dashboard/role-management" className={navCls}>
+              <UserCog size={20} strokeWidth={1.5} />
+              <span>Role Management</span>
+            </NavLink>
+          )}
+
+          {isSuperAdmin && (
+            <NavLink to="/dashboard/settings" className={navCls}>
+              <Settings size={20} strokeWidth={1.5} />
+              <span>Settings</span>
+            </NavLink>
+          )}
+        </nav>
+
+        <div className={styles.bottomProfile} onClick={handleLogout} title="Click to Logout">
+          <div className={styles.profileInfo}>
+            <div className={styles.profileAvatar}>
+              {user.first_name?.[0]?.toUpperCase() || 'A'}
+            </div>
+            <span className={styles.profileName}>
+              {isSuperAdmin ? 'CLIMBS Admin' : `${user.first_name} ${user.last_name}`}
+            </span>
+          </div>
+          <MoreHorizontal size={18} color="#94a3b8" />
+        </div>
+      </aside>
+
+      {/* ─── MAIN CONTENT ─── */}
+      <div className={styles.mainWrapper}>
+        {/* The header is inside the pages, so we only render the Outlet here */}
+        <Outlet />
+      </div>
+
+    </div>
+  );
 };
 
 export default DashboardLayout;

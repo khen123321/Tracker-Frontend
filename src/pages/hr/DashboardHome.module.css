@@ -1,0 +1,361 @@
+/* ══════════════════════════════════════════════════════════════
+   LOADING
+══════════════════════════════════════════════════════════════ */
+.loadingScreen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  gap: 10px;
+  font-size: 1rem;
+  color: #64748b;
+  font-weight: 500;
+  background: #f8f9fc;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  animation: spin 0.8s linear infinite;
+  border: 3px solid #e2e8f0;
+  border-top-color: #0B1EAE;
+  border-radius: 50%;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PAGE & HEADER
+══════════════════════════════════════════════════════════════ */
+.pageWrapper {
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 100%;
+  background: #f8f9fc;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pageTitle {
+  font-size: 26px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.3px;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.iconButton {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  transition: background 0.15s;
+}
+
+.iconButton:hover { background: #f1f5f9; }
+
+.notifDot {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 8px;
+  height: 8px;
+  background: #ef4444;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.dateBadge {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  font-size: 12.5px;
+  color: #475569;
+  white-space: nowrap;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   NOTIFICATION DROPDOWN
+══════════════════════════════════════════════════════════════ */
+.notifContainer { position: relative; }
+
+.notifDropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 320px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,.12), 0 4px 6px -2px rgba(0,0,0,.06);
+  z-index: 50;
+  overflow: hidden;
+}
+
+.notifDropdownHeader {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.notifCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 9999px;
+}
+
+.notifList {
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.notifList::-webkit-scrollbar { width: 4px; }
+.notifList::-webkit-scrollbar-track { background: transparent; }
+.notifList::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+
+.notifItem {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f8fafc;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.notifItem:last-child { border-bottom: none; }
+.notifItem:hover { background: #f8fafc; }
+.notifItem p { font-size: 0.825rem; color: #334155; margin: 0 0 3px; line-height: 1.45; }
+.notifItem p strong { color: #0f172a; font-weight: 600; }
+
+.notifTime { display: block; font-size: 0.7rem; color: #94a3b8; }
+
+.notifEmpty {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.875rem;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SHARED CARD
+══════════════════════════════════════════════════════════════ */
+.card {
+  background: #ffffff;
+  border: 1px solid #e8ecf2;
+  border-radius: 12px;
+  padding: 20px 22px;
+}
+
+.cardTitle {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+  margin: 0 0 8px;
+}
+
+.cardValue {
+  font-size: 36px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   TOP ROW (wide card + 2 metric cards)
+══════════════════════════════════════════════════════════════ */
+.topGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 16px;
+}
+
+.cardWide { grid-column: span 1; }
+
+.cardRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.progressBlock {
+  flex: 1;
+  max-width: 55%;
+}
+
+.progressLabel {
+  display: block;
+  font-size: 11px;
+  color: #94a3b8;
+  margin-bottom: 6px;
+}
+
+.progressTrack {
+  height: 8px;
+  background: #e8ecf2;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #0B1EAE, #4f63d2);
+  border-radius: 9999px;
+  transition: width 0.4s ease;
+}
+
+.progressPercent {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0B1EAE;
+  margin-top: 4px;
+  text-align: right;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MIDDLE ROW (Pie Chart + 2x2 Attendance Grid)
+══════════════════════════════════════════════════════════════ */
+.middleGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* ── RECHARTS DONUT CHART ── */
+.chartCard {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  min-height: 320px;
+}
+
+.chartWrapper {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.donutCenter {
+  position: absolute;
+  top: 43%; /* Accounts for legend at the bottom */
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none; /* Crucial so tooltips still work */
+}
+
+.donutTotal {
+  font-size: 26px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.donutLabel {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+/* ── 2x2 ATTENDANCE GRID ── */
+.attGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.attCard {
+  background: #ffffff;
+  border: 1px solid #e8ecf2;
+  border-radius: 12px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.attLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.attValue {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* Status colors */
+.present { color: #15803d; }
+.absent  { color: #dc2626; }
+.excused { color: #d97706; }
+.late    { color: #7c3aed; }
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .topGrid    { grid-template-columns: 1fr 1fr; }
+  .cardWide   { grid-column: span 2; }
+  .middleGrid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .topGrid  { grid-template-columns: 1fr; }
+  .cardWide { grid-column: span 1; }
+  .attGrid  { grid-template-columns: 1fr 1fr; }
+}
