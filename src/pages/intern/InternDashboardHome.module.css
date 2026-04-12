@@ -1,52 +1,305 @@
-.container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
+/* ══════════════════════════════════════════════════════════════
+   LAYOUT
+══════════════════════════════════════════════════════════════ */
+.pageWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
 }
 
-.cameraBox {
-    width: 100%;
-    max-width: 400px;
-    border: 4px solid #3b82f6;
-    border-radius: 15px;
-    overflow: hidden;
-    margin-bottom: 20px;
+/* ══════════════════════════════════════════════════════════════
+   TOP HEADER & GREETING
+══════════════════════════════════════════════════════════════ */
+.topHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  padding: 16px 24px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
-.webcam {
-    width: 100%;
-    display: block;
+.headerTitle {
+  font-size: 24px;
+  font-weight: 800;
+  color: #111827;
+  margin: 0;
 }
 
-.buttonGrid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    width: 100%;
-    max-width: 400px;
+.themeToggle {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #4b5563;
+  transition: all 0.2s;
+}
+.themeToggle:hover { background: #f3f4f6; }
+
+.welcomeSection {
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
-.buttonGrid button {
-    padding: 20px;
-    border: none;
-    border-radius: 10px;
-    font-weight: 700;
-    color: white;
-    cursor: pointer;
-    transition: transform 0.1s;
+.greetingText {
+  font-size: 32px;
+  font-weight: 400;
+  color: #111827;
+  margin: 0 0 8px 0;
 }
 
-.buttonGrid button:active { transform: scale(0.95); }
-.buttonGrid button:disabled { opacity: 0.6; cursor: not-allowed; }
+.highlightName {
+  font-weight: 800;
+  color: #eab308;
+}
 
-.btnIn { background: #10b981; }
-.btnLunch { background: #f59e0b; }
-.btnOut { background: #ef4444; }
+.dateText {
+  color: #6b7280;
+  font-size: 16px;
+  margin: 0;
+}
 
-.statusText {
-    margin-top: 20px;
-    font-weight: 600;
-    color: #1e293b;
-    text-align: center;
+/* ══════════════════════════════════════════════════════════════
+   ANNOUNCEMENTS
+══════════════════════════════════════════════════════════════ */
+.announcementsSection {
+  background: #fdf6b2;
+  border: 1px solid #fde047;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.pinIcon { color: #b45309; }
+
+.sectionHeader h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.announcementList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.announcementCard {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 18px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.announcementHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  gap: 10px;
+}
+
+.announcementHeader h4 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.announcementDesc {
+  font-size: 14px;
+  color: #4b5563;
+  margin: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   STATS GRID
+══════════════════════════════════════════════════════════════ */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.statCard {
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.cardTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 16px 0;
+}
+
+.cardHeaderSplit {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.progressCircle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 5px solid #eab308;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 18px;
+  color: #eab308;
+}
+
+.progressBarContainer { margin-top: auto; }
+
+.progressLabels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.hiddenLabel { visibility: hidden; }
+
+.fractionLabel { font-size: 14px; color: #6b7280; font-weight: 500; }
+
+.progressTrack {
+  height: 12px;
+  background: #fef08a;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progressFill {
+  height: 100%;
+  background: #eab308;
+  border-radius: 999px;
+  transition: width 0.5s ease;
+}
+
+.estCompletion {
+  font-size: 12px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.statusRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: auto;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #dcfce7;
+  color: #166534;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.timeDetails p {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.hoursToday {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.hoursBig {
+  font-size: 40px;
+  font-weight: 800;
+  color: #eab308;
+  line-height: 1;
+}
+
+.hoursLabel {
+  font-size: 14px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+.weeklySummary {
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.weeklyBoxes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.weeklyBox {
+  border: 1px solid #22c55e;
+  border-radius: 8px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.weeklyBox:nth-child(2) { border-color: #eab308; }
+
+.weeklyValueGreen { font-size: 24px; font-weight: 800; color: #22c55e; }
+.weeklyValueYellow { font-size: 24px; font-weight: 800; color: #eab308; }
+.weeklyLabel { font-size: 14px; font-weight: 600; color: #111827; }
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE DESIGN
+══════════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .statsGrid { grid-template-columns: 1fr; }
+  .weeklyBoxes { flex-direction: row; }
+  .weeklyBox { flex: 1; justify-content: center; }
+}
+
+@media (max-width: 640px) {
+  .weeklyBoxes { flex-direction: column; }
 }

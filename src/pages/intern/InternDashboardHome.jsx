@@ -1,152 +1,166 @@
-import React, { useState, useRef, useEffect } from 'react';
-import Webcam from 'react-webcam';
-import api from '../../api/axios'; 
-import { Calendar, Clock, MapPin, Camera, ShieldCheck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import api from '../../api/axios';
+import { Calendar, Clock, Pin, CheckCircle2, Moon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import styles from './InternDashboardHome.module.css';
 
 const InternDashboardHome = () => {
-    const webcamRef = useRef(null);
     const navigate = useNavigate();
-    const [loading, setLoading] = useState(false);
-    const [statusMsg, setStatusMsg] = useState({ type: '', text: '' });
     const [upcomingEvents, setUpcomingEvents] = useState([]);
-    
-    // Get user data
+
     const user = JSON.parse(localStorage.getItem('user')) || {};
 
+    const [internStats, setInternStats] = useState({
+        totalHoursRequired: 500,
+        hoursRendered: 0,
+        completionDate: 'Calculating...',
+        todayStatus: 'Loading...',
+        todayClockIn: '--:--',
+        todayOfficial: '08:30 AM',
+        todayHours: 0,
+        weekDaysPresent: 0,
+        weekHoursRendered: 0,
+    });
+
     useEffect(() => {
-        const fetchBriefEvents = async () => {
+        const fetchDashboardData = async () => {
             try {
-                const { data } = await api.get('/events');
-                setUpcomingEvents(data.slice(0, 2)); 
+                const eventsRes = await api.get('/events');
+                setUpcomingEvents(eventsRes.data.slice(0, 3));
+
+                const statsRes = await api.get('/intern/dashboard-stats');
+                setInternStats(statsRes.data);
             } catch {
-                console.error("Dashboard event sync failed");
+                console.error("Dashboard sync failed");
             }
         };
-        fetchBriefEvents();
+        fetchDashboardData();
     }, []);
 
-    const captureAttendance = async (clockType) => {
-        setLoading(true);
-        setStatusMsg({ type: 'info', text: 'Validating location and identity...' });
+    const progressPercentage = internStats.totalHoursRequired > 0
+        ? Math.round((internStats.hoursRendered / internStats.totalHoursRequired) * 100)
+        : 0;
 
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                const { latitude, longitude } = position.coords;
-                const imageSrc = webcamRef.current.getScreenshot();
-
-                try {
-                    const response = await api.post('/attendance/log', {
-                        type: clockType,
-                        lat: latitude,
-                        lng: longitude,
-                        image: imageSrc
-                    });
-                    setStatusMsg({ type: 'success', text: response.data.message });
-                } catch (error) {
-                    setStatusMsg({ 
-                        type: 'error', 
-                        text: error.response?.data?.message || 'Server connection failed.' 
-                    });
-                } finally {
-                    setLoading(false);
-                }
-            },
-            () => {
-                setStatusMsg({ type: 'error', text: 'GPS Required. Please enable location.' });
-                setLoading(false);
-            }
-        );
-    };
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening';
+    const todayDate = new Date().toLocaleDateString('en-US', {
+        weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+    });
 
     return (
-        <div className={styles.container}>
-            <header className="mb-8 flex justify-between items-end">
-                <div>
-                    <h1 className={styles.title}>
-                        Welcome back, {user.first_name || 'Admin'}!
-                    </h1>
-                    <p className="text-slate-500 flex items-center gap-2">
-                        {user.role === 'superadmin' ? (
-                            <ShieldCheck size={16} className="text-blue-600" />
-                        ) : (
-                            <MapPin size={16} />
-                        )} 
-                        {user.role === 'superadmin' ? 'System Administrator' : 'CLIMBS HQ - Cagayan de Oro'}
-                    </p>
-                </div>
-                
-                <button 
-                    onClick={() => navigate('/intern-dashboard/events')}
-                    className="flex items-center gap-2 text-sm bg-white border border-slate-200 px-4 py-2 rounded-xl hover:bg-slate-50 transition-all shadow-sm"
-                >
-                    <Calendar size={18} className="text-[#0B1EAE]" />
-                    View Full Calendar
-                </button>
-            </header>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
-                    <div className={styles.cameraWrapper}>
-                        <Webcam
-                            audio={false}
-                            ref={webcamRef}
-                            screenshotFormat="image/jpeg"
-                            className={styles.webcamView}
-                            videoConstraints={{ facingMode: "user" }}
-                        />
-                        <div className={styles.overlay}>
-                            <Camera size={20} className="animate-pulse" />
-                            Live Verification
-                        </div>
-                    </div>
+        <div className={styles.pageWrapper}>
 
-                    {statusMsg.text && (
-                        <div className={`${styles.alert} ${styles[statusMsg.type]} mt-4`}>
-                            {statusMsg.text}
-                        </div>
-                    )}
-
-                    <div className={styles.actionGrid}>
-                        <button onClick={() => captureAttendance('time_in')} disabled={loading} className={styles.btnIn}>TIME IN</button>
-                        <button onClick={() => captureAttendance('lunch_out')} disabled={loading} className={styles.btnLunch}>LUNCH OUT</button>
-                        <button onClick={() => captureAttendance('lunch_in')} disabled={loading} className={styles.btnLunch}>LUNCH IN</button>
-                        <button onClick={() => captureAttendance('time_out')} disabled={loading} className={styles.btnOut}>TIME OUT</button>
-                    </div>
-                </div>
-
-                <div className="space-y-6">
-                    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                        <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                            <Calendar size={18} /> Upcoming
-                        </h3>
-                        {upcomingEvents.length > 0 ? (
-                            <div className="space-y-3">
-                                {upcomingEvents.map(event => (
-                                    <div key={event.id} className="border-l-4 border-[#0B1EAE] bg-blue-50 p-3 rounded-r-lg">
-                                        <p className="text-xs font-bold text-[#0B1EAE] uppercase">{event.start}</p>
-                                        <p className="text-sm font-medium text-slate-700">{event.title}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-xs text-slate-400 italic">No scheduled events.</p>
-                        )}
-                    </div>
-
-                    <div className="bg-[#0B1EAE] p-5 rounded-2xl text-white shadow-lg">
-                        <h3 className="font-bold mb-2 flex items-center gap-2">
-                            <Clock size={18} /> {user.role === 'superadmin' ? 'Admin Note' : 'Duty Reminder'}
-                        </h3>
-                        <p className="text-sm opacity-90 leading-relaxed">
-                            {user.role === 'superadmin' 
-                                ? "You are logged in as a Superadmin. You can perform all actions and bypass standard restrictions."
-                                : "Ensure your face is clearly visible in the camera before clicking Time In."}
-                        </p>
-                    </div>
+            {/* ─── TOP HEADER ─── */}
+            <div className={styles.topHeader}>
+                <h1 className={styles.headerTitle}>Dashboard</h1>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => navigate('/intern-dashboard/events')}
+                        className="flex items-center gap-2 text-sm bg-white border border-slate-200 px-4 py-2 rounded-xl hover:bg-slate-50 transition-all shadow-sm h-[40px]"
+                    >
+                        <Calendar size={18} className="text-[#0B1EAE]" />
+                        <span className="hidden sm:inline font-semibold text-slate-700">Full Calendar</span>
+                    </button>
+                    <button className={styles.themeToggle}>
+                        <Moon size={20} strokeWidth={1.5} />
+                    </button>
                 </div>
             </div>
+
+            {/* ─── WELCOME SECTION ─── */}
+            <div className={styles.welcomeSection}>
+                <h2 className={styles.greetingText}>
+                    {greeting}, <span className={styles.highlightName}>{user.first_name || 'Intern'}!</span>
+                </h2>
+                <p className={styles.dateText}>{todayDate}</p>
+            </div>
+
+            {/* ─── PINNED ANNOUNCEMENTS ─── */}
+            <div className={styles.announcementsSection}>
+                <div className={styles.sectionHeader}>
+                    <Pin size={18} className={styles.pinIcon} />
+                    <h3>Pinned Announcements</h3>
+                </div>
+                <div className={styles.announcementList}>
+                    {upcomingEvents.length > 0 ? (
+                        upcomingEvents.map(event => (
+                            <div key={event.id} className={styles.announcementCard}>
+                                <div className={styles.announcementHeader}>
+                                    <h4>{event.title}</h4>
+                                    <span className={styles.badge} style={{ backgroundColor: '#bfdbfe', color: '#1e3a8a' }}>Event</span>
+                                </div>
+                                <p className={styles.announcementDesc}>
+                                    Scheduled: <span className="font-bold">{event.start}</span>
+                                </p>
+                            </div>
+                        ))
+                    ) : (
+                        <p className="text-sm text-slate-500 italic px-2">No pinned announcements.</p>
+                    )}
+                </div>
+            </div>
+
+            {/* ─── STATS GRID ─── */}
+            <div className={styles.statsGrid}>
+
+                {/* OJT Progress */}
+                <div className={styles.statCard}>
+                    <div className={styles.cardHeaderSplit}>
+                        <h3 className={styles.cardTitle}>OJT Progress</h3>
+                        <div className={styles.progressCircle}>
+                            <span>{progressPercentage}%</span>
+                        </div>
+                    </div>
+                    <div className={styles.progressBarContainer}>
+                        <div className={styles.progressLabels}>
+                            <span className={styles.hiddenLabel}>Progress</span>
+                            <span className={styles.fractionLabel}>{internStats.hoursRendered}/{internStats.totalHoursRequired} hours</span>
+                        </div>
+                        <div className={styles.progressTrack}>
+                            <div className={styles.progressFill} style={{ width: `${progressPercentage}%` }} />
+                        </div>
+                        <p className={styles.estCompletion}>Est. completion: {internStats.completionDate}</p>
+                    </div>
+                </div>
+
+                {/* Today's Status */}
+                <div className={styles.statCard}>
+                    <h3 className={styles.cardTitle}>Today's Status</h3>
+                    <div className={styles.statusRow}>
+                        <div className={styles.statusInfo}>
+                            <div className={styles.statusBadge}>
+                                <CheckCircle2 size={16} />
+                                <span>{internStats.todayStatus}</span>
+                            </div>
+                            <div className={styles.timeDetails}>
+                                <p>Clock-in: {internStats.todayClockIn}</p>
+                                <p>Official: {internStats.todayOfficial}</p>
+                            </div>
+                        </div>
+                        <div className={styles.hoursToday}>
+                            <span className={styles.hoursBig}>{internStats.todayHours}h</span>
+                            <span className={styles.hoursLabel}>hours today</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* This Week */}
+                <div className={styles.weeklySummary}>
+                    <h2 className={styles.cardTitle}>This Week</h2>
+                    <div className={styles.weeklyBoxes}>
+                        <div className={styles.weeklyBox}>
+                            <span className={styles.weeklyValueGreen}>{internStats.weekDaysPresent}</span>
+                            <span className={styles.weeklyLabel}>Days Present</span>
+                        </div>
+                        <div className={styles.weeklyBox}>
+                            <span className={styles.weeklyValueYellow}>{internStats.weekHoursRendered}h</span>
+                            <span className={styles.weeklyLabel}>Hours Rendered</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
         </div>
     );
 };

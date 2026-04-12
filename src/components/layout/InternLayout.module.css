@@ -1,39 +1,132 @@
-.layout { display: flex; min-height: 100vh; background: #f1f5f9; }
+/* ─── Wrapper ─────────────────────────────────────────────────── */
+.layoutWrapper {
+  display: flex;
+  height: 100vh;
+  background-color: #f8f9fc;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, sans-serif;
+}
 
+/* ══════════════════════════════════════════════════════════════
+   SIDEBAR
+══════════════════════════════════════════════════════════════ */
 .sidebar {
-    width: 260px; background: #0f172a; color: #cbd5e1;
-    display: flex; flex-direction: column; padding: 1.5rem;
-    position: fixed; height: 100vh;
+  width: 260px;
+  background: var(--Main-color,
+    linear-gradient(270deg, #0B1EAE 0%, #152286 23.56%, #0D1767 63.46%, #050C48 100%)
+  );
+  color: white;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.12);
+  z-index: 20;
 }
 
-.brand { display: flex; align-items: center; gap: 12px; margin-bottom: 2.5rem; padding-left: 8px; }
-.logoBox { background: #2563eb; color: white; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-weight: bold; }
-.brandName { font-size: 1.2rem; font-weight: 700; color: white; }
-
-.navigation { display: flex; flex-direction: column; gap: 6px; flex-grow: 1; }
-
-.navLink, .active {
-    display: flex; align-items: center; gap: 12px; padding: 12px;
-    border-radius: 8px; text-decoration: none; color: #94a3b8; transition: 0.3s;
+/* Logo */
+.brand {
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
 }
 
-.navLink:hover { background: #1e293b; color: #f1f5f9; }
-.active { background: #2563eb; color: white; }
-
-.logoutBtn {
-    margin-top: auto; display: flex; align-items: center; gap: 12px;
-    background: none; border: none; color: #f87171; cursor: pointer;
-    padding: 12px; border-radius: 8px; transition: 0.2s;
+.logoImage {
+  width: 150px;
+  height: auto;
+  object-fit: contain;
 }
 
-.logoutBtn:hover { background: #fee2e220; }
-
-.content { margin-left: 260px; flex-grow: 1; display: flex; flex-direction: column; }
-
-.topbar {
-    height: 64px; background: white; border-bottom: 1px solid #e2e8f0;
-    display: flex; justify-content: space-between; align-items: center; padding: 0 2rem;
+/* Nav */
+.navMenu {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding-left: 1rem;
+  gap: 0.25rem;
 }
 
-.profileArea { display: flex; align-items: center; gap: 10px; font-weight: 500; color: #475569; }
-.pageBody { padding: 2rem; }
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  color: #cbd5e1;
+  text-decoration: none;
+  border-radius: 8px 0 0 8px;
+  font-size: 0.9rem;
+  font-weight: 400;
+  transition: all 0.2s ease;
+}
+
+.navItem:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+/* White gradient cutout — active */
+.navItemActive {
+  background: linear-gradient(90deg, #999 0%, #ccc 45.19%, #fff 100%);
+  color: #061178;
+  font-weight: 700;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.navItemActive:hover {
+  background: linear-gradient(90deg, #999 0%, #ccc 45.19%, #fff 100%);
+  color: #061178;
+}
+
+/* Bottom profile / logout */
+.bottomProfile {
+  padding: 0.75rem 1rem;
+  margin: 1rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.bottomProfile:hover {
+  background-color: rgba(255, 255, 255, 0.16);
+}
+
+.profileInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.profileAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  background-color: #1e3a8a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+
+.profileName {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: white;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MAIN WRAPPER
+══════════════════════════════════════════════════════════════ */
+.mainWrapper {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+  background-color: #f8f9fc;
+}

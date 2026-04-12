@@ -1,50 +1,88 @@
-.container { display: flex; justify-content: center; align-items: flex-start; padding-top: 1rem; }
-
-.attendanceCard {
-    background: white; padding: 2.5rem; border-radius: 16px;
-    width: 100%; max-width: 550px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+.pageContainer {
+    padding: 24px;
+    background: #f1f5f9;
+    min-height: 100vh;
 }
 
-.title { font-size: 1.5rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem; }
-.subtitle { color: #64748b; font-size: 0.95rem; margin-bottom: 2rem; }
-
-.cameraSection { 
-    margin-bottom: 2rem; border-radius: 12px; overflow: hidden; 
-    background: #f8fafc; position: relative; border: 2px dashed #e2e8f0;
-}
-.webcam { width: 100%; display: block; transform: scaleX(-1); border-radius: 12px; }
-.previewImg { width: 100%; display: block; border-radius: 12px; }
-
-.captureBtn, .retakeBtn {
-    position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
-    padding: 10px 24px; border-radius: 30px; border: none; cursor: pointer;
-    display: flex; align-items: center; gap: 8px; font-weight: 600;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s;
+.mainCard {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    overflow: hidden;
 }
 
-.captureBtn { background: #2563eb; color: white; }
-.captureBtn:hover { background: #1d4ed8; transform: translateX(-50%) scale(1.05); }
+.cardHeader { padding: 20px 30px; border-bottom: 1px solid #edf2f7; }
+.mainTitle { font-size: 26px; font-weight: 800; color: #1a202c; }
 
-.retakeBtn { background: rgba(255, 255, 255, 0.9); color: #0f172a; }
-.retakeBtn:hover { background: white; transform: translateX(-50%) scale(1.05); }
-
-.actionGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-
-.logBtn {
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
-    padding: 1.2rem; border-radius: 12px; border: 1px solid #e2e8f0;
-    background: white; cursor: pointer; transition: all 0.2s;
-    font-weight: 600; color: #475569; font-size: 0.9rem;
+.clockBanner {
+    background: #0B1EAE;
+    margin: 20px;
+    padding: 45px;
+    border-radius: 14px;
+    text-align: center;
+    color: white;
 }
 
-.logBtn:hover:not(:disabled) { 
-    background: #f8fafc; border-color: #cbd5e1; transform: translateY(-3px); 
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+.dateDisplay { font-size: 18px; margin-bottom: 8px; font-weight: 500; opacity: 0.9; }
+.digitalClock { font-size: 82px; font-weight: 900; color: #FACC15; letter-spacing: 2px; }
+
+.verificationNotice {
+    display: flex; gap: 16px; align-items: center;
+    background: #eff6ff; border: 1px solid #bfdbfe;
+    margin: 0 20px 20px 20px; padding: 18px; border-radius: 12px;
 }
-.logBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+.noticeIcon { color: #1d4ed8; }
+.noticeText h3 { font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 2px; }
+.noticeText p { font-size: 13px; color: #64748b; }
 
-.amIn { color: #2563eb; border-color: #bfdbfe; background: #eff6ff; }
-.amIn:hover:not(:disabled) { background: #dbeafe; border-color: #93c5fd; }
+.shiftWrapper { padding: 0 20px 20px 20px; display: flex; flex-direction: column; gap: 20px; }
+.shiftGroup { background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0; }
+.shiftLabel { display: flex; align-items: center; gap: 8px; font-weight: 700; color: #475569; margin-bottom: 12px; font-size: 14px; text-transform: uppercase; }
 
-.pmOut { color: #059669; border-color: #bbf7d0; background: #f0fdf4; }
-.pmOut:hover:not(:disabled) { background: #dcfce7; border-color: #86efac; }
+.actionGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.timeInBtn, .timeOutBtn {
+    height: 65px; border-radius: 10px; border: none; font-size: 20px;
+    font-weight: 800; color: white; cursor: pointer; display: flex;
+    align-items: center; justify-content: center; gap: 10px; transition: 0.2s;
+}
+
+.timeInBtn { background: #EAB308; }
+.timeOutBtn { background: #F87171; }
+.timeInBtn:hover:not(.locked) { background: #ca8a04; transform: translateY(-2px); }
+.timeOutBtn:hover:not(.locked) { background: #ef4444; transform: translateY(-2px); }
+
+.locked { background: #94a3b8 !important; opacity: 0.6; cursor: not-allowed !important; transform: none !important; }
+
+/* MODAL STYLES */
+.modalOverlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(15, 23, 42, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1000;
+}
+.modalContent { background: white; width: 480px; padding: 35px; border-radius: 24px; position: relative; text-align: center; }
+.closeBtn { position: absolute; top: 20px; right: 20px; border: none; background: none; color: #94a3b8; cursor: pointer; }
+.modalTitle { font-size: 20px; font-weight: 800; text-decoration: underline; margin-bottom: 30px; color: #0f172a; }
+
+.stepper { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 30px; }
+.step { width: 36px; height: 36px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #64748b; }
+.activeStep { background: #0B1EAE; color: white; }
+.line { width: 40px; height: 2px; background: #e2e8f0; }
+
+.stepBody { display: flex; flex-direction: column; align-items: center; }
+.locCircle { width: 80px; height: 80px; background: #dcfce7; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; }
+.coordsText { color: #4f46e5; font-weight: 600; font-size: 18px; margin-bottom: 10px; }
+.premisesBadge { border: 2px solid #22c55e; color: #15803d; padding: 6px 20px; border-radius: 20px; font-weight: 700; font-size: 14px; margin-bottom: 25px; }
+
+.modalPrimaryBtn { background: #0B1EAE; color: white; border: none; padding: 14px 50px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+.modalPrimaryBtn:hover { background: #081685; }
+
+.webcamBox { width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 20px; border: 2px solid #e2e8f0; }
+.webcam { width: 100%; transform: scaleX(-1); }
+
+.previewBox { width: 100%; position: relative; border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+.imgPreview { width: 100%; display: block; }
+.checkOverlay { position: absolute; inset: 0; background: rgba(34, 197, 94, 0.4); display: flex; align-items: center; justify-content: center; }
+
+.modalFooter { display: flex; gap: 12px; width: 100%; }
+.retakeBtn { flex: 1; padding: 14px; border-radius: 10px; border: 1px solid #d1d5db; background: #f9fafb; font-weight: 600; cursor: pointer; }
+.confirmBtn { flex: 2; padding: 14px; border-radius: 10px; border: none; background: #0B1EAE; color: white; font-weight: 700; cursor: pointer; }

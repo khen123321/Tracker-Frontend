@@ -20,7 +20,7 @@ import InternLayout from './components/layout/InternLayout';
 import InternDashboardHome from './pages/intern/InternDashboardHome';
 import Attendance from './pages/intern/attendance/Attendance';
 import InternEventsPage from './pages/intern/events/EventsPage'; 
-// ✅ ADD THIS IMPORT HERE:
+import Logs from './pages/intern/logs/Logs';
 import Forms from './pages/intern/forms/Forms'; 
 
 // Placeholder for sections still being developed
@@ -63,6 +63,7 @@ export default function App() {
             <Route index element={<InternDashboardHome />} />
             <Route path="attendance" element={<Attendance />} />
             <Route path="events" element={<InternEventsPage />} />
+            <Route path="logs" element={<Logs />} />
             
             {/* ✅ This is now correctly mapped to the Forms component */}
             <Route path="forms" element={<Forms />} />
