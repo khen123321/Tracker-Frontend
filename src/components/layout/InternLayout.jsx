@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import styles from './InternLayout.module.css';
 import logoImage from '../../assets/logo.png';
+import NotificationBell from '../../pages/intern/NotificationBell'; // ✅ Imported Bell
 
 const InternLayout = () => {
     const navigate = useNavigate();
@@ -76,8 +77,18 @@ const InternLayout = () => {
             </aside>
 
             {/* ─── MAIN CONTENT ─── */}
-            <div className={styles.mainWrapper}>
-                <Outlet />
+            {/* Added flex column here so the header sits nicely above the Outlet */}
+            <div className={`${styles.mainWrapper} flex flex-col h-screen overflow-hidden`}>
+                
+                {/* ✅ NEW TOP HEADER JUST FOR NOTIFICATIONS */}
+                <header className="h-16 bg-white border-b border-slate-100 flex items-center justify-end px-8 shrink-0 z-10">
+                    <NotificationBell />
+                </header>
+
+                {/* PAGE CONTENT WRAPPER */}
+                <div className="flex-1 overflow-y-auto bg-slate-50 relative">
+                    <Outlet />
+                </div>
             </div>
 
         </div>

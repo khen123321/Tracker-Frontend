@@ -1,322 +1,386 @@
-.pageWrapper {
-  padding: 1.5rem;
-  background-color: #f8f9fc;
-  min-height: 100vh;
-  font-family: system-ui, -apple-system, sans-serif;
+/* ══ SKELETON SHIMMER ══ */
+@keyframes shimmer {
+    0%   { background-position: -700px 0; }
+    100% { background-position:  700px 0; }
 }
 
-/* --- Header Section --- */
+.skel {
+    border-radius: 6px;
+    background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+    background-size: 700px 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+    flex-shrink: 0;
+}
+
+/* Skeleton shape presets */
+.skelTitle      { width: 90px;  height: 26px; }
+.skelIconBtn    { width: 34px;  height: 34px; border-radius: 9999px !important; }
+.skelDateBadge  { width: 240px; height: 34px; }
+.skelStatLabel  { width: 100px; height: 13px; margin-bottom: 8px; }
+.skelStatValue  { width: 50px;  height: 38px; }
+.skelFilterItem { height: 36px; border-radius: 8px; }
+.skelTableTitle { width: 120px; height: 18px; }
+.skelSortBtn    { width: 72px;  height: 32px; border-radius: 8px !important; }
+.skelCheckbox   { width: 15px;  height: 15px; border-radius: 4px !important; flex-shrink: 0; }
+.skelAvatar     { width: 36px;  height: 36px; border-radius: 9999px !important; }
+.skelName       { width: 120px; height: 13px; }
+.skelEmail      { width: 85px;  height: 11px; }
+.skelCell       { height: 13px; }
+.skelBadge      { height: 22px; border-radius: 4px !important; }
+.skelTh         { height: 11px; }
+
+.skelTheadRow {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 11px 12px;
+    background: #e5e7eb;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.skelTbodyRow {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.skelTbodyRow:last-child {
+    border-bottom: none;
+}
+
+/* ══ PAGE WRAPPER ══ */
+.pageWrapper {
+    padding: 12px;
+    background-color: #f8f9fc;
+    min-height: 100vh;
+    font-family: system-ui, -apple-system, sans-serif;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+/* ══ HEADER ══ */
 .header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  background-color: #ffffff;
-  padding: 1rem 1.25rem;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  border: 1px solid #f3f4f6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #ffffff;
+    padding: 12px;
+    border-radius: 0.75rem;
+    border: 1px solid #f3f4f6;
 }
 
 .pageTitle {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #111827;
-  margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
 }
 
 .headerActions {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
 .iconButton {
-  padding: 0.5rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 9999px;
-  background: transparent;
-  cursor: pointer;
-  color: #6b7280;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s;
+    padding: 7px;
+    border: 1px solid #e5e7eb;
+    border-radius: 9999px;
+    background: transparent;
+    cursor: pointer;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
 }
 
 .iconButton:hover {
-  background-color: #f9fafb;
+    background-color: #f9fafb;
 }
 
 .dateBadge {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  border: 1px solid #e5e7eb;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  color: #4b5563;
-  background-color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid #e5e7eb;
+    padding: 7px 12px;
+    border-radius: 0.5rem;
+    font-size: 0.8125rem;
+    color: #4b5563;
+    background-color: #fff;
 }
 
-/* --- Stats Grid --- */
+/* ══ STATS GRID ══ */
 .statsGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px;
 }
 
 .statCard {
-  background-color: #ffffff;
-  padding: 1.5rem;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
-  border: 1px solid #f3f4f6;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+    background-color: #ffffff;
+    padding: 12px;
+    border-radius: 0.75rem;
+    border: 1px solid #f3f4f6;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .statLabel {
-  color: #4b5563;
-  font-size: 1.125rem;
-  margin-bottom: 0.25rem;
+    color: #4b5563;
+    font-size: 1rem;
+    margin-bottom: 4px;
 }
 
 .statValue {
-  font-size: 2.5rem;
-  line-height: 1;
-  font-weight: 700;
-  color: #111827;
-  margin: 0;
+    font-size: 2.25rem;
+    line-height: 1.1;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
 }
 
-/* --- Filters Grid --- */
+/* ══ FILTERS ══ */
 .filterGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px;
 }
 
 .selectWrapper {
-  position: relative;
+    position: relative;
 }
 
 .filterSelect {
-  width: 100%;
-  background-color: #ffffff;
-  border: 1px solid #e5e7eb;
-  color: #374151;
-  border-radius: 0.5rem;
-  padding: 0.625rem 1rem;
-  outline: none;
-  appearance: none;
-  cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 500;
+    width: 100%;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    color: #374151;
+    border-radius: 0.5rem;
+    padding: 9px 36px 9px 12px;
+    outline: none;
+    appearance: none;
+    cursor: pointer;
+    font-size: 0.8125rem;
+    font-weight: 500;
 }
 
 .filterSelect:focus {
-  box-shadow: 0 0 0 2px #0B1EAE;
+    box-shadow: 0 0 0 2px #0B1EAE;
 }
 
 .selectIcon {
-  pointer-events: none;
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  right: 0;
-  display: flex;
-  align-items: center;
-  padding-right: 1rem;
-  color: #6b7280;
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    padding-right: 12px;
+    color: #6b7280;
 }
 
-/* --- Table Area --- */
+/* ══ ERROR BANNER ══ */
+.errorBanner {
+    background: #fee2e2;
+    color: #991b1b;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #fecaca;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* ══ TABLE ══ */
 .tableContainer {
-  background-color: #ffffff;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
-  border: 1px solid #f3f4f6;
-  overflow: hidden;
+    background-color: #ffffff;
+    border-radius: 0.75rem;
+    border: 1px solid #f3f4f6;
+    overflow: hidden;
 }
 
 .tableHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
 }
 
 .tableTitle {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
 }
 
 .tableControls {
-  display: flex;
-  gap: 0.5rem;
+    display: flex;
+    gap: 5px;
 }
 
 .sortButton {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  border: 1px solid #e5e7eb;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  color: #4b5563;
-  background: transparent;
-  cursor: pointer;
-  font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid #e5e7eb;
+    padding: 7px 12px;
+    border-radius: 0.5rem;
+    font-size: 0.8125rem;
+    color: #4b5563;
+    background: transparent;
+    cursor: pointer;
+    font-weight: 500;
 }
 
 .sortButton:hover {
-  background-color: #f9fafb;
+    background-color: #f9fafb;
 }
 
 .tableWrapper {
-  overflow-x: auto;
+    overflow-x: auto;
 }
 
 .dataTable {
-  width: 100%;
-  text-align: left;
-  border-collapse: collapse;
+    width: 100%;
+    text-align: left;
+    border-collapse: collapse;
 }
 
 .dataTable thead tr {
-  background-color: #e5e7eb;
-  color: #4b5563;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+    background-color: #e5e7eb;
+    color: #4b5563;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .dataTable th {
-  padding: 1rem;
+    padding: 10px 12px;
 }
 
 .dataTable tbody tr {
-  border-bottom: 1px solid #f3f4f6;
-  transition: background-color 0.2s;
+    border-bottom: 1px solid #f3f4f6;
+    transition: background-color 0.2s;
 }
 
 .dataTable tbody tr:hover {
-  background-color: #f9fafb;
+    background-color: #f9fafb;
 }
 
 .dataTable td {
-  padding: 1rem;
+    padding: 10px 12px;
 }
 
 .checkboxCell {
-  text-align: center;
-  width: 3rem;
+    text-align: center;
+    width: 40px;
 }
 
 .checkbox {
-  width: 1rem;
-  height: 1rem;
-  border-radius: 0.25rem;
-  border: 1px solid #d1d5db;
-  cursor: pointer;
-  accent-color: #0B1EAE;
+    width: 15px;
+    height: 15px;
+    border-radius: 4px;
+    border: 1px solid #d1d5db;
+    cursor: pointer;
+    accent-color: #0B1EAE;
 }
 
 .internProfile {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .avatar {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 9999px;
-  background-color: #dbeafe;
-  border: 1px solid #bfdbfe;
-  overflow: hidden;
-  flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 9999px;
+    background-color: #dbeafe;
+    border: 1px solid #bfdbfe;
+    overflow: hidden;
+    flex-shrink: 0;
 }
 
 .avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .internName {
-  font-weight: 500;
-  color: #111827;
-  font-size: 0.875rem;
-  margin: 0;
+    font-weight: 500;
+    color: #111827;
+    font-size: 0.8125rem;
+    margin: 0;
 }
 
 .internEmail {
-  font-size: 0.75rem;
-  color: #6b7280;
-  margin: 0;
+    font-size: 0.6875rem;
+    color: #6b7280;
+    margin: 0;
 }
 
 .cellText {
-  font-size: 0.875rem;
-  color: #374151;
-  font-weight: 500;
+    font-size: 0.8125rem;
+    color: #374151;
+    font-weight: 500;
 }
 
 .statusActive {
-  color: #111827;
-  font-weight: 500;
-  font-size: 0.875rem;
+    color: #111827;
+    font-weight: 500;
+    font-size: 0.8125rem;
 }
 
 .statusInactive {
-  color: #9ca3af;
-  font-size: 0.875rem;
+    color: #9ca3af;
+    font-size: 0.8125rem;
 }
 
 .actionCell {
-  text-align: center;
+    text-align: center;
 }
 
 .actionButton {
-  color: #9ca3af;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.2s, color 0.2s;
+    color: #9ca3af;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s, color 0.2s;
 }
 
 .dataTable tbody tr:hover .actionButton {
-  opacity: 1;
+    opacity: 1;
 }
 
 .actionButton:hover {
-  color: #1f2937;
+    color: #1f2937;
 }
 
+/* ══ EMPTY STATE ══ */
+.emptyRow {
+    text-align: center;
+    padding: 48px !important;
+    color: #94a3b8;
+    font-size: 13px;
+    font-style: italic;
+}
+
+/* ══ RESPONSIVE ══ */
 @media (max-width: 1024px) {
-  .statsGrid, .filterGrid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+    .statsGrid    { grid-template-columns: repeat(2, 1fr); }
+    .filterGrid   { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 640px) {
-  .statsGrid, .filterGrid {
-    grid-template-columns: 1fr;
-  }
-  .header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
+    .statsGrid    { grid-template-columns: 1fr 1fr; }
+    .filterGrid   { grid-template-columns: 1fr 1fr; }
 }

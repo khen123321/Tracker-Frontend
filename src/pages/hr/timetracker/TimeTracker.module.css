@@ -1,51 +1,89 @@
-/* ══════════════════════════════════════════════════════════════
-   LOADER
-══════════════════════════════════════════════════════════════ */
+/* ══ SKELETON SHIMMER ══ */
+@keyframes shimmer {
+    0%   { background-position: -700px 0; }
+    100% { background-position:  700px 0; }
+}
+
+.skel {
+    border-radius: 6px;
+    background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+    background-size: 700px 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+    flex-shrink: 0;
+}
+
+/* Skeleton shape presets */
+.skelTitle      { width: 150px; height: 26px; }
+.skelIconBtn    { width: 36px;  height: 36px; border-radius: 8px !important; }
+.skelDatePill   { width: 230px; height: 36px; }
+.skelStatLabel  { width: 90px;  height: 13px; margin-bottom: 10px; }
+.skelStatValue  { width: 55px;  height: 38px; }
+.skelFilter     { height: 36px; min-width: 140px; }
+.skelTableTitle { width: 130px; height: 18px; }
+.skelActionBtn  { width: 68px;  height: 32px; }
+.skelAvatar     { width: 34px;  height: 34px; border-radius: 50% !important; }
+.skelName       { width: 115px; height: 13px; }
+.skelEmail      { width: 80px;  height: 11px; }
+.skelCell       { height: 13px; }
+.skelBadge      { height: 26px; max-width: 90px; border-radius: 8px !important; }
+.skelTh         { height: 11px; }
+
+.skelTheadRow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    background: #f8fafc;
+}
+
+.skelTbodyRow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.skelTbodyRow:last-child {
+    border-bottom: none;
+}
+
+/* ══ LOADER (fallback, unused) ══ */
 .loaderContainer {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     height: 60vh;
-    gap: 16px;
+    gap: 5px;
     color: #64748b;
 }
 
-.spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid #e2e8f0;
-    border-top-color: #0B1EAE;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ══════════════════════════════════════════════════════════════
-   PAGE WRAPPER
-══════════════════════════════════════════════════════════════ */
+/* ══ PAGE WRAPPER ══ */
 .pageWrapper {
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    padding: 2rem;
+    gap: 5px;
+    padding: 12px;
     background: #f8f9fc;
     min-height: 100%;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   PAGE HEADER
-══════════════════════════════════════════════════════════════ */
+/* ══ PAGE HEADER ══ */
 .pageHeader {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    background: #fff;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #f3f4f6;
 }
 
 .pageTitle {
-    font-size: 28px;
-    font-weight: 800;
+    font-size: 22px;
+    font-weight: 700;
     color: #0f172a;
     margin: 0;
 }
@@ -53,13 +91,13 @@
 .headerRight {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 5px;
 }
 
 .iconBtn {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
     border: 1px solid #e2e8f0;
     background: #fff;
     display: flex;
@@ -75,72 +113,66 @@
 .datePill {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 5px;
     background: #fff;
     border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 8px 16px;
-    font-size: 14px;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
     font-weight: 500;
     color: #334155;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   ERROR BANNER
-══════════════════════════════════════════════════════════════ */
+/* ══ ERROR BANNER ══ */
 .errorBanner {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 5px;
     background: #fee2e2;
     color: #991b1b;
-    padding: 12px 16px;
-    border-radius: 10px;
-    font-size: 14px;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 13px;
     font-weight: 500;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   STAT CARDS
-══════════════════════════════════════════════════════════════ */
+/* ══ STAT CARDS ══ */
 .statsRow {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
+    gap: 5px;
 }
 
 .statCard {
     background: #fff;
-    border-radius: 12px;
+    border-radius: 8px;
     border: 1px solid #e8eaf0;
-    padding: 24px 28px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
 }
 
 .statLabel {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 500;
     color: #475569;
     margin: 0;
 }
 
 .statValue {
-    font-size: 48px;
+    font-size: 36px;
     font-weight: 800;
     color: #0f172a;
     margin: 0;
     line-height: 1;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   FILTERS
-══════════════════════════════════════════════════════════════ */
+/* ══ FILTERS ══ */
 .filtersRow {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 5px;
 }
 
 .dateInput {
@@ -150,10 +182,10 @@
 }
 
 .dateInput input {
-    padding: 10px 40px 10px 14px;
+    padding: 9px 36px 9px 12px;
     border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    font-size: 14px;
+    border-radius: 8px;
+    font-size: 13px;
     color: #334155;
     background: #fff;
     appearance: none;
@@ -164,7 +196,7 @@
 
 .inputIcon {
     position: absolute;
-    right: 12px;
+    right: 10px;
     color: #94a3b8;
     pointer-events: none;
 }
@@ -178,10 +210,10 @@
 
 .selectWrap select {
     width: 100%;
-    padding: 10px 40px 10px 14px;
+    padding: 9px 36px 9px 12px;
     border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    font-size: 14px;
+    border-radius: 8px;
+    font-size: 13px;
     color: #334155;
     background: #fff;
     appearance: none;
@@ -192,17 +224,15 @@
 
 .selectIcon {
     position: absolute;
-    right: 12px;
+    right: 10px;
     color: #94a3b8;
     pointer-events: none;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   TABLE SECTION
-══════════════════════════════════════════════════════════════ */
+/* ══ TABLE SECTION ══ */
 .tableSection {
     background: #fff;
-    border-radius: 14px;
+    border-radius: 8px;
     border: 1px solid #e8eaf0;
     overflow: hidden;
 }
@@ -211,12 +241,12 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 24px 16px;
+    padding: 12px;
     border-bottom: 1px solid #f1f5f9;
 }
 
 .tableTitle {
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 700;
     color: #0f172a;
     margin: 0;
@@ -225,18 +255,18 @@
 .tableActions {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 5px;
 }
 
 .actionBtn {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
+    gap: 5px;
+    padding: 7px 12px;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
     background: #fff;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
     color: #475569;
     cursor: pointer;
@@ -245,15 +275,13 @@
 
 .actionBtn:hover { background: #f8fafc; }
 
-.tableContainer {
-    overflow-x: auto;
-}
+.tableContainer { overflow-x: auto; }
 
 .trackerTable {
     width: 100%;
     border-collapse: collapse;
     text-align: left;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .trackerTable thead tr {
@@ -262,8 +290,8 @@
 }
 
 .trackerTable th {
-    padding: 12px 20px;
-    font-size: 12px;
+    padding: 10px 12px;
+    font-size: 11px;
     font-weight: 700;
     color: #64748b;
     text-transform: uppercase;
@@ -280,21 +308,20 @@
 .tableRow:hover { background: #f8fafc; }
 
 .trackerTable td {
-    padding: 16px 20px;
+    padding: 12px;
     color: #334155;
     white-space: nowrap;
 }
 
-/* Intern cell */
 .internCell {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 }
 
 .avatar {
-    width: 38px;
-    height: 38px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
     background: #e2e8f0;
     display: flex;
@@ -305,48 +332,40 @@
     overflow: hidden;
 }
 
-.avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
 
 .internName {
     font-weight: 600;
     color: #0f172a;
     margin: 0 0 2px 0;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .internEmail {
-    font-size: 12px;
+    font-size: 11px;
     color: #94a3b8;
     margin: 0;
 }
 
-/* Time cells */
 .timeCell {
     color: #1e40af;
     font-weight: 500;
     font-family: 'Courier New', Courier, monospace;
 }
 
-/* Duration cell */
 .durationCell {
     font-weight: 600;
     color: #0f172a;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   STATUS BADGES
-══════════════════════════════════════════════════════════════ */
+/* ══ STATUS BADGES ══ */
 .statusBadge {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
+    gap: 5px;
+    padding: 5px 12px;
     border-radius: 8px;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     border: 1px solid #e2e8f0;
     background: #fff;
@@ -354,8 +373,8 @@
 }
 
 .statusDot {
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
     flex-shrink: 0;
 }
@@ -375,26 +394,21 @@
 .statusOvertime { color: #1d4ed8; }
 .statusOvertime .statusDot { background: #3b82f6; }
 
-/* ══════════════════════════════════════════════════════════════
-   EMPTY STATE
-══════════════════════════════════════════════════════════════ */
+/* ══ EMPTY STATE ══ */
 .emptyRow {
     text-align: center;
     padding: 48px !important;
     color: #94a3b8;
-    font-size: 14px;
+    font-size: 13px;
     font-style: italic;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   RESPONSIVE
-══════════════════════════════════════════════════════════════ */
+/* ══ RESPONSIVE ══ */
 @media (max-width: 1024px) {
     .statsRow { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 640px) {
-    .pageWrapper { padding: 1rem; }
     .statsRow { grid-template-columns: 1fr 1fr; }
     .filtersRow { flex-direction: column; align-items: stretch; }
 }

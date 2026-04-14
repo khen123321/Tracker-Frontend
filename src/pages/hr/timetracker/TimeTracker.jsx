@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../../../api/axios';
 import styles from './TimeTracker.module.css';
-import { Clock, Bell, CalendarDays, SlidersHorizontal, Search, User, AlertCircle, ChevronDown } from 'lucide-react';
+import { Bell, CalendarDays, SlidersHorizontal, Search, User, AlertCircle, ChevronDown } from 'lucide-react';
 
 const TimeTracker = () => {
     const [interns, setInterns] = useState([]);
@@ -45,7 +45,6 @@ const TimeTracker = () => {
             const response = await api.get('/hr/interns');
             const data = response.data;
             setInterns(data);
-
             const logs = data.map(u => u.attendance_logs?.[0]);
             setStats({
                 present: logs.filter(l => l?.status === 'present').length,
@@ -70,20 +69,79 @@ const TimeTracker = () => {
 
     const getStatusMeta = (status) => {
         switch (status) {
-            case 'present':   return { label: 'Present',           cls: styles.statusPresent };
-            case 'late':      return { label: 'Late',              cls: styles.statusLate };
-            case 'excused':   return { label: 'Excused',           cls: styles.statusExcused };
-            case 'overtime':  return { label: 'Present (Overtime)',cls: styles.statusOvertime };
+            case 'present':   return { label: 'Present',            cls: styles.statusPresent };
+            case 'late':      return { label: 'Late',               cls: styles.statusLate };
+            case 'excused':   return { label: 'Excused',            cls: styles.statusExcused };
+            case 'overtime':  return { label: 'Present (Overtime)', cls: styles.statusOvertime };
             case 'absent':
-            default:          return { label: 'Absent',            cls: styles.statusAbsent };
+            default:          return { label: 'Absent',             cls: styles.statusAbsent };
         }
     };
 
     if (loading) {
         return (
-            <div className={styles.loaderContainer}>
-                <div className={styles.spinner}></div>
-                <p>Synchronizing Live Logs...</p>
+            <div className={styles.pageWrapper}>
+                {/* Skeleton Header */}
+                <div className={styles.pageHeader}>
+                    <div className={`${styles.skel} ${styles.skelTitle}`} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div className={`${styles.skel} ${styles.skelIconBtn}`} />
+                        <div className={`${styles.skel} ${styles.skelDatePill}`} />
+                    </div>
+                </div>
+
+                {/* Skeleton Stat Cards */}
+                <div className={styles.statsRow}>
+                    {[...Array(4)].map((_, i) => (
+                        <div key={i} className={styles.statCard}>
+                            <div className={`${styles.skel} ${styles.skelStatLabel}`} />
+                            <div className={`${styles.skel} ${styles.skelStatValue}`} />
+                        </div>
+                    ))}
+                </div>
+
+                {/* Skeleton Filters */}
+                <div className={styles.filtersRow}>
+                    <div className={`${styles.skel} ${styles.skelFilter}`} />
+                    <div className={`${styles.skel} ${styles.skelFilter}`} style={{ flex: 1 }} />
+                    <div className={`${styles.skel} ${styles.skelFilter}`} style={{ flex: 1 }} />
+                </div>
+
+                {/* Skeleton Table */}
+                <div className={styles.tableSection}>
+                    <div className={styles.tableSectionHeader}>
+                        <div className={`${styles.skel} ${styles.skelTableTitle}`} />
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <div className={`${styles.skel} ${styles.skelActionBtn}`} />
+                            <div className={`${styles.skel} ${styles.skelIconBtn}`} />
+                        </div>
+                    </div>
+
+                    {/* Skeleton thead */}
+                    <div className={styles.skelTheadRow}>
+                        {[140, 80, 80, 80, 80, 70, 70].map((w, i) => (
+                            <div key={i} className={`${styles.skel} ${styles.skelTh}`} style={{ width: `${w}px` }} />
+                        ))}
+                    </div>
+
+                    {/* Skeleton tbody rows */}
+                    {[...Array(6)].map((_, i) => (
+                        <div key={i} className={styles.skelTbodyRow}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: '2', minWidth: '140px' }}>
+                                <div className={`${styles.skel} ${styles.skelAvatar}`} />
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                                    <div className={`${styles.skel} ${styles.skelName}`} />
+                                    <div className={`${styles.skel} ${styles.skelEmail}`} />
+                                </div>
+                            </div>
+                            {[80, 80, 80, 80].map((w, j) => (
+                                <div key={j} className={`${styles.skel} ${styles.skelCell}`} style={{ width: `${w}px`, flex: '1' }} />
+                            ))}
+                            <div className={`${styles.skel} ${styles.skelCell}`} style={{ width: '70px', flex: '1' }} />
+                            <div className={`${styles.skel} ${styles.skelBadge}`} style={{ flex: '1' }} />
+                        </div>
+                    ))}
+                </div>
             </div>
         );
     }
@@ -91,15 +149,15 @@ const TimeTracker = () => {
     return (
         <div className={styles.pageWrapper}>
 
-            {/* ─── PAGE HEADER ─── */}
+            {/* PAGE HEADER */}
             <div className={styles.pageHeader}>
                 <h1 className={styles.pageTitle}>Time Tracker</h1>
                 <div className={styles.headerRight}>
                     <button className={styles.iconBtn}>
-                        <Bell size={18} />
+                        <Bell size={16} />
                     </button>
                     <div className={styles.datePill}>
-                        <CalendarDays size={15} />
+                        <CalendarDays size={14} />
                         <span>{todayLabel}</span>
                     </div>
                 </div>
@@ -107,11 +165,11 @@ const TimeTracker = () => {
 
             {error && (
                 <div className={styles.errorBanner}>
-                    <AlertCircle size={18} /> {error}
+                    <AlertCircle size={16} /> {error}
                 </div>
             )}
 
-            {/* ─── STAT CARDS ─── */}
+            {/* STAT CARDS */}
             <div className={styles.statsRow}>
                 <div className={styles.statCard}>
                     <p className={styles.statLabel}>Present Today</p>
@@ -131,7 +189,7 @@ const TimeTracker = () => {
                 </div>
             </div>
 
-            {/* ─── FILTERS ─── */}
+            {/* FILTERS */}
             <div className={styles.filtersRow}>
                 <div className={styles.dateInput}>
                     <input
@@ -139,32 +197,32 @@ const TimeTracker = () => {
                         value={selectedDate}
                         onChange={e => setSelectedDate(e.target.value)}
                     />
-                    <CalendarDays size={16} className={styles.inputIcon} />
+                    <CalendarDays size={14} className={styles.inputIcon} />
                 </div>
                 <div className={styles.selectWrap}>
                     <select value={department} onChange={e => setDepartment(e.target.value)}>
                         <option value="">All Department</option>
                     </select>
-                    <ChevronDown size={15} className={styles.selectIcon} />
+                    <ChevronDown size={13} className={styles.selectIcon} />
                 </div>
                 <div className={styles.selectWrap}>
                     <select value={school} onChange={e => setSchool(e.target.value)}>
                         <option value="">All School</option>
                     </select>
-                    <ChevronDown size={15} className={styles.selectIcon} />
+                    <ChevronDown size={13} className={styles.selectIcon} />
                 </div>
             </div>
 
-            {/* ─── TABLE SECTION ─── */}
+            {/* TABLE SECTION */}
             <div className={styles.tableSection}>
                 <div className={styles.tableSectionHeader}>
                     <h2 className={styles.tableTitle}>List Of Interns</h2>
                     <div className={styles.tableActions}>
                         <button className={styles.actionBtn}>
-                            <SlidersHorizontal size={15} /> Sort
+                            <SlidersHorizontal size={13} /> Sort
                         </button>
                         <button className={styles.actionBtn}>
-                            <Search size={15} />
+                            <Search size={13} />
                         </button>
                     </div>
                 </div>
@@ -188,12 +246,11 @@ const TimeTracker = () => {
                                     const log = user.attendance_logs?.[0];
                                     const status = log?.status || 'absent';
                                     const { label, cls } = getStatusMeta(status);
-
                                     return (
                                         <tr key={user.id} className={styles.tableRow}>
                                             <td className={styles.internCell}>
                                                 <div className={styles.avatar}>
-                                                    <User size={18} />
+                                                    <User size={16} />
                                                 </div>
                                                 <div>
                                                     <p className={styles.internName}>{user.first_name} {user.last_name}</p>

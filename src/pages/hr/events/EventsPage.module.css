@@ -1,0 +1,202 @@
+.pageContainer { 
+  padding: 1.5rem; 
+  background: #f4f6f8; 
+  min-height: 100vh; 
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* --- HEADER --- */
+.header { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  background: white;
+  padding: 1rem 1.5rem;
+  border-radius: 0.75rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.pageTitle { 
+  font-size: 1.75rem; 
+  font-weight: 800; 
+  color: #0f172a; 
+  margin: 0;
+}
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.iconBtn {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s;
+}
+.iconBtn:hover { background: #f8fafc; color: #0B1EAE; }
+.dateBadge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #334155;
+}
+
+/* --- MAIN GRID --- */
+.mainGrid { 
+  display: grid; 
+  grid-template-columns: 300px 1fr; 
+  gap: 1.5rem; 
+  align-items: start;
+}
+
+/* --- LEFT SIDEBAR BLOCKS --- */
+.sidebarBlock {
+  background: white; 
+  border-radius: 0.75rem; 
+  padding: 1.25rem; 
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  margin-bottom: 1rem;
+}
+.blockTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 1rem;
+}
+
+/* Add Event Button */
+.addEventBtn {
+  width: 100%;
+  background: #5b6ccf; /* Matches screenshot button color */
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.addEventBtn:hover { background: #4a59b5; }
+
+/* Category Legend */
+.legendList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #334155;
+}
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.dotYellow { background: #eab308; }
+.dotBlue { background: #152286; }
+.dotGreen { background: #22c55e; }
+.addCategoryBtn {
+  margin-top: 1rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  padding: 0.35rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+}
+
+/* Upcoming Events List */
+.eventList { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 0.75rem; 
+  max-height: 400px;
+  overflow-y: auto;
+}
+.eventCard {
+  background: #f1f5f9;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  cursor: pointer;
+  transition: 0.2s;
+  border: 1px solid transparent;
+}
+.eventCard:hover { border-color: #cbd5e1; }
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+}
+.cardTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.5rem;
+}
+.cardLocation {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* --- CALENDAR WRAPPER --- */
+.calendarWrapper { 
+  background: white; 
+  padding: 1.5rem; 
+  border-radius: 0.75rem; 
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+/* Override FullCalendar default borders to look cleaner */
+:global(.fc-theme-standard th) { border: none !important; border-bottom: 1px solid #e2e8f0 !important; padding: 0.5rem 0; color: #64748b; font-weight: 500;}
+:global(.fc-theme-standard td) { border-color: #f1f5f9; }
+:global(.fc .fc-toolbar-title) { font-size: 1.25rem !important; font-weight: 700; color: #0f172a; }
+:global(.fc .fc-button-primary) { background: white !important; color: #334155 !important; border: 1px solid #e2e8f0 !important; box-shadow: none !important; text-transform: capitalize;}
+:global(.fc .fc-button-primary:hover) { background: #f8fafc !important; }
+
+/* --- MODAL (Kept from previous design) --- */
+.modalOverlay { position: fixed; inset: 0; z-index: 999; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }
+.modalContainer { background: white; border-radius: 1rem; width: 100%; max-width: 50rem; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+.modalHeader { display: flex; justify-content: space-between; padding: 1.25rem 2rem; border-bottom: 1px solid #f1f5f9; }
+.modalForm, .viewContent { padding: 2rem; }
+.formGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.formColumn { display: flex; flex-direction: column; gap: 0.75rem; }
+.label { font-size: 0.8rem; font-weight: 600; color: #475569; }
+.input, .textarea { padding: 0.6rem 0.8rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; outline: none; transition: 0.2s;}
+.input:focus, .textarea:focus { border-color: #0B1EAE; box-shadow: 0 0 0 2px rgba(11, 30, 174, 0.1); }
+.inputGroup { display: flex; gap: 0.5rem; }
+.inputGroupItemPrimary { flex: 1.5; background: #0B1EAE; color: white; border: none; border-radius: 0.5rem; padding: 0.5rem 0.8rem; }
+.inputGroupItem { flex: 1; border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.5rem 0.8rem; }
+.submitButton { width: 100%; margin-top: 1.5rem; padding: 0.8rem; background: #0B1EAE; color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; }
+.deleteBtn { width: 100%; padding: 0.75rem; background: #fef2f2; color: #dc2626; border-radius: 0.5rem; font-weight: 600; cursor: pointer; border: none; }

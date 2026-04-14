@@ -2,13 +2,12 @@ import axios from 'axios';
 
 /**
  * API CONFIGURATION
- * This baseURL will look for the Vercel environment variable first.
- * If it doesn't find it (like on your local laptop), it defaults to localhost.
+ * This baseURL looks for the Vercel/Production environment variable first.
+ * If not found (local development), it dynamically uses your current Wi-Fi IP!
  */
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || `http://${window.location.hostname}:8000/api`;
 
 const api = axios.create({
-  // ✅ CORRECT: Now it uses the dynamic variable!
   baseURL: API_BASE_URL, 
   headers: {
     'Content-Type': 'application/json',

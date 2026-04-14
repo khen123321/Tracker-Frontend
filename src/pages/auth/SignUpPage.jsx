@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from '../../api/axios';
-import toast, { Toaster } from 'react-hot-toast'; // Named import for Toaster
+import toast, { Toaster } from 'react-hot-toast';
 import logo from '../../assets/logo.png';
+import styles from './SignUpPage.module.css';
 
 // ── Icons ─────────────────────────────────────────────────────────────
 const ChevronDown = () => (
@@ -17,19 +18,15 @@ const CheckIcon = () => (
   </svg>
 );
 
-// ── Shared Tailwind Classes ──────────────────────────────────────────
-const inputCls = 'w-full border border-slate-300 rounded-lg px-4 py-3 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0B1EAE] focus:border-transparent bg-white transition';
-const selectCls = 'w-full border border-slate-300 rounded-lg px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0B1EAE] bg-white appearance-none cursor-pointer transition';
-const labelCls = 'block text-sm font-medium text-slate-700 mb-1.5';
-
+// ── Components ────────────────────────────────────────────────────────
 const SelectField = ({ label, name, value, onChange, children }) => (
   <div>
-    <label className={labelCls}>{label}</label>
-    <div className="relative">
-      <select name={name} value={value} onChange={onChange} className={selectCls}>
+    <label className={styles.label}>{label}</label>
+    <div className={styles.selectWrapper}>
+      <select name={name} value={value} onChange={onChange} className={styles.select}>
         {children}
       </select>
-      <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+      <div className={styles.selectIcon}>
         <ChevronDown />
       </div>
     </div>
@@ -44,10 +41,11 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
+  // ✅ Updated state to use _id for school, branch, and department
   const [formData, setFormData] = useState({
-    first_name: '',  middle_name: '',   last_name: '',         email: '',
+    first_name: '',  middle_name: '',   last_name: '',        email: '',
     emergency_name: '', emergency_phone: '', emergency_address: '', emergency_relationship: '',
-    course: '',      school: '',        branch: '',            department: '', date_started: '',
+    course: '',      school_id: '',     branch_id: '',        department_id: '', date_started: '',
     has_moa: false,  has_endorsement: false, has_pledge: false, has_nda: false,
     password: '',    password_confirmation: '',
   });
@@ -66,6 +64,7 @@ export default function SignUpPage() {
     
     setLoading(true);
 
+    // ✅ Updated payload to send the exact column names Laravel is expecting
     const payload = {
       first_name: formData.first_name,
       middle_name: formData.middle_name,
@@ -77,10 +76,20 @@ export default function SignUpPage() {
       emergency_contact_phone: formData.emergency_phone,
       emergency_contact_address: formData.emergency_address,
       emergency_relationship: formData.emergency_relationship,
+      
       course_program: formData.course,
-      school_university: formData.school,
-      assigned_branch: formData.branch,
-      assigned_department: formData.department,
+      course: formData.course,
+      
+      // Send the IDs to the backend
+      school_id: formData.school_id,
+      branch_id: formData.branch_id,
+      department_id: formData.department_id,
+      
+      // Keep these just in case your users table relies on them for text fallback
+      school_university: formData.school_id,
+      assigned_branch: formData.branch_id,
+      assigned_department: formData.department_id,
+      
       date_started: formData.date_started,
       
       has_moa: formData.has_moa ? 1 : 0,
@@ -111,32 +120,32 @@ export default function SignUpPage() {
   const renderStep = () => {
     switch (step) {
       case 1: return (
-        <div className="space-y-4">
-          <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-1">Personal Information</p>
+        <div className={styles.spaceY4}>
+          <p className={styles.sectionTitle}>Personal Information</p>
           <div>
-            <label className={labelCls}>Last Name</label>
-            <input type="text" name="last_name" placeholder="Last Name" className={inputCls} value={formData.last_name} onChange={handleChange} />
+            <label className={styles.label}>Last Name</label>
+            <input type="text" name="last_name" placeholder="Last Name" className={styles.input} value={formData.last_name} onChange={handleChange} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className={styles.grid2}>
             <div>
-              <label className={labelCls}>First Name</label>
-              <input type="text" name="first_name" placeholder="First Name" className={inputCls} value={formData.first_name} onChange={handleChange} />
+              <label className={styles.label}>First Name</label>
+              <input type="text" name="first_name" placeholder="First Name" className={styles.input} value={formData.first_name} onChange={handleChange} />
             </div>
             <div>
-              <label className={labelCls}>Middle Name</label>
-              <input type="text" name="middle_name" placeholder="Middle Name" className={inputCls} value={formData.middle_name} onChange={handleChange} />
+              <label className={styles.label}>Middle Name</label>
+              <input type="text" name="middle_name" placeholder="Middle Name" className={styles.input} value={formData.middle_name} onChange={handleChange} />
             </div>
           </div>
           <div>
-            <label className={labelCls}>Email Address</label>
-            <input type="email" name="email" placeholder="Email" className={inputCls} value={formData.email} onChange={handleChange} />
+            <label className={styles.label}>Email Address</label>
+            <input type="email" name="email" placeholder="Email" className={styles.input} value={formData.email} onChange={handleChange} />
           </div>
-          <div className="pt-1">
-            <p className="text-sm font-semibold text-slate-700 mb-3">Emergency Contact</p>
-            <div className="space-y-3">
-              <input type="text" name="emergency_name" placeholder="Contact Name" className={inputCls} value={formData.emergency_name} onChange={handleChange} />
-              <input type="text" name="emergency_phone" placeholder="Phone Number" className={inputCls} value={formData.emergency_phone} onChange={handleChange} />
-              <input type="text" name="emergency_address" placeholder="Address" className={inputCls} value={formData.emergency_address} onChange={handleChange} />
+          <div style={{ paddingTop: '0.25rem' }}>
+            <p className={styles.subTitle}>Emergency Contact</p>
+            <div className={styles.spaceY3}>
+              <input type="text" name="emergency_name" placeholder="Contact Name" className={styles.input} value={formData.emergency_name} onChange={handleChange} />
+              <input type="text" name="emergency_phone" placeholder="Phone Number" className={styles.input} value={formData.emergency_phone} onChange={handleChange} />
+              <input type="text" name="emergency_address" placeholder="Address" className={styles.input} value={formData.emergency_address} onChange={handleChange} />
               <SelectField label="Relationship" name="emergency_relationship" value={formData.emergency_relationship} onChange={handleChange}>
                 <option value="">Choose</option>
                 <option value="Parent">Parent</option>
@@ -152,50 +161,71 @@ export default function SignUpPage() {
         </div>
       );
       case 2: return (
-        <div className="space-y-4">
-          <SelectField label="Course" name="course" value={formData.course} onChange={handleChange}>
+        <div className={styles.spaceY4}>
+          {/* ✅ COURSE STAYS AS TEXT */}
+          <SelectField label="Course / Program" name="course" value={formData.course} onChange={handleChange}>
             <option value="">Select Course</option>
             <option value="BSIT">BS Information Technology</option>
             <option value="BSCS">BS Computer Science</option>
+            <option value="BSIS">BS Information Systems</option>
+            <option value="BSBA">BS Business Administration</option>
           </SelectField>
-          <SelectField label="School" name="school" value={formData.school} onChange={handleChange}>
+
+          {/* ✅ SCHOOL USES IDs */}
+          <SelectField label="School / University" name="school_id" value={formData.school_id} onChange={handleChange}>
             <option value="">Select School</option>
-            <option value="USTP">USTP</option>
-            <option value="XU">Xavier University</option>
+            <option value="1">University of Science and Technology of Southern Philippines (USTP)</option>
+            <option value="2">Xavier University (XU)</option>
+            <option value="3">Capitol University (CU)</option>
+            <option value="4">Liceo de Cagayan University</option>
           </SelectField>
-          <SelectField label="Branch" name="branch" value={formData.branch} onChange={handleChange}>
+
+          {/* ✅ BRANCHES EXACTLY AS REQUESTED */}
+          <SelectField label="Assigned Branch" name="branch_id" value={formData.branch_id} onChange={handleChange}>
             <option value="">Select Branch</option>
-            <option value="Main">Main Branch</option>
+            <option value="1">Bulua Branch (Head Office)</option>
+            <option value="2">Tiano Office</option>
+            <option value="3">Luzon Branch</option>
+            <option value="4">Naga Branch</option>
+            <option value="5">Baguio Branch</option>
+            <option value="6">Cebu Branch</option>
           </SelectField>
-          <SelectField label="Department" name="department" value={formData.department} onChange={handleChange}>
+
+          {/* ✅ DEPARTMENTS EXACTLY AS REQUESTED */}
+          <SelectField label="Department" name="department_id" value={formData.department_id} onChange={handleChange}>
             <option value="">Select Department</option>
-            <option value="IT">Information Technology</option>
-            <option value="HR">Human Resources</option>
+            <option value="1">Insurtech - Business Analyst & System Development</option>
+            <option value="2">CARES</option>
+            <option value="3">EDP</option>
+            <option value="4">CESLA</option>
+            <option value="5">Finance</option>
+            <option value="6">HR</option>
           </SelectField>
+
           <div>
-            <label className={labelCls}>Date Started</label>
-            <input type="date" name="date_started" className={inputCls} value={formData.date_started} onChange={handleChange} />
+            <label className={styles.label}>Date Started</label>
+            <input type="date" name="date_started" className={styles.input} value={formData.date_started} onChange={handleChange} />
           </div>
         </div>
       );
       case 3: return (
-        <div className="space-y-3">
-          <p className="text-sm font-semibold text-slate-700 mb-4">Documents</p>
+        <div className={styles.spaceY3}>
+          <p className={styles.subTitle}>Documents Submitted</p>
           {['has_moa', 'has_endorsement', 'has_pledge', 'has_nda'].map((key) => (
-            <label key={key} className="flex items-center gap-4 px-4 py-3.5 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer">
-              <input type="checkbox" name={key} checked={formData[key]} onChange={handleChange} className="w-4 h-4 accent-[#0B1EAE]" />
-              <span className="text-sm text-slate-700">{key.replace('has_', '').replace('_', ' ').toUpperCase()}</span>
+            <label key={key} className={styles.checkboxRow}>
+              <input type="checkbox" name={key} checked={formData[key]} onChange={handleChange} className={styles.checkboxInput} />
+              <span className={styles.checkboxLabel}>{key.replace('has_', '').replace('_', ' ').toUpperCase()}</span>
             </label>
           ))}
         </div>
       );
       case 4: return (
-        <div className="space-y-4">
-          <input type="password" name="password" placeholder="Password" className={inputCls} value={formData.password} onChange={handleChange} />
-          <input type="password" name="password_confirmation" placeholder="Confirm Password" className={inputCls} value={formData.password_confirmation} onChange={handleChange} />
-          <div className="flex items-start gap-3">
-            <input type="checkbox" id="terms" checked={agreedToTerms} onChange={(e) => setAgreedToTerms(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[#0B1EAE]" />
-            <label htmlFor="terms" className="text-sm text-slate-600">I agree to the Terms and Conditions</label>
+        <div className={styles.spaceY4}>
+          <input type="password" name="password" placeholder="Password" className={styles.input} value={formData.password} onChange={handleChange} />
+          <input type="password" name="password_confirmation" placeholder="Confirm Password" className={styles.input} value={formData.password_confirmation} onChange={handleChange} />
+          <div className={styles.termsContainer}>
+            <input type="checkbox" id="terms" checked={agreedToTerms} onChange={(e) => setAgreedToTerms(e.target.checked)} className={styles.checkboxInput} style={{ marginTop: '0.125rem' }} />
+            <label htmlFor="terms" className={styles.checkboxLabel}>I agree to the Terms and Conditions</label>
           </div>
         </div>
       );
@@ -204,20 +234,24 @@ export default function SignUpPage() {
   };
 
   const Stepper = () => (
-    <div className="flex items-start mb-8">
+    <div className={styles.stepperContainer}>
       {STEP_LABELS.map((label, i) => {
         const s = i + 1;
         const isComplete = step > s;
         const isActive = step === s;
         return (
-          <div key={s} className={`flex items-start ${i < STEP_LABELS.length - 1 ? 'flex-1' : ''}`}>
-            <div className="flex flex-col items-center">
-              <div className={`w-9 h-9 rounded-full flex items-center justify-center border-2 text-sm font-bold z-10 ${isComplete || isActive ? 'bg-[#0B1EAE] border-[#0B1EAE] text-white' : 'bg-white border-slate-300 text-slate-400'}`}>
+          <div key={s} className={`${styles.stepWrapper} ${i < STEP_LABELS.length - 1 ? styles.stepFlex : ''}`}>
+            <div className={styles.stepIconContainer}>
+              <div className={`${styles.stepCircle} ${isComplete || isActive ? styles.stepCircleActive : styles.stepCircleInactive}`}>
                 {isComplete ? <CheckIcon /> : s}
               </div>
-              <span className={`text-[11px] mt-1.5 font-medium text-center ${isActive ? 'text-[#0B1EAE]' : 'text-slate-400'}`} style={{ maxWidth: '70px' }}>{label}</span>
+              <span className={`${styles.stepLabel} ${isActive ? styles.stepLabelActive : styles.stepLabelInactive}`}>
+                {label}
+              </span>
             </div>
-            {i < STEP_LABELS.length - 1 && <div className={`flex-1 h-[2px] mt-4 mx-1 ${step > s ? 'bg-[#0B1EAE]' : 'bg-slate-200'}`} />}
+            {i < STEP_LABELS.length - 1 && (
+              <div className={`${styles.stepLine} ${step > s ? styles.stepLineActive : styles.stepLineInactive}`} />
+            )}
           </div>
         );
       })}
@@ -225,12 +259,14 @@ export default function SignUpPage() {
   );
 
   const NavButtons = () => (
-    <div className={`mt-7 flex gap-3 ${step > 1 ? 'justify-between' : 'justify-end'}`}>
-      {step > 1 && <button type="button" onClick={handleBack} className="flex items-center gap-2 px-7 py-2.5 bg-[#0B1EAE] text-white rounded-lg font-semibold text-sm">Back</button>}
+    <div className={`${styles.btnContainer} ${step > 1 ? styles.btnSpaceBetween : styles.btnRight}`}>
+      {step > 1 && (
+        <button type="button" onClick={handleBack} className={styles.btnPrimary}>Back</button>
+      )}
       {step < 4 ? (
-        <button type="button" onClick={handleNext} className="ml-auto flex items-center gap-2 px-7 py-2.5 bg-[#0B1EAE] text-white rounded-lg font-semibold text-sm">Continue</button>
+        <button type="button" onClick={handleNext} className={`${styles.btnPrimary} ${styles.btnAutoLeft}`}>Continue</button>
       ) : (
-        <button type="submit" disabled={loading || !agreedToTerms} className="px-7 py-2.5 bg-[#0B1EAE] text-white rounded-lg font-semibold text-sm disabled:opacity-50">
+        <button type="submit" disabled={loading || !agreedToTerms} className={styles.btnPrimary}>
           {loading ? 'Creating...' : 'Create Account'}
         </button>
       )}
@@ -238,24 +274,24 @@ export default function SignUpPage() {
   );
 
   return (
-    <div className="min-h-screen flex font-sans">
-      <Toaster position="top-right" /> {/* Use the named export component directly */}
+    <div className={styles.pageWrapper}>
+      <Toaster position="top-right" />
       
-      <div className="hidden lg:flex lg:w-[42%] flex-col justify-center items-center p-12 text-white relative overflow-hidden" style={{ background: 'linear-gradient(270deg, #0B1EAE 0%, #152286 23.56%, #0D1767 63.46%, #050C48 100%)' }}>
-        <img src={logo} alt="Logo" className="w-44 mb-6 z-10" />
-        <h1 className="text-2xl font-black text-center z-10">CLIMBS INTERNSHIP MONITORING SYSTEM</h1>
+      <div className={styles.leftPane}>
+        <img src={logo} alt="Logo" className={styles.logo} />
+        <h1 className={styles.leftTitle}>CLIMBS INTERNSHIP MONITORING SYSTEM</h1>
       </div>
 
-      <div className="flex-1 flex flex-col relative overflow-y-auto">
-        <div className="absolute inset-0 bg-cover bg-center opacity-20" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1400&q=80')" }} />
-        <div className="absolute inset-0 bg-white/65 backdrop-blur-[2px]" />
+      <div className={styles.rightPane}>
+        <div className={styles.bgImage} />
+        <div className={styles.bgOverlay} />
         
-        <div className="relative z-10 text-center pt-10 pb-2">
-          <h1 className="text-5xl font-black text-[#0B1EAE] tracking-tight">WELCOME</h1>
+        <div className={styles.welcomeHeader}>
+          <h1 className={styles.welcomeTitle}>WELCOME</h1>
         </div>
 
-        <div className="relative z-10 flex justify-center px-4 pb-10 pt-4">
-          <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl p-8 border border-slate-100">
+        <div className={styles.contentWrapper}>
+          <div className={styles.formCard}>
             <Stepper />
             <form onSubmit={step === 4 ? handleSubmit : (e) => e.preventDefault()}>
               {renderStep()}

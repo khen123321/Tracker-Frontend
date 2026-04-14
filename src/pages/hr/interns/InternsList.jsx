@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, Calendar, Search, SlidersHorizontal, MoreHorizontal } from 'lucide-react';
-import api from '../../../api/axios'; 
+import api from '../../../api/axios';
 import styles from './InternsList.module.css';
 
 export default function InternsList() {
@@ -8,11 +8,10 @@ export default function InternsList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 1. Fetch Real Data from Database
   const fetchInterns = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/hr/interns'); 
+      const response = await api.get('/hr/interns');
       setInterns(response.data);
       setError(null);
     } catch (err) {
@@ -23,11 +22,8 @@ export default function InternsList() {
     }
   };
 
-  useEffect(() => {
-    fetchInterns();
-  }, []);
+  useEffect(() => { fetchInterns(); }, []);
 
-  // 2. Helper to format dates nicely
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -35,10 +31,9 @@ export default function InternsList() {
     });
   };
 
-  // 3. Dynamic Statistics based on real data
   const totalInterns = interns.length;
   const activeInterns = interns.filter(i => i.status?.toLowerCase() === 'active').length;
-  const absentToday = 0; 
+  const absentToday = 0;
   const avgHours = 0;
 
   const stats = [
@@ -48,24 +43,96 @@ export default function InternsList() {
     { label: 'Active', value: activeInterns },
   ];
 
+  if (loading) {
+    return (
+      <div className={styles.pageWrapper}>
+
+        {/* Skeleton Header */}
+        <div className={styles.header}>
+          <div className={`${styles.skel} ${styles.skelTitle}`} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className={`${styles.skel} ${styles.skelIconBtn}`} />
+            <div className={`${styles.skel} ${styles.skelDateBadge}`} />
+          </div>
+        </div>
+
+        {/* Skeleton Stats Grid */}
+        <div className={styles.statsGrid}>
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className={styles.statCard}>
+              <div className={`${styles.skel} ${styles.skelStatLabel}`} />
+              <div className={`${styles.skel} ${styles.skelStatValue}`} />
+            </div>
+          ))}
+        </div>
+
+        {/* Skeleton Filter Grid */}
+        <div className={styles.filterGrid}>
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className={`${styles.skel} ${styles.skelFilterItem}`} />
+          ))}
+        </div>
+
+        {/* Skeleton Table */}
+        <div className={styles.tableContainer}>
+          <div className={styles.tableHeader}>
+            <div className={`${styles.skel} ${styles.skelTableTitle}`} />
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <div className={`${styles.skel} ${styles.skelSortBtn}`} />
+              <div className={`${styles.skel} ${styles.skelIconBtn}`} />
+            </div>
+          </div>
+
+          {/* Skeleton thead */}
+          <div className={styles.skelTheadRow}>
+            <div className={`${styles.skel} ${styles.skelCheckbox}`} />
+            {[160, 110, 110, 90, 80].map((w, i) => (
+              <div key={i} className={`${styles.skel} ${styles.skelTh}`} style={{ width: `${w}px` }} />
+            ))}
+            <div className={`${styles.skel} ${styles.skelCheckbox}`} />
+          </div>
+
+          {/* Skeleton tbody rows */}
+          {[...Array(7)].map((_, i) => (
+            <div key={i} className={styles.skelTbodyRow}>
+              <div className={`${styles.skel} ${styles.skelCheckbox}`} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: '2', minWidth: '160px' }}>
+                <div className={`${styles.skel} ${styles.skelAvatar}`} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                  <div className={`${styles.skel} ${styles.skelName}`} />
+                  <div className={`${styles.skel} ${styles.skelEmail}`} />
+                </div>
+              </div>
+              {[110, 110, 90].map((w, j) => (
+                <div key={j} className={`${styles.skel} ${styles.skelCell}`} style={{ width: `${w}px`, flex: '1' }} />
+              ))}
+              <div className={`${styles.skel} ${styles.skelBadge}`} style={{ flex: '0 0 80px' }} />
+              <div className={`${styles.skel} ${styles.skelCheckbox}`} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.pageWrapper}>
-      
+
       {/* Top Header */}
       <div className={styles.header}>
         <h1 className={styles.pageTitle}>Interns</h1>
         <div className={styles.headerActions}>
           <button className={styles.iconButton} onClick={fetchInterns} title="Refresh List">
-            <Bell size={18} />
+            <Bell size={16} />
           </button>
           <div className={styles.dateBadge}>
-            <Calendar size={16} />
+            <Calendar size={15} />
             <span>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</span>
           </div>
         </div>
       </div>
 
-      {/* Dynamic 4-Column Stats Grid */}
+      {/* Stats Grid */}
       <div className={styles.statsGrid}>
         {stats.map((stat, idx) => (
           <div key={idx} className={styles.statCard}>
@@ -93,28 +160,25 @@ export default function InternsList() {
 
       {/* Error State */}
       {error && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-6 border border-red-100">
+        <div className={styles.errorBanner}>
           {error}
         </div>
       )}
 
-      {/* Main Table Area */}
+      {/* Main Table */}
       <div className={styles.tableContainer}>
-        
-        {/* Table Header Controls */}
         <div className={styles.tableHeader}>
           <h2 className={styles.tableTitle}>List Of Interns</h2>
           <div className={styles.tableControls}>
             <button className={styles.sortButton}>
-              Sort <SlidersHorizontal size={16} />
+              Sort <SlidersHorizontal size={14} />
             </button>
             <button className={styles.iconButton}>
-              <Search size={18} />
+              <Search size={16} />
             </button>
           </div>
         </div>
 
-        {/* The Table */}
         <div className={styles.tableWrapper}>
           <table className={styles.dataTable}>
             <thead>
@@ -131,15 +195,9 @@ export default function InternsList() {
               </tr>
             </thead>
             <tbody>
-              {loading ? (
+              {interns.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="p-8 text-center text-gray-500 font-medium">
-                    Loading intern data from database...
-                  </td>
-                </tr>
-              ) : interns.length === 0 ? (
-                <tr>
-                  <td colSpan="7" className="p-8 text-center text-gray-500 font-medium">
+                  <td colSpan="7" className={styles.emptyRow}>
                     No interns found in the system.
                   </td>
                 </tr>
@@ -152,9 +210,9 @@ export default function InternsList() {
                     <td>
                       <div className={styles.internProfile}>
                         <div className={styles.avatar}>
-                          <img 
-                             src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.first_name + user.id}`} 
-                             alt="avatar" 
+                          <img
+                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.first_name + user.id}`}
+                            alt="avatar"
                           />
                         </div>
                         <div>
@@ -173,7 +231,7 @@ export default function InternsList() {
                     </td>
                     <td className={styles.actionCell}>
                       <button className={styles.actionButton}>
-                        <MoreHorizontal size={20} />
+                        <MoreHorizontal size={18} />
                       </button>
                     </td>
                   </tr>
