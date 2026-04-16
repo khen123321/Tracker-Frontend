@@ -1,26 +1,44 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../../api/axios';
-import toast, { Toaster } from 'react-hot-toast';
-import { UserPlus, ShieldCheck, Trash2, Edit, CheckCircle, XCircle } from 'lucide-react';
+import { Search, Shield, Edit2, X, CheckCircle, UserCircle, Key, UserPlus } from 'lucide-react';
+import api from '../../../api/axios'; 
+import styles from './RoleManagement.module.css';
 
-const RoleManagement = () => {
-  const [users, setUsers] = useState([]);
+const AVAILABLE_PAGES = [
+  'Dashboard',
+  'Time Tracker',
+  'Intern Management',
+  'Reports & Analytics',
+  'Role Management'
+];
+
+export default function RoleManagement() {
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
+  const [users, setUsers] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  // Edit Access Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedPermissions, setSelectedPermissions] = useState([]);
+
+  // Create User Modal State
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newUser, setNewUser] = useState({
     first_name: '',
     last_name: '',
     email: '',
     password: '',
-    role: 'hr_intern'
+    role: 'hr_intern' // Defaulting to intern!
   });
 
+  // ─── FETCH USERS ───
   const fetchUsers = async () => {
     try {
-      const { data } = await api.get('/hr/all-users');
-      setUsers(data);
-    } catch {
-      toast.error("Failed to load user list.");
+      const res = await api.get('/hr/users-roles');
+      setUsers(res.data);
+    } catch (err) {
+      console.error('Failed to fetch users:', err);
     } finally {
       setLoading(false);
     }
@@ -30,149 +48,325 @@ const RoleManagement = () => {
     fetchUsers();
   }, []);
 
-  const handleSubmit = async (e) => {
+  const formatRoleDisplay = (role) => {
+    if (role === 'superadmin') return 'Super Admin (HR Head)';
+    if (role === 'hr') return 'HR Staff';
+    if (role === 'hr_intern') return 'HR Intern';
+    return role;
+  };
+
+  // ─── CREATE USER LOGIC ───
+  const handleCreateUser = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    
     try {
-      await api.post('/hr/sub-users', formData);
-      toast.success("Account created successfully!");
-      setShowForm(false);
-      fetchUsers(); 
-      setFormData({ first_name: '', last_name: '', email: '', password: '', role: 'hr_intern' });
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Check fields and try again.");
+      await api.post('/hr/users', newUser);
+      
+      // Refresh the table to show the new user
+      await fetchUsers();
+      
+      // Close modal and reset form
+      setIsAddModalOpen(false);
+      setNewUser({ first_name: '', last_name: '', email: '', password: '', role: 'hr_intern' });
+    } catch (error) {
+      console.error("Failed to create user", error);
+      alert(error.response?.data?.message || "Error creating account. Check console.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // NEW: Handle changing roles directly from the table
-  const handleRoleChange = async (userId, newRole, currentStatus) => {
-    const loadingToast = toast.loading("Updating role...");
+  // ─── EDIT ACCESS LOGIC ───
+  const handleOpenModal = (user) => {
+    setSelectedUser(user);
+    if (user.role === 'superadmin') {
+      setSelectedPermissions(AVAILABLE_PAGES);
+    } else {
+      setSelectedPermissions(user.permissions || []);
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleTogglePermission = (page) => {
+    setSelectedPermissions(prev => 
+      prev.includes(page) ? prev.filter(p => p !== page) : [...prev, page]
+    );
+  };
+
+  const handleSaveRole = async () => {
     try {
-        await api.post(`/hr/update-permissions/${userId}`, {
-            role: newRole,
-            status: currentStatus || 'active'
-        });
-        toast.success("User role updated!", { id: loadingToast });
-        fetchUsers(); 
+      await api.put(`/hr/users-roles/${selectedUser.id}`, {
+        role: selectedUser.role, 
+        permissions: selectedPermissions
+      });
+      
+      setUsers(users.map(u => 
+        u.id === selectedUser.id ? { ...u, permissions: selectedPermissions } : u
+      ));
+      setIsModalOpen(false);
     } catch (error) {
-        toast.error(error.response?.data?.message || 'Failed to update user.', { id: loadingToast });
+      console.error("Failed to update permissions", error);
+      alert("Error saving permissions. Check your console.");
     }
   };
+
+  const filteredUsers = users.filter(user => 
+    user.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    user.email?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <div className={styles.pageWrapper}>
+        <div className={styles.header}>
+          <div className={`${styles.skel} ${styles.skelTitle}`} />
+          <div className={`${styles.skel} ${styles.skelSearch}`} />
+        </div>
+        <div className={styles.tableSection}>
+          <div className={styles.skelTheadRow}>
+            <div className={`${styles.skel} ${styles.skelTh}`} style={{ width: '200px' }} />
+            <div className={`${styles.skel} ${styles.skelTh}`} style={{ width: '250px' }} />
+            <div className={`${styles.skel} ${styles.skelTh}`} style={{ width: '100px' }} />
+            <div className={`${styles.skel} ${styles.skelTh}`} style={{ width: '80px' }} />
+          </div>
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className={styles.skelTbodyRow}>
+              <div style={{ display: 'flex', gap: '12px', flex: 1.5 }}>
+                <div className={`${styles.skel} ${styles.skelAvatar}`} />
+                <div>
+                  <div className={`${styles.skel} ${styles.skelText}`} style={{ width: '120px', marginBottom: '6px' }} />
+                  <div className={`${styles.skel} ${styles.skelText}`} style={{ width: '160px' }} />
+                </div>
+              </div>
+              <div className={`${styles.skel} ${styles.skelText}`} style={{ flex: 2 }} />
+              <div className={`${styles.skel} ${styles.skelBadge}`} style={{ flex: 1 }} />
+              <div className={`${styles.skel} ${styles.skelActionBtn}`} style={{ flex: 0.5 }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-8 bg-slate-50 min-h-screen">
-      <Toaster position="top-right" />
-      
-      <div className="mb-8 flex justify-between items-center">
+    <div className={styles.pageWrapper}>
+      {/* ─── HEADER & SEARCH ─── */}
+      <div className={styles.header}>
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-            <ShieldCheck className="text-[#0B1EAE]" />
-            Role Management
-          </h1>
-          <p className="text-slate-500">Manage administrative access and sub-HR roles.</p>
+          <h1 className={styles.pageTitle}>HR Access Management</h1>
+          <p className={styles.pageSub}>Manage your team and their panel permissions.</p>
         </div>
-        <button 
-          onClick={() => setShowForm(!showForm)}
-          className="bg-[#0B1EAE] text-white px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-blue-800 transition-all font-semibold shadow-md"
-        >
-          <UserPlus size={18} />
-          {showForm ? 'Close Form' : 'Add HR Staff'}
-        </button>
+        
+        <div className={styles.headerRight}>
+          <div className={styles.searchContainer}>
+            <Search size={18} className={styles.searchIcon} />
+            <input 
+              type="text" 
+              placeholder="Search HR staff..." 
+              className={styles.searchInput}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <button className={styles.addBtn} onClick={() => setIsAddModalOpen(true)}>
+            <UserPlus size={16} /> Add Staff
+          </button>
+        </div>
       </div>
 
-      {showForm && (
-        <div className="mb-8 bg-white p-6 rounded-2xl border border-blue-200 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
-          <h2 className="text-lg font-bold text-slate-800 mb-4">Register New Staff Member</h2>
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            <input 
-              type="text" placeholder="First Name" className="p-2 border rounded-lg outline-[#0B1EAE]"
-              value={formData.first_name} onChange={e => setFormData({...formData, first_name: e.target.value})} required
-            />
-            <input 
-              type="text" placeholder="Last Name" className="p-2 border rounded-lg outline-[#0B1EAE]"
-              value={formData.last_name} onChange={e => setFormData({...formData, last_name: e.target.value})} required
-            />
-            <input 
-              type="email" placeholder="Email" className="p-2 border rounded-lg outline-[#0B1EAE]"
-              value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required
-            />
-            <input 
-              type="password" placeholder="Password" className="p-2 border rounded-lg outline-[#0B1EAE]"
-              value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} required
-            />
-            <select 
-              className="p-2 border rounded-lg outline-[#0B1EAE] bg-white"
-              value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}
-            >
-              <option value="hr_intern">HR Intern</option>
-              <option value="hr">HR Staff</option>
-              <option value="superadmin">Superadmin</option>
-            </select>
-            <button className="md:col-span-2 lg:col-span-5 bg-emerald-500 text-white py-2 rounded-lg font-bold hover:bg-emerald-600 transition-colors">
-              Confirm & Create Account
-            </button>
-          </form>
+      {/* ─── DATA TABLE ─── */}
+      <div className={styles.tableSection}>
+        <div className={styles.tableContainer}>
+          <table className={styles.roleTable}>
+            <thead>
+              <tr>
+                <th>HR Staff Member</th>
+                <th>Page Access</th>
+                <th>Account Type</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredUsers.length > 0 ? (
+                filteredUsers.map((user) => (
+                  <tr key={user.id} className={styles.tableRow}>
+                    <td className={styles.userCell}>
+                      <div className={styles.avatar}>
+                        <UserCircle size={20} />
+                      </div>
+                      <div>
+                        <p className={styles.userName}>{user.name}</p>
+                        <p className={styles.userEmail}>{user.email}</p>
+                      </div>
+                    </td>
+                    <td className={styles.accessCell}>
+                      {user.role === 'superadmin' ? (
+                        <span className={styles.allAccess}>Full System Access</span>
+                      ) : (
+                        <div className={styles.tagsContainer}>
+                          {(user.permissions || []).map(page => (
+                            <span key={page} className={styles.pageTag}>{page}</span>
+                          ))}
+                          {(!user.permissions || user.permissions.length === 0) && (
+                            <span className={styles.noAccess}>No access granted</span>
+                          )}
+                        </div>
+                      )}
+                    </td>
+                    <td>
+                      <span className={user.role === 'superadmin' ? styles.badgeHead : styles.badgeIntern}>
+                        <Shield size={14} />
+                        {formatRoleDisplay(user.role)}
+                      </span>
+                    </td>
+                    <td>
+                      <button 
+                        className={styles.editBtn}
+                        onClick={() => handleOpenModal(user)}
+                        disabled={user.role === 'superadmin'}
+                      >
+                        <Key size={15} /> Access
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="4" className={styles.emptyRow}>No staff found in the database.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* ─── ADD NEW STAFF MODAL ─── */}
+      {isAddModalOpen && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>Create HR Account</h2>
+              <button className={styles.closeBtn} onClick={() => setIsAddModalOpen(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleCreateUser}>
+              <div className={styles.modalBody}>
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label>First Name</label>
+                    <input 
+                      type="text" 
+                      required 
+                      className={styles.inputField} 
+                      value={newUser.first_name}
+                      onChange={e => setNewUser({...newUser, first_name: e.target.value})}
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>Last Name</label>
+                    <input 
+                      type="text" 
+                      required 
+                      className={styles.inputField} 
+                      value={newUser.last_name}
+                      onChange={e => setNewUser({...newUser, last_name: e.target.value})}
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label>Email Address</label>
+                  <input 
+                    type="email" 
+                    required 
+                    className={styles.inputField} 
+                    value={newUser.email}
+                    onChange={e => setNewUser({...newUser, email: e.target.value})}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label>Temporary Password</label>
+                  <input 
+                    type="text" 
+                    required 
+                    minLength={6}
+                    className={styles.inputField} 
+                    value={newUser.password}
+                    onChange={e => setNewUser({...newUser, password: e.target.value})}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label>Account Role</label>
+                  <select 
+                    className={styles.inputField}
+                    value={newUser.role}
+                    onChange={e => setNewUser({...newUser, role: e.target.value})}
+                  >
+                    <option value="hr_intern">HR Intern</option>
+                    <option value="hr">HR Staff</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className={styles.modalFooter}>
+                <button type="button" className={styles.cancelBtn} onClick={() => setIsAddModalOpen(false)}>Cancel</button>
+                <button type="submit" className={styles.saveBtn} disabled={isSubmitting}>
+                  <UserPlus size={16} /> {isSubmitting ? 'Creating...' : 'Create Account'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-50 border-b border-slate-200">
-              <th className="p-4 text-sm font-bold text-slate-600">Name</th>
-              <th className="p-4 text-sm font-bold text-slate-600">Email</th>
-              <th className="p-4 text-sm font-bold text-slate-600">Access Level</th>
-              <th className="p-4 text-sm font-bold text-slate-600">Status</th>
-              <th className="p-4 text-sm font-bold text-slate-600 text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan="5" className="p-8 text-center text-slate-400 italic">Fetching user data...</td></tr>
-            ) : users.map(user => (
-              <tr key={user.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                <td className="p-4 text-slate-700 font-medium">{user.first_name} {user.last_name}</td>
-                <td className="p-4 text-slate-500 text-sm">{user.email}</td>
-                <td className="p-4">
-                  {/* NEW: Interactive Dropdown */}
-                  <select 
-                      className={`text-xs font-bold uppercase rounded-lg px-2 py-1 outline-none cursor-pointer border ${
-                        user.role === 'superadmin' ? 'bg-amber-50 text-amber-700 border-amber-200' : 
-                        user.role === 'hr' ? 'bg-blue-50 text-blue-700 border-blue-200' : 
-                        'bg-slate-50 text-slate-700 border-slate-200'
-                      }`}
-                      value={user.role}
-                      onChange={(e) => handleRoleChange(user.id, e.target.value, user.status)}
-                      disabled={user.email === 'testadmin123@gmail.com'} 
-                  >
-                      <option value="hr_intern">HR Intern</option>
-                      <option value="hr">HR Staff</option>
-                      <option value="superadmin">Superadmin</option>
-                  </select>
-                </td>
-                <td className="p-4">
-                  <div className="flex items-center gap-1">
-                    {user.status === 'active' ? (
-                      <><CheckCircle size={14} className="text-emerald-500" /> <span className="text-sm text-slate-600">Active</span></>
-                    ) : (
-                      <><XCircle size={14} className="text-rose-500" /> <span className="text-sm text-slate-600">Inactive</span></>
-                    )}
-                  </div>
-                </td>
-                <td className="p-4">
-                  <div className="flex justify-center gap-2">
-                    <button className="p-1.5 text-slate-400 hover:text-blue-600 transition-colors" title="Edit User"><Edit size={16} /></button>
-                    {user.email !== 'testadmin123@gmail.com' && (
-                      <button className="p-1.5 text-slate-400 hover:text-rose-600 transition-colors" title="Deactivate User"><Trash2 size={16} /></button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* ─── EDIT PERMISSION MODAL ─── */}
+      {isModalOpen && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>Manage Access Limits</h2>
+              <button className={styles.closeBtn} onClick={() => setIsModalOpen(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className={styles.modalBody}>
+              <p className={styles.modalSub}>
+                Select which pages <strong>{selectedUser?.name}</strong> is allowed to view and interact with in the HR Panel.
+              </p>
+              
+              <div className={styles.permissionsList}>
+                {AVAILABLE_PAGES.map((page) => (
+                  <label key={page} className={styles.permissionItem}>
+                    <div className={styles.checkboxWrapper}>
+                      <input 
+                        type="checkbox" 
+                        checked={selectedPermissions.includes(page)}
+                        onChange={() => handleTogglePermission(page)}
+                        className={styles.checkbox}
+                      />
+                      <span className={styles.checkmark}></span>
+                    </div>
+                    <span className={styles.permissionLabel}>{page}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className={styles.modalFooter}>
+              <button className={styles.cancelBtn} onClick={() => setIsModalOpen(false)}>Cancel</button>
+              <button className={styles.saveBtn} onClick={handleSaveRole}>
+                <CheckCircle size={16} /> Save Access
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-};
-
-export default RoleManagement;
+}
