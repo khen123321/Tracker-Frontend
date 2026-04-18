@@ -11,9 +11,11 @@ import DashboardHome from './pages/hr/DashboardHome';
 import InternsList from './pages/hr/interns/InternsList';
 import RoleManagement from './pages/hr/rolemanagement/RoleManagement';
 import ExportReports from './pages/hr/export/ExportReports';
-import SettingsLayout from './pages/hr/settings/SettingsLayout'; 
+import SettingsLayout from './components/layout/SettingsLayout'; 
+import SettingsPage from "./pages/hr/settings/SettingsPage";     
 import TimeTracker from './pages/hr/timetracker/TimeTracker'; 
 import HREventsPage from './pages/hr/events/EventsPage'; 
+import CameraVerification from "./pages/hr/cameraverification/CameraVerification";
 
 // --- INTERN IMPORTS ---
 import InternLayout from './components/layout/InternLayout';
@@ -35,6 +37,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* 👇 ROOT REDIRECT: Sends anyone at "/" straight to "/login" */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+
         {/* PUBLIC ROUTES */}
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/login" element={<LoginPage />} />
@@ -50,11 +55,15 @@ export default function App() {
             <Route path="events" element={<HREventsPage />} />
             <Route path="role-management" element={<RoleManagement />} />
             <Route path="export" element={<ExportReports />} />
+            <Route path="camera-verification" element={<CameraVerification />} />
             
+            {/* --- SETTINGS ROUTES --- */}
             <Route path="settings" element={<SettingsLayout />}>
-              <Route index element={<Navigate to="/dashboard/settings/account" replace />} />
-              <Route path="account" element={<PlaceholderPage title="Account Settings" />} />
-              <Route path="about" element={<PlaceholderPage title="About CIMS" />} />
+              <Route index element={<Navigate to="curriculum" replace />} />
+              <Route path="curriculum" element={<SettingsPage />} />
+              <Route path="general" element={<PlaceholderPage title="General Setup" />} />
+              <Route path="accounts" element={<PlaceholderPage title="Admin Accounts" />} />
+              <Route path="security" element={<PlaceholderPage title="Security & Logs" />} />
             </Route>
           </Route>
 
@@ -64,8 +73,6 @@ export default function App() {
             <Route path="attendance" element={<Attendance />} />
             <Route path="events" element={<InternEventsPage />} />
             <Route path="logs" element={<Logs />} />
-            
-            {/* ✅ This is now correctly mapped to the Forms component */}
             <Route path="forms" element={<Forms />} />
             
             <Route path="history" element={<PlaceholderPage title="History" />} />
@@ -74,7 +81,7 @@ export default function App() {
 
         </Route>
 
-        {/* CATCH-ALL REDIRECT */}
+        {/* 👇 CATCH-ALL: Redirects any unknown URL back to login */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>

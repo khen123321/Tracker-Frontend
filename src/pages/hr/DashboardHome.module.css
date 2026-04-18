@@ -204,7 +204,12 @@
 .progressBlock { flex-grow: 1; }
 .progressLabel { font-size: 12px; color: #64748b; display: block; margin-bottom: 6px; }
 .progressTrack { height: 6px; background: #f1f5f9; border-radius: 4px; overflow: hidden; margin-bottom: 5px; }
-.progressFill { height: 100%; background: #0B1EAE; border-radius: 4px; transition: width 0.5s ease; }
+.progressFill { 
+  height: 100%; 
+  background: linear-gradient(90deg, #E3BD01 0%, #FFDE3C 50%, #FFE359 75%, #FFEFA3 100%); 
+  border-radius: 4px; 
+  transition: width 0.5s ease; 
+}
 .progressPercent { font-size: 12px; font-weight: 600; color: #0f172a; }
 
 /* ══════════════════════════════════════════════════════════════
@@ -257,7 +262,7 @@
 }
 
 .attCard {
-  background: #f8fafc;
+  background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   padding: 14px 16px;
@@ -282,7 +287,11 @@
 .deptHeader { display: flex; justify-content: space-between; font-size: 13px; font-weight: 500; color: #334155; }
 .deptCount { color: #64748b; font-size: 12px; }
 .deptTrack { height: 6px; background: #f1f5f9; border-radius: 4px; overflow: hidden; }
-.deptFill  { height: 100%; border-radius: 4px; }
+.deptFill { 
+  height: 100%; 
+  background: linear-gradient(90deg, #E3BD01 0%, #FFDE3C 50%, #FFE359 75%, #FFEFA3 100%); 
+  border-radius: 4px; 
+}
 
 /* ══════════════════════════════════════════════════════════════
    BRANCHES

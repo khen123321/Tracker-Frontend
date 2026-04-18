@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Bell, Calendar, Search, SlidersHorizontal, MoreHorizontal } from 'lucide-react';
 import api from '../../../api/axios';
 import styles from './InternsList.module.css';
+import InternDetailsModal from '../internsdetail/InternDetailsModal';
 
 export default function InternsList() {
   const [interns, setInterns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedIntern, setSelectedIntern] = useState(null);
 
   const fetchInterns = async () => {
     try {
@@ -16,7 +18,7 @@ export default function InternsList() {
       setError(null);
     } catch (err) {
       console.error("Error fetching interns:", err);
-      setError("Failed to load interns list. Please check your connection.");
+      setError("Failed to load interns list.");
     } finally {
       setLoading(false);
     }
@@ -31,94 +33,48 @@ export default function InternsList() {
     });
   };
 
+  // 👇 HELPER 1: Translate Department ID back to text
+  const getDepartmentName = (id) => {
+    if (!id) return 'N/A';
+    const departments = {
+      "1": "Insurtech - Business Analyst & System Development",
+      "2": "CARES",
+      "3": "EDP",
+      "4": "CESLA",
+      "5": "Finance",
+      "6": "HR"
+    };
+    return departments[String(id)] || id; 
+  };
+
+  // 👇 HELPER 2: Translate School ID back to text
+  const getSchoolName = (id, fallbackName) => {
+    if (!id && !fallbackName) return 'N/A';
+    const schools = {
+      "1": "USTP",
+      "2": "Xavier University (XU)",
+      "3": "Capitol University (CU)",
+      "4": "Liceo de Cagayan"
+    };
+    return schools[String(id)] || fallbackName || id; 
+  };
+
   const totalInterns = interns.length;
   const activeInterns = interns.filter(i => i.status?.toLowerCase() === 'active').length;
-  const absentToday = 0;
-  const avgHours = 0;
 
   const stats = [
     { label: 'Total Interns', value: totalInterns },
-    { label: 'Absent', value: absentToday },
-    { label: 'Avg. Hours Rendered', value: avgHours },
+    { label: 'Absent', value: 0 },
+    { label: 'Avg. Hours Rendered', value: 0 },
     { label: 'Active', value: activeInterns },
   ];
 
   if (loading) {
-    return (
-      <div className={styles.pageWrapper}>
-
-        {/* Skeleton Header */}
-        <div className={styles.header}>
-          <div className={`${styles.skel} ${styles.skelTitle}`} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div className={`${styles.skel} ${styles.skelIconBtn}`} />
-            <div className={`${styles.skel} ${styles.skelDateBadge}`} />
-          </div>
-        </div>
-
-        {/* Skeleton Stats Grid */}
-        <div className={styles.statsGrid}>
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className={styles.statCard}>
-              <div className={`${styles.skel} ${styles.skelStatLabel}`} />
-              <div className={`${styles.skel} ${styles.skelStatValue}`} />
-            </div>
-          ))}
-        </div>
-
-        {/* Skeleton Filter Grid */}
-        <div className={styles.filterGrid}>
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className={`${styles.skel} ${styles.skelFilterItem}`} />
-          ))}
-        </div>
-
-        {/* Skeleton Table */}
-        <div className={styles.tableContainer}>
-          <div className={styles.tableHeader}>
-            <div className={`${styles.skel} ${styles.skelTableTitle}`} />
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <div className={`${styles.skel} ${styles.skelSortBtn}`} />
-              <div className={`${styles.skel} ${styles.skelIconBtn}`} />
-            </div>
-          </div>
-
-          {/* Skeleton thead */}
-          <div className={styles.skelTheadRow}>
-            <div className={`${styles.skel} ${styles.skelCheckbox}`} />
-            {[160, 110, 110, 90, 80].map((w, i) => (
-              <div key={i} className={`${styles.skel} ${styles.skelTh}`} style={{ width: `${w}px` }} />
-            ))}
-            <div className={`${styles.skel} ${styles.skelCheckbox}`} />
-          </div>
-
-          {/* Skeleton tbody rows */}
-          {[...Array(7)].map((_, i) => (
-            <div key={i} className={styles.skelTbodyRow}>
-              <div className={`${styles.skel} ${styles.skelCheckbox}`} />
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: '2', minWidth: '160px' }}>
-                <div className={`${styles.skel} ${styles.skelAvatar}`} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                  <div className={`${styles.skel} ${styles.skelName}`} />
-                  <div className={`${styles.skel} ${styles.skelEmail}`} />
-                </div>
-              </div>
-              {[110, 110, 90].map((w, j) => (
-                <div key={j} className={`${styles.skel} ${styles.skelCell}`} style={{ width: `${w}px`, flex: '1' }} />
-              ))}
-              <div className={`${styles.skel} ${styles.skelBadge}`} style={{ flex: '0 0 80px' }} />
-              <div className={`${styles.skel} ${styles.skelCheckbox}`} />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
+    return <div className={styles.pageWrapper}>Loading interns...</div>;
   }
 
   return (
     <div className={styles.pageWrapper}>
-
-      {/* Top Header */}
       <div className={styles.header}>
         <h1 className={styles.pageTitle}>Interns</h1>
         <div className={styles.headerActions}>
@@ -132,7 +88,6 @@ export default function InternsList() {
         </div>
       </div>
 
-      {/* Stats Grid */}
       <div className={styles.statsGrid}>
         {stats.map((stat, idx) => (
           <div key={idx} className={styles.statCard}>
@@ -142,40 +97,24 @@ export default function InternsList() {
         ))}
       </div>
 
-      {/* Filter Dropdowns */}
       <div className={styles.filterGrid}>
         {['All Department', 'All School', 'All Status', 'Present'].map((filter, idx) => (
           <div key={idx} className={styles.selectWrapper}>
             <select className={styles.filterSelect} defaultValue={filter}>
               <option>{filter}</option>
             </select>
-            <div className={styles.selectIcon}>
-              <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
-              </svg>
-            </div>
           </div>
         ))}
       </div>
 
-      {/* Error State */}
-      {error && (
-        <div className={styles.errorBanner}>
-          {error}
-        </div>
-      )}
+      {error && <div className={styles.errorBanner}>{error}</div>}
 
-      {/* Main Table */}
       <div className={styles.tableContainer}>
         <div className={styles.tableHeader}>
           <h2 className={styles.tableTitle}>List Of Interns</h2>
           <div className={styles.tableControls}>
-            <button className={styles.sortButton}>
-              Sort <SlidersHorizontal size={14} />
-            </button>
-            <button className={styles.iconButton}>
-              <Search size={16} />
-            </button>
+            <button className={styles.sortButton}>Sort <SlidersHorizontal size={14} /></button>
+            <button className={styles.iconButton}><Search size={16} /></button>
           </div>
         </div>
 
@@ -183,9 +122,7 @@ export default function InternsList() {
           <table className={styles.dataTable}>
             <thead>
               <tr>
-                <th className={styles.checkboxCell}>
-                  <input type="checkbox" className={styles.checkbox} />
-                </th>
+                <th className={styles.checkboxCell}><input type="checkbox" className={styles.checkbox} /></th>
                 <th>Interns</th>
                 <th>Department</th>
                 <th>School</th>
@@ -196,51 +133,74 @@ export default function InternsList() {
             </thead>
             <tbody>
               {interns.length === 0 ? (
-                <tr>
-                  <td colSpan="7" className={styles.emptyRow}>
-                    No interns found in the system.
-                  </td>
-                </tr>
+                <tr><td colSpan="7" className={styles.emptyRow}>No interns found in the system.</td></tr>
               ) : (
-                interns.map((user) => (
-                  <tr key={user.id}>
-                    <td className={styles.checkboxCell}>
-                      <input type="checkbox" className={styles.checkbox} />
-                    </td>
-                    <td>
-                      <div className={styles.internProfile}>
-                        <div className={styles.avatar}>
-                          <img
-                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.first_name + user.id}`}
-                            alt="avatar"
-                          />
+                interns.map((user) => {
+                  
+                  // 👇 PULLING DATA FROM THE INTERN PROFILE 👇
+                  const deptId = user.intern?.department_id;
+                  const schoolId = user.intern?.school_id;
+                  const schoolName = user.intern?.school;
+                  const dateStart = user.intern?.date_started;
+
+                  return (
+                    <tr key={user.id}>
+                      <td className={styles.checkboxCell}><input type="checkbox" className={styles.checkbox} /></td>
+                      <td>
+                        <div className={styles.internProfile}>
+                          <div className={styles.avatar}>
+                            <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.first_name + user.id}`} alt="avatar" />
+                          </div>
+                          <div>
+                            <p className={styles.internName}>{user.first_name} {user.last_name}</p>
+                            <p className={styles.internEmail}>{user.email}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className={styles.internName}>{user.first_name} {user.last_name}</p>
-                          <p className={styles.internEmail}>{user.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className={styles.cellText}>{user.intern?.department || 'N/A'}</td>
-                    <td className={styles.cellText}>{user.intern?.school || 'N/A'}</td>
-                    <td className={styles.cellText}>{formatDate(user.created_at)}</td>
-                    <td>
-                      <span className={user.status?.toLowerCase() === 'active' ? styles.statusActive : styles.statusInactive}>
-                        {user.status || 'Unknown'}
-                      </span>
-                    </td>
-                    <td className={styles.actionCell}>
-                      <button className={styles.actionButton}>
-                        <MoreHorizontal size={18} />
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      
+                      {/* APPLY THE HELPER TRANSLATORS TO THE TABLE */}
+                      <td className={styles.cellText}>{getDepartmentName(deptId)}</td>
+                      <td className={styles.cellText}>{getSchoolName(schoolId, schoolName)}</td>
+                      <td className={styles.cellText}>{formatDate(dateStart || user.created_at)}</td>
+                      
+                      <td>
+                        <span className={user.status?.toLowerCase() === 'active' ? styles.statusActive : styles.statusInactive}>
+                          {user.status || 'Unknown'}
+                        </span>
+                      </td>
+                      <td className={styles.actionCell}>
+                        <button 
+                          className={styles.actionButton}
+                          onClick={() => {
+                            // MAP EVERYTHING PERFECTLY FOR THE MODAL
+                            setSelectedIntern({
+                              id: user.id, 
+                              name: `${user.first_name} ${user.last_name}`,
+                              email: user.email,
+                              department: getDepartmentName(deptId),
+                              school: getSchoolName(schoolId, schoolName),
+                              course: user.intern?.course || 'N/A',
+                              emergency_name: user.intern?.emergency_name || 'NOT PROVIDED',
+                              emergency_number: user.intern?.emergency_number || 'NOT PROVIDED',
+                              emergency_address: user.intern?.emergency_address || 'NOT PROVIDED',
+                            });
+                          }}
+                        >
+                          <MoreHorizontal size={18} />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {selectedIntern && (
+        <InternDetailsModal intern={selectedIntern} onClose={() => setSelectedIntern(null)} />
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../../api/axios';
 import toast, { Toaster } from 'react-hot-toast';
@@ -19,11 +19,11 @@ const CheckIcon = () => (
 );
 
 // ── Components ────────────────────────────────────────────────────────
-const SelectField = ({ label, name, value, onChange, children }) => (
+const SelectField = ({ label, name, value, onChange, disabled, children }) => (
   <div>
     <label className={styles.label}>{label}</label>
     <div className={styles.selectWrapper}>
-      <select name={name} value={value} onChange={onChange} className={styles.select}>
+      <select name={name} value={value} onChange={onChange} disabled={disabled} className={styles.select}>
         {children}
       </select>
       <div className={styles.selectIcon}>
@@ -41,7 +41,11 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
-  // ✅ Updated state to use _id for school, branch, and department
+  // States for dynamic dropdowns
+  const [schoolsList, setSchoolsList] = useState([]);
+  const [coursesList, setCoursesList] = useState([]);
+  const [loadingSchools, setLoadingSchools] = useState(true);
+
   const [formData, setFormData] = useState({
     first_name: '',  middle_name: '',   last_name: '',        email: '',
     emergency_name: '', emergency_phone: '', emergency_address: '', emergency_relationship: '',
@@ -49,6 +53,36 @@ export default function SignUpPage() {
     has_moa: false,  has_endorsement: false, has_pledge: false, has_nda: false,
     password: '',    password_confirmation: '',
   });
+
+  // Fetch Schools on Load
+  useEffect(() => {
+    const fetchSchools = async () => {
+      try {
+        const res = await axios.get('/public/schools');
+        setSchoolsList(res.data);
+      } catch (error) {
+        console.error("Failed to load schools", error);
+      } finally {
+        setLoadingSchools(false);
+      }
+    };
+    fetchSchools();
+  }, []);
+
+  // Fetch Courses when School changes
+  const handleSchoolChange = async (e) => {
+    const selectedSchoolId = e.target.value;
+    
+    setFormData(prev => ({ ...prev, school_id: selectedSchoolId, course: '' }));
+    
+    try {
+      const res = await axios.get(`/public/courses/${selectedSchoolId}`);
+      setCoursesList(res.data);
+    } catch  {
+      console.error("Failed to load courses");
+      setCoursesList([]);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -64,7 +98,6 @@ export default function SignUpPage() {
     
     setLoading(true);
 
-    // ✅ Updated payload to send the exact column names Laravel is expecting
     const payload = {
       first_name: formData.first_name,
       middle_name: formData.middle_name,
@@ -72,20 +105,19 @@ export default function SignUpPage() {
       email: formData.email,
       password: formData.password,
       password_confirmation: formData.password_confirmation,
-      emergency_contact_name: formData.emergency_name, 
-      emergency_contact_phone: formData.emergency_phone,
-      emergency_contact_address: formData.emergency_address,
+      
+      emergency_name: formData.emergency_name, 
+      emergency_number: formData.emergency_phone, 
+      emergency_address: formData.emergency_address,
       emergency_relationship: formData.emergency_relationship,
       
       course_program: formData.course,
       course: formData.course,
       
-      // Send the IDs to the backend
       school_id: formData.school_id,
       branch_id: formData.branch_id,
       department_id: formData.department_id,
       
-      // Keep these just in case your users table relies on them for text fallback
       school_university: formData.school_id,
       assigned_branch: formData.branch_id,
       assigned_department: formData.department_id,
@@ -162,25 +194,44 @@ export default function SignUpPage() {
       );
       case 2: return (
         <div className={styles.spaceY4}>
-          {/* ✅ COURSE STAYS AS TEXT */}
-          <SelectField label="Course / Program" name="course" value={formData.course} onChange={handleChange}>
-            <option value="">Select Course</option>
-            <option value="BSIT">BS Information Technology</option>
-            <option value="BSCS">BS Computer Science</option>
-            <option value="BSIS">BS Information Systems</option>
-            <option value="BSBA">BS Business Administration</option>
+          <SelectField 
+            label="School / University" 
+            name="school_id" 
+            value={formData.school_id} 
+            onChange={handleSchoolChange} 
+            disabled={loadingSchools}
+          >
+            <option value="" disabled>
+              {loadingSchools ? "Loading schools..." : "-- Select School --"}
+            </option>
+            {schoolsList.map(school => (
+              <option key={school.id} value={school.id}>
+                {school.name}
+              </option>
+            ))}
           </SelectField>
 
-          {/* ✅ SCHOOL USES IDs */}
-          <SelectField label="School / University" name="school_id" value={formData.school_id} onChange={handleChange}>
-            <option value="">Select School</option>
-            <option value="1">University of Science and Technology of Southern Philippines (USTP)</option>
-            <option value="2">Xavier University (XU)</option>
-            <option value="3">Capitol University (CU)</option>
-            <option value="4">Liceo de Cagayan University</option>
+          <SelectField 
+            label="Course / Program" 
+            name="course" 
+            value={formData.course} 
+            onChange={handleChange}
+            disabled={!formData.school_id || coursesList.length === 0}
+          >
+            <option value="" disabled>
+              {!formData.school_id 
+                ? "Select a school first" 
+                : coursesList.length === 0 
+                  ? "No courses found for this school" 
+                  : "-- Select Course --"}
+            </option>
+            {coursesList.map((c, index) => (
+              <option key={index} value={c.course_name}>
+                {c.course_name}
+              </option>
+            ))}
           </SelectField>
 
-          {/* ✅ BRANCHES EXACTLY AS REQUESTED */}
           <SelectField label="Assigned Branch" name="branch_id" value={formData.branch_id} onChange={handleChange}>
             <option value="">Select Branch</option>
             <option value="1">Bulua Branch (Head Office)</option>
@@ -191,7 +242,6 @@ export default function SignUpPage() {
             <option value="6">Cebu Branch</option>
           </SelectField>
 
-          {/* ✅ DEPARTMENTS EXACTLY AS REQUESTED */}
           <SelectField label="Department" name="department_id" value={formData.department_id} onChange={handleChange}>
             <option value="">Select Department</option>
             <option value="1">Insurtech - Business Analyst & System Development</option>
@@ -258,17 +308,34 @@ export default function SignUpPage() {
     </div>
   );
 
+  // 👇 UPDATED: Added the Login Link specifically for Step 1 👇
   const NavButtons = () => (
-    <div className={`${styles.btnContainer} ${step > 1 ? styles.btnSpaceBetween : styles.btnRight}`}>
-      {step > 1 && (
-        <button type="button" onClick={handleBack} className={styles.btnPrimary}>Back</button>
-      )}
-      {step < 4 ? (
-        <button type="button" onClick={handleNext} className={`${styles.btnPrimary} ${styles.btnAutoLeft}`}>Continue</button>
-      ) : (
-        <button type="submit" disabled={loading || !agreedToTerms} className={styles.btnPrimary}>
-          {loading ? 'Creating...' : 'Create Account'}
-        </button>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '24px' }}>
+      <div className={`${styles.btnContainer} ${step > 1 ? styles.btnSpaceBetween : styles.btnRight}`}>
+        {step > 1 && (
+          <button type="button" onClick={handleBack} className={styles.btnPrimary}>Back</button>
+        )}
+        {step < 4 ? (
+          <button type="button" onClick={handleNext} className={`${styles.btnPrimary} ${styles.btnAutoLeft}`}>Continue</button>
+        ) : (
+          <button type="submit" disabled={loading || !agreedToTerms} className={styles.btnPrimary}>
+            {loading ? 'Creating...' : 'Create Account'}
+          </button>
+        )}
+      </div>
+
+      {/* Show the login link ONLY on the first step */}
+      {step === 1 && (
+        <div style={{ textAlign: 'center', fontSize: '14px', color: '#64748b' }}>
+          Already have an account?{' '}
+          <button 
+            type="button" 
+            onClick={() => navigate('/login')} 
+            style={{ background: 'none', border: 'none', color: '#0B1EAE', fontWeight: '600', cursor: 'pointer', padding: 0 }}
+          >
+            Login
+          </button>
+        </div>
       )}
     </div>
   );

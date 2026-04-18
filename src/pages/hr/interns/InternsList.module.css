@@ -345,24 +345,33 @@
 }
 
 .actionCell {
-    text-align: center;
+  width: 60px;
+  text-align: center;
+  padding: 12px 16px;
 }
 
 .actionButton {
-    color: #9ca3af;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    opacity: 0;
-    transition: opacity 0.2s, color 0.2s;
-}
-
-.dataTable tbody tr:hover .actionButton {
-    opacity: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0; /* Added a light border */
+  background-color: #f8fafc; /* Subtle gray background */
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  /* 👇 THE FIX: Ensure opacity is 1 and not hidden 👇 */
+  opacity: 1 !important; 
+  visibility: visible !important;
 }
 
 .actionButton:hover {
-    color: #1f2937;
+  background-color: #f1f5f9;
+  color: #0B1EAE; /* Brand color on hover */
+  border-color: #cbd5e1;
 }
 
 /* ══ EMPTY STATE ══ */
