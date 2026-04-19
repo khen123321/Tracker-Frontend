@@ -32,9 +32,8 @@ export default function LoginPage() {
                 // 1. Store the Token for API Authorization headers
                 localStorage.setItem('cims_token', response.access_token);
                 
-                // 2. STORE THE USER DATA (The Critical Fix)
-                // We stringify the object so localStorage can store it
-                localStorage.setItem('cims_user', JSON.stringify(response.user));
+                // 2. ✨ THE FIX: Store the user data under the exact key "user" ✨
+                localStorage.setItem('user', JSON.stringify(response.user));
 
                 sessionStorage.setItem('justLoggedIn', 'true');
 

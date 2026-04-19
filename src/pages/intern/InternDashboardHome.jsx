@@ -25,9 +25,31 @@ const InternDashboardHome = () => {
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
+                // Fetch events
                 const eventsRes = await api.get('/events');
-                setUpcomingEvents(eventsRes.data.slice(0, 3));
+                
+                // --- NEW DATE FILTERING LOGIC ---
+                // 1. Get today's date and set to midnight for an accurate day comparison
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
 
+                // 2. Filter out events that happened before today
+                const activePinnedEvents = eventsRes.data.filter(event => {
+                    // Check both event.start or event.date depending on your DB column structure
+                    const eventDateString = event.start || event.date;
+                    if (!eventDateString) return true; // Failsafe if date is missing
+
+                    const eventDate = new Date(eventDateString);
+                    eventDate.setHours(0, 0, 0, 0);
+                    
+                    // Only keep events that are today or in the future
+                    return eventDate >= today;
+                });
+
+                // 3. Take the top 3 of the remaining ACTIVE events
+                setUpcomingEvents(activePinnedEvents.slice(0, 3));
+
+                // Fetch stats
                 const statsRes = await api.get('/intern/dashboard-stats');
                 setInternStats(statsRes.data);
             } catch {

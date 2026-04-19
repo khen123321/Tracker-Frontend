@@ -357,20 +357,18 @@
   width: 32px;
   height: 32px;
   border-radius: 6px;
-  border: 1px solid #e2e8f0; /* Added a light border */
-  background-color: #f8fafc; /* Subtle gray background */
+  border: 1px solid #e2e8f0; 
+  background-color: #f8fafc; 
   color: #64748b;
   cursor: pointer;
   transition: all 0.2s ease;
-  
-  /* 👇 THE FIX: Ensure opacity is 1 and not hidden 👇 */
   opacity: 1 !important; 
   visibility: visible !important;
 }
 
 .actionButton:hover {
   background-color: #f1f5f9;
-  color: #0B1EAE; /* Brand color on hover */
+  color: #0B1EAE; 
   border-color: #cbd5e1;
 }
 

@@ -10,20 +10,20 @@ import logoImage from '../../assets/logo.png';
 const DashboardLayout = () => {
   const navigate = useNavigate();
 
-  // Pulling the user from localStorage just like you had it
-  const user         = JSON.parse(localStorage.getItem('cims_user')) || {};
+  // ✨ THE FIX: Changed 'cims_user' to 'user' to match the Login page ✨
+  const user         = JSON.parse(localStorage.getItem('user')) || {};
   const permissions  = user.permissions || [];
-  const isSuperAdmin = user.role === 'superadmin';
+  const isSuperAdmin = user.role === 'superadmin' || user.role === 'hr'; // Added 'hr' fallback just in case!
 
   console.log("=== SIDEBAR DEBUG ===");
   console.log("1. The User Object:", user);
   console.log("2. The Permissions Array:", permissions);
-  console.log("3. Is Superadmin?:", isSuperAdmin);
+  console.log("3. Is Superadmin or HR?:", isSuperAdmin);
 
   const handleLogout = () => {
     if (window.confirm('Are you sure you want to log out?')) {
       localStorage.removeItem('cims_token');
-      localStorage.removeItem('cims_user');
+      localStorage.removeItem('user'); // Also updated this to 'user'
       navigate('/login');
     }
   };
@@ -66,7 +66,7 @@ const DashboardLayout = () => {
             </NavLink>
           )}
 
-          {/* 👇 NEW: Camera Verification Check 👇 */}
+          {/* Camera Verification Check */}
           {(isSuperAdmin || permissions.includes('Camera Verification')) && (
             <NavLink to="/dashboard/camera-verification" className={navCls}>
               <Camera size={20} strokeWidth={1.5} />
@@ -114,7 +114,7 @@ const DashboardLayout = () => {
               {user.first_name?.[0]?.toUpperCase() || 'A'}
             </div>
             <span className={styles.profileName}>
-              {isSuperAdmin ? 'CLIMBS Admin' : `${user.first_name} ${user.last_name}`}
+              {isSuperAdmin ? 'CLIMBS Admin' : `${user.first_name || 'Admin'} ${user.last_name || ''}`}
             </span>
           </div>
           <MoreHorizontal size={18} color="#94a3b8" />

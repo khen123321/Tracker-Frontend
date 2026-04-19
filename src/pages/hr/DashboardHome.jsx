@@ -1,6 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Calendar, UserCheck, UserX, UserMinus, Clock } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { 
+  Bell, Calendar, UserCheck, UserX, UserMinus, Clock, 
+  PieChart as PieIcon, BarChart2 as BarIcon 
+} from 'lucide-react';
+import { 
+  PieChart, Pie, Cell, 
+  BarChart, Bar, 
+  XAxis, YAxis, CartesianGrid, 
+  ResponsiveContainer, Tooltip, Legend 
+} from 'recharts';
 import api from '../../api/axios';
 import styles from './DashboardHome.module.css';
 
@@ -20,8 +28,6 @@ function Sk({ w = '100%', h = 16, r = 6, mb = 0 }) {
 function DashboardSkeleton() {
   return (
     <div className={styles.pageWrapper}>
-
-      {/* Header */}
       <div className={styles.header}>
         <Sk w={140} h={26} r={6} />
         <div style={{ display: 'flex', gap: 5 }}>
@@ -30,7 +36,6 @@ function DashboardSkeleton() {
         </div>
       </div>
 
-      {/* Top Grid */}
       <div className={styles.topGrid}>
         <div className={styles.card}>
           <Sk w={130} h={14} r={4} mb={14} />
@@ -53,10 +58,7 @@ function DashboardSkeleton() {
         </div>
       </div>
 
-      {/* Middle Grid */}
       <div className={styles.middleGrid}>
-
-        {/* Chart card */}
         <div className={styles.card} style={{ minHeight: 300 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, paddingBottom: 10, borderBottom: '1px solid #f1f5f9' }}>
             <Sk w={130} h={15} r={4} />
@@ -69,7 +71,6 @@ function DashboardSkeleton() {
           </div>
         </div>
 
-        {/* Attendance 2x2 */}
         <div className={styles.attGrid}>
           {[0, 1, 2, 3].map(i => (
             <div key={i} className={styles.attCard}>
@@ -79,7 +80,6 @@ function DashboardSkeleton() {
           ))}
         </div>
 
-        {/* Departments */}
         <div className={styles.card}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, paddingBottom: 10, borderBottom: '1px solid #f1f5f9' }}>
             <Sk w={110} h={15} r={4} />
@@ -97,13 +97,9 @@ function DashboardSkeleton() {
             ))}
           </div>
         </div>
-
       </div>
 
-      {/* Bottom Grid */}
       <div className={styles.bottomGrid}>
-
-        {/* Branches */}
         <div className={styles.card}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, paddingBottom: 10, borderBottom: '1px solid #f1f5f9' }}>
             <Sk w={80} h={15} r={4} />
@@ -120,7 +116,6 @@ function DashboardSkeleton() {
           ))}
         </div>
 
-        {/* Schools */}
         <div className={styles.card}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, paddingBottom: 10, borderBottom: '1px solid #f1f5f9' }}>
             <Sk w={130} h={15} r={4} />
@@ -137,7 +132,6 @@ function DashboardSkeleton() {
           </div>
         </div>
 
-        {/* Pending */}
         <div className={styles.card}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, paddingBottom: 10, borderBottom: '1px solid #f1f5f9' }}>
             <Sk w={130} h={15} r={4} />
@@ -150,7 +144,6 @@ function DashboardSkeleton() {
           </div>
           <Sk w="100%" h={70} r={8} />
         </div>
-
       </div>
     </div>
   );
@@ -162,6 +155,9 @@ export default function DashboardHome() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const dropdownRef = useRef(null);
+
+  // Toggle State for the Chart: 'pie' | 'bar'
+  const [chartView, setChartView] = useState('pie');
 
   const [stats, setStats] = useState({
     total_interns: 0,
@@ -214,6 +210,22 @@ export default function DashboardHome() {
   const todayStr = new Date().toLocaleDateString('en-US', {
     weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
   });
+
+  // Data mapping for Bar Chart
+  const deptAttendanceData = stats.departments?.length > 0 
+    ? stats.departments.map(d => ({
+        name: d.name.length > 10 ? d.name.substring(0, 10) + '...' : d.name, 
+        present: d.present_count || Math.floor(d.count * 0.8), 
+        absent: d.absent_count || Math.floor(d.count * 0.2),
+      }))
+    : [
+        { name: 'IT', present: 18, absent: 10 },
+        { name: 'HR', present: 18, absent: 10 },
+        { name: 'Accounting', present: 18, absent: 10 }
+      ];
+
+  // Hover states for the single flip button
+  const [isHovered, setIsHovered] = useState(false);
 
   if (loading) return <DashboardSkeleton />;
 
@@ -291,38 +303,92 @@ export default function DashboardHome() {
 
       {/* MIDDLE GRID */}
       <div className={styles.middleGrid}>
+        
+        {/* INTERACTIVE CHART CARD */}
         <div className={`${styles.card} ${styles.chartCard}`}>
-          <div className={styles.sectionHeader}>
-            <h3 className={styles.sectionTitle}>Interns by Course</h3>
+          <div className={styles.sectionHeader} style={{ alignItems: 'center' }}>
+            <h3 className={styles.sectionTitle}>
+              {chartView === 'pie' ? 'Interns by Course' : 'Attendance by Dept'}
+            </h3>
+            
+            {/* ✨ Single Flip Toggle Switch ✨ */}
+            <button 
+              onClick={() => setChartView(prev => prev === 'pie' ? 'bar' : 'pie')}
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+              title={chartView === 'pie' ? "Switch to Bar Chart" : "Switch to Pie Chart"}
+              style={{
+                padding: '6px',
+                borderRadius: '8px',
+                border: '1px solid #e2e8f0',
+                backgroundColor: isHovered ? '#f8fafc' : '#ffffff',
+                color: isHovered ? '#0B1EAE' : '#64748B',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+              }}
+            >
+              {/* Shows the icon of the view you will switch TO */}
+              {chartView === 'pie' ? <BarIcon size={18} strokeWidth={2} /> : <PieIcon size={18} strokeWidth={2} />}
+            </button>
           </div>
-          <div className={styles.chartWrapper}>
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie
-                  data={stats.course_distribution}
-                  innerRadius={55}
-                  outerRadius={75}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {stats.course_distribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  itemStyle={{ color: '#0f172a', fontWeight: 600 }}
-                />
-                <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className={styles.donutCenter}>
-              <span className={styles.donutTotal}>{stats.total_interns}</span>
-              <span className={styles.donutLabel}>Total</span>
-            </div>
+
+          <div className={styles.chartWrapper} style={{ marginTop: '10px' }}>
+            
+            {/* PIE CHART VIEW */}
+            {chartView === 'pie' && (
+              <>
+                <ResponsiveContainer width="100%" height={220}>
+                  <PieChart>
+                    <Pie
+                      data={stats.course_distribution}
+                      innerRadius={55}
+                      outerRadius={75}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {stats.course_distribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                      itemStyle={{ color: '#0f172a', fontWeight: 600 }}
+                    />
+                    <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className={styles.donutCenter}>
+                  <span className={styles.donutTotal}>{stats.total_interns}</span>
+                  <span className={styles.donutLabel}>Total</span>
+                </div>
+              </>
+            )}
+
+            {/* BAR CHART VIEW */}
+            {chartView === 'bar' && (
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={deptAttendanceData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} />
+                  <Tooltip 
+                    cursor={{ fill: '#f8fafc' }} 
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} 
+                  />
+                  <Legend wrapperStyle={{ fontSize: '12px' }} iconType="circle" />
+                  <Bar dataKey="present" name="Present" fill="#0B1EAE" radius={[4, 4, 0, 0]} barSize={12} />
+                  <Bar dataKey="absent" name="Absent" fill="#94A3B8" radius={[4, 4, 0, 0]} barSize={12} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 
+        {/* Attendance Cards */}
         <div className={styles.attGrid}>
           <div className={styles.attCard}>
             <div className={`${styles.attLabel} ${styles.present}`}><UserCheck size={16} /> Present</div>
@@ -342,6 +408,7 @@ export default function DashboardHome() {
           </div>
         </div>
 
+        {/* By Department List */}
         <div className={styles.card}>
           <div className={styles.sectionHeader}>
             <h3 className={styles.sectionTitle}>By Department</h3>

@@ -24,6 +24,7 @@ import Attendance from './pages/intern/attendance/Attendance';
 import InternEventsPage from './pages/intern/events/EventsPage'; 
 import Logs from './pages/intern/logs/Logs';
 import Forms from './pages/intern/forms/Forms'; 
+import InternProfile from './pages/intern/internprofile/InternProfile';
 
 // Placeholder for sections still being developed
 const PlaceholderPage = ({ title }) => (
@@ -51,6 +52,10 @@ export default function App() {
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<DashboardHome />} />
             <Route path="interns" element={<InternsList />} />
+            
+            {/* ✨ MOVED HERE: Intern Profile now loads inside the HR layout! ✨ */}
+            <Route path="interns/:id" element={<InternProfile />} />
+            
             <Route path="time-tracker" element={<TimeTracker />} /> 
             <Route path="events" element={<HREventsPage />} />
             <Route path="role-management" element={<RoleManagement />} />
@@ -74,6 +79,7 @@ export default function App() {
             <Route path="events" element={<InternEventsPage />} />
             <Route path="logs" element={<Logs />} />
             <Route path="forms" element={<Forms />} />
+            <Route path="profile" element={<InternProfile />} />
             
             <Route path="history" element={<PlaceholderPage title="History" />} />
             <Route path="announcements" element={<PlaceholderPage title="Announcements" />} />

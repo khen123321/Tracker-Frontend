@@ -81,7 +81,6 @@ const TimeTracker = () => {
     if (loading) {
         return (
             <div className={styles.pageWrapper}>
-                {/* Skeleton Header */}
                 <div className={styles.pageHeader}>
                     <div className={`${styles.skel} ${styles.skelTitle}`} />
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -90,7 +89,6 @@ const TimeTracker = () => {
                     </div>
                 </div>
 
-                {/* Skeleton Stat Cards */}
                 <div className={styles.statsRow}>
                     {[...Array(4)].map((_, i) => (
                         <div key={i} className={styles.statCard}>
@@ -100,14 +98,12 @@ const TimeTracker = () => {
                     ))}
                 </div>
 
-                {/* Skeleton Filters */}
                 <div className={styles.filtersRow}>
                     <div className={`${styles.skel} ${styles.skelFilter}`} />
                     <div className={`${styles.skel} ${styles.skelFilter}`} style={{ flex: 1 }} />
                     <div className={`${styles.skel} ${styles.skelFilter}`} style={{ flex: 1 }} />
                 </div>
 
-                {/* Skeleton Table */}
                 <div className={styles.tableSection}>
                     <div className={styles.tableSectionHeader}>
                         <div className={`${styles.skel} ${styles.skelTableTitle}`} />
@@ -117,14 +113,12 @@ const TimeTracker = () => {
                         </div>
                     </div>
 
-                    {/* Skeleton thead */}
                     <div className={styles.skelTheadRow}>
-                        {[140, 80, 80, 80, 80, 70, 70].map((w, i) => (
+                        {[140, 80, 80, 80, 80, 70, 70, 100].map((w, i) => (
                             <div key={i} className={`${styles.skel} ${styles.skelTh}`} style={{ width: `${w}px` }} />
                         ))}
                     </div>
 
-                    {/* Skeleton tbody rows */}
                     {[...Array(6)].map((_, i) => (
                         <div key={i} className={styles.skelTbodyRow}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: '2', minWidth: '140px' }}>
@@ -139,6 +133,7 @@ const TimeTracker = () => {
                             ))}
                             <div className={`${styles.skel} ${styles.skelCell}`} style={{ width: '70px', flex: '1' }} />
                             <div className={`${styles.skel} ${styles.skelBadge}`} style={{ flex: '1' }} />
+                            <div className={`${styles.skel} ${styles.skelCell}`} style={{ width: '100px', flex: '1.5' }} /> 
                         </div>
                     ))}
                 </div>
@@ -149,7 +144,6 @@ const TimeTracker = () => {
     return (
         <div className={styles.pageWrapper}>
 
-            {/* PAGE HEADER */}
             <div className={styles.pageHeader}>
                 <h1 className={styles.pageTitle}>Time Tracker</h1>
                 <div className={styles.headerRight}>
@@ -169,7 +163,6 @@ const TimeTracker = () => {
                 </div>
             )}
 
-            {/* STAT CARDS */}
             <div className={styles.statsRow}>
                 <div className={styles.statCard}>
                     <p className={styles.statLabel}>Present Today</p>
@@ -189,7 +182,6 @@ const TimeTracker = () => {
                 </div>
             </div>
 
-            {/* FILTERS */}
             <div className={styles.filtersRow}>
                 <div className={styles.dateInput}>
                     <input
@@ -213,7 +205,6 @@ const TimeTracker = () => {
                 </div>
             </div>
 
-            {/* TABLE SECTION */}
             <div className={styles.tableSection}>
                 <div className={styles.tableSectionHeader}>
                     <h2 className={styles.tableTitle}>List Of Interns</h2>
@@ -236,8 +227,9 @@ const TimeTracker = () => {
                                 <th>Time Out (AM)</th>
                                 <th>Time In (PM)</th>
                                 <th>Time Out (PM)</th>
-                                <th>Total Time</th>
+                                <th>Today's Hours</th>
                                 <th>Status</th>
+                                <th>Overall Progress</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -246,11 +238,21 @@ const TimeTracker = () => {
                                     const log = user.attendance_logs?.[0];
                                     const status = log?.status || 'absent';
                                     const { label, cls } = getStatusMeta(status);
+                                    
+                                    const rendered = Math.round(user.attendance_logs_sum_hours_rendered || 0);
+                                    const required = user.intern?.required_hours || 0;
+                                    const percent = required > 0 ? Math.min(Math.round((rendered / required) * 100), 100) : 0;
+
                                     return (
                                         <tr key={user.id} className={styles.tableRow}>
                                             <td className={styles.internCell}>
+                                                {/* ✨ HERE IS THE AUTO-GENERATED AVATAR UPDATE ✨ */}
                                                 <div className={styles.avatar}>
-                                                    <User size={16} />
+                                                    <img 
+                                                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.first_name + user.id}`} 
+                                                        alt="avatar" 
+                                                        style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} 
+                                                    />
                                                 </div>
                                                 <div>
                                                     <p className={styles.internName}>{user.first_name} {user.last_name}</p>
@@ -262,18 +264,39 @@ const TimeTracker = () => {
                                             <td className={styles.timeCell}>{formatTime(log?.lunch_in)}</td>
                                             <td className={styles.timeCell}>{formatTime(log?.time_out)}</td>
                                             <td className={styles.durationCell}>{formatDuration(log?.hours_rendered)}</td>
+                                            
                                             <td>
                                                 <span className={`${styles.statusBadge} ${cls}`}>
                                                     <span className={styles.statusDot}></span>
                                                     {label}
                                                 </span>
                                             </td>
+
+                                            <td className={styles.timeCell}>
+                                                <div className="flex flex-col gap-1.5 min-w-[110px] pr-4">
+                                                    <div className="flex items-end justify-between text-[11px] leading-none">
+                                                        <span className="font-bold text-[#0B1EAE]">{rendered}</span>
+                                                        <span className="text-slate-400 font-medium tracking-tight">/ {required} hrs</span>
+                                                    </div>
+                                                    
+                                                    <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                                                        <div 
+                                                            className="h-full transition-all duration-500" 
+                                                            style={{ 
+                                                                width: `${percent}%`,
+                                                                borderRadius: '30px',
+                                                                background: 'linear-gradient(90deg, #E3BD01 0%, #FFDE3C 50%, #FFE359 75%, #FFEFA3 100%)'
+                                                            }}
+                                                        ></div>
+                                                    </div>
+                                                </div>
+                                            </td>
                                         </tr>
                                     );
                                 })
                             ) : (
                                 <tr>
-                                    <td colSpan="7" className={styles.emptyRow}>
+                                    <td colSpan="8" className={styles.emptyRow}>
                                         No interns found in the system.
                                     </td>
                                 </tr>
