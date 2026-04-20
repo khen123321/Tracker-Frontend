@@ -1,8 +1,7 @@
-/* src/pages/auth/Login.module.css */
-
 /* --- LAYOUT WRAPPER --- */
 .pageWrapper {
-  display: flex; /* This is what puts them side-by-side */
+  display: flex;
+  flex-direction: row; /* Explicitly state row for desktop */
   min-height: 100vh;
   width: 100%;
   font-family: 'Inter', sans-serif;
@@ -175,4 +174,78 @@
 .loginBtn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+/* =========================================
+   📱 RESPONSIVE MOBILE STYLES (NEW!)
+   ========================================= */
+
+/* Triggers on tablets and smaller screens */
+@media (max-width: 860px) {
+  .pageWrapper {
+    flex-direction: column; /* Stack top and bottom */
+  }
+
+  .brandSide {
+    flex: none; /* Stop taking up 50% */
+    padding: 3rem 1.5rem; /* Shrink padding slightly */
+  }
+
+  .brandLogo {
+    max-width: 220px; /* Make logo smaller */
+    margin-bottom: 1rem;
+  }
+
+  .brandSide h2 {
+    font-size: 1.25rem; /* Shrink title */
+    margin-top: 0.5rem;
+  }
+
+  .formSide {
+    flex: 1; /* Take up the rest of the height */
+    padding: 2rem 1.25rem;
+    justify-content: flex-start; /* Push the form to the top of the white area */
+  }
+
+  .headerArea {
+    margin-top: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .welcomeText {
+    font-size: 2.5rem;
+  }
+
+  .loginCard {
+    padding: 1.75rem;
+    max-width: 100%; /* Let it fill the screen padding width */
+  }
+}
+
+/* Extra tweaks for very small phones */
+@media (max-width: 480px) {
+  .brandSide {
+    padding: 2rem 1rem;
+  }
+
+  .brandLogo {
+    max-width: 180px;
+  }
+
+  .brandSide h2 {
+    font-size: 1.1rem;
+  }
+
+  .welcomeText {
+    font-size: 2.25rem;
+  }
+
+  .loginCard {
+    padding: 1.25rem;
+  }
+  
+  .toggleBtn {
+    padding: 0.6rem;
+    font-size: 0.85rem;
+  }
 }

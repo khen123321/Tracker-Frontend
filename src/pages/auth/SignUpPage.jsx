@@ -44,7 +44,9 @@ export default function SignUpPage() {
   // States for dynamic dropdowns
   const [schoolsList, setSchoolsList] = useState([]);
   const [coursesList, setCoursesList] = useState([]);
-  const [loadingSchools, setLoadingSchools] = useState(true);
+  const [branchesList, setBranchesList] = useState([]);
+  const [departmentsList, setDepartmentsList] = useState([]);
+  const [loadingDropdowns, setLoadingDropdowns] = useState(true);
 
   const [formData, setFormData] = useState({
     first_name: '',  middle_name: '',   last_name: '',        email: '',
@@ -54,19 +56,28 @@ export default function SignUpPage() {
     password: '',    password_confirmation: '',
   });
 
-  // Fetch Schools on Load
+  // ✨ Fetch Schools, Branches, and Departments simultaneously on Load ✨
   useEffect(() => {
-    const fetchSchools = async () => {
+    const fetchDropdownData = async () => {
       try {
-        const res = await axios.get('/public/schools');
-        setSchoolsList(res.data);
+        // Promise.all fetches all three at the exact same time for speed
+        const [schoolsRes, branchesRes, deptsRes] = await Promise.all([
+          axios.get('/public/schools'),
+          axios.get('/public/branches'),
+          axios.get('/public/departments')
+        ]);
+        
+        setSchoolsList(schoolsRes.data);
+        setBranchesList(branchesRes.data);
+        setDepartmentsList(deptsRes.data);
       } catch (error) {
-        console.error("Failed to load schools", error);
+        console.error("Failed to load dropdown options", error);
+        toast.error("Failed to load registration options. Please refresh.");
       } finally {
-        setLoadingSchools(false);
+        setLoadingDropdowns(false);
       }
     };
-    fetchSchools();
+    fetchDropdownData();
   }, []);
 
   // Fetch Courses when School changes
@@ -199,10 +210,10 @@ export default function SignUpPage() {
             name="school_id" 
             value={formData.school_id} 
             onChange={handleSchoolChange} 
-            disabled={loadingSchools}
+            disabled={loadingDropdowns}
           >
             <option value="" disabled>
-              {loadingSchools ? "Loading schools..." : "-- Select School --"}
+              {loadingDropdowns ? "Loading schools..." : "-- Select School --"}
             </option>
             {schoolsList.map(school => (
               <option key={school.id} value={school.id}>
@@ -232,24 +243,36 @@ export default function SignUpPage() {
             ))}
           </SelectField>
 
-          <SelectField label="Assigned Branch" name="branch_id" value={formData.branch_id} onChange={handleChange}>
-            <option value="">Select Branch</option>
-            <option value="1">Bulua Branch (Head Office)</option>
-            <option value="2">Tiano Office</option>
-            <option value="3">Luzon Branch</option>
-            <option value="4">Naga Branch</option>
-            <option value="5">Baguio Branch</option>
-            <option value="6">Cebu Branch</option>
+          {/* ✨ Dynamic Branch Dropdown ✨ */}
+          <SelectField 
+            label="Assigned Branch" 
+            name="branch_id" 
+            value={formData.branch_id} 
+            onChange={handleChange}
+            disabled={loadingDropdowns}
+          >
+            <option value="">{loadingDropdowns ? "Loading branches..." : "Select Branch"}</option>
+            {branchesList.map(branch => (
+              <option key={branch.id} value={branch.id}>
+                {branch.name}
+              </option>
+            ))}
           </SelectField>
 
-          <SelectField label="Department" name="department_id" value={formData.department_id} onChange={handleChange}>
-            <option value="">Select Department</option>
-            <option value="1">Insurtech - Business Analyst & System Development</option>
-            <option value="2">CARES</option>
-            <option value="3">EDP</option>
-            <option value="4">CESLA</option>
-            <option value="5">Finance</option>
-            <option value="6">HR</option>
+          {/* ✨ Dynamic Department Dropdown ✨ */}
+          <SelectField 
+            label="Department" 
+            name="department_id" 
+            value={formData.department_id} 
+            onChange={handleChange}
+            disabled={loadingDropdowns}
+          >
+            <option value="">{loadingDropdowns ? "Loading departments..." : "Select Department"}</option>
+            {departmentsList.map(dept => (
+              <option key={dept.id} value={dept.id}>
+                {dept.name}
+              </option>
+            ))}
           </SelectField>
 
           <div>
@@ -308,7 +331,6 @@ export default function SignUpPage() {
     </div>
   );
 
-  // 👇 UPDATED: Added the Login Link specifically for Step 1 👇
   const NavButtons = () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '24px' }}>
       <div className={`${styles.btnContainer} ${step > 1 ? styles.btnSpaceBetween : styles.btnRight}`}>
@@ -324,7 +346,6 @@ export default function SignUpPage() {
         )}
       </div>
 
-      {/* Show the login link ONLY on the first step */}
       {step === 1 && (
         <div style={{ textAlign: 'center', fontSize: '14px', color: '#64748b' }}>
           Already have an account?{' '}

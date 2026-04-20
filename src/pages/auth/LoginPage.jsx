@@ -32,7 +32,7 @@ export default function LoginPage() {
                 // 1. Store the Token for API Authorization headers
                 localStorage.setItem('cims_token', response.access_token);
                 
-                // 2. ✨ THE FIX: Store the user data under the exact key "user" ✨
+                // 2. Store the user data under the exact key "user"
                 localStorage.setItem('user', JSON.stringify(response.user));
 
                 sessionStorage.setItem('justLoggedIn', 'true');
@@ -124,7 +124,7 @@ export default function LoginPage() {
                         </div>
 
                         <div className="flex items-center mt-2 mb-6">
-                            <input type="checkbox" id="remember" className="w-4 h-4 rounded text-[#0B1EAE]" />
+                            <input type="checkbox" id="remember" className="w-4 h-4 rounded text-[#0B1EAE] border-gray-300 focus:ring-[#0B1EAE]" />
                             <label htmlFor="remember" className="ml-2 text-sm text-gray-500">Keep me Signed In</label>
                         </div>
 

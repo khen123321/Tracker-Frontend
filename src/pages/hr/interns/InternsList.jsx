@@ -1,38 +1,44 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,  useMemo } from 'react';
 import { 
   Bell, Calendar, Search, SlidersHorizontal, MoreHorizontal, 
   UserMinus, Download, Clock, AlertCircle, X, FileText, Activity, File, CheckCircle2 
 } from 'lucide-react';
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
+} from 'recharts';
 import api from '../../../api/axios';
 import styles from './InternsList.module.css';
 import InternDetailsModal from '../internsdetail/InternDetailsModal';
+
+// ─── SKELETON PRIMITIVE ───
+function Sk({ w = '100%', h = 16, r = 6, mb = 0 }) {
+  return (
+    <div
+      className={styles.skel}
+      style={{ width: w, height: h, borderRadius: r, marginBottom: mb, flexShrink: 0 }}
+    />
+  );
+}
 
 export default function InternsList() {
   const [interns, setInterns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // State for individual intern view
   const [selectedInternModal, setSelectedInternModal] = useState(null);
-
-  // ─── NOTIFICATION STATE (THE NEW FEATURE) ───
   const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
 
-  // Helper function to trigger notifications
   const showNotification = (message, type = 'success') => {
     setNotification({ show: true, message, type });
-    // Auto-hide after 3 seconds
     setTimeout(() => {
       setNotification({ show: false, message: '', type: 'success' });
     }, 3000);
   };
 
-  // ─── BULK ACTION STATES ───
   const [selectedInterns, setSelectedInterns] = useState([]); 
   const [activeBulkModal, setActiveBulkModal] = useState(null); 
   const [isProcessing, setIsProcessing] = useState(false); 
 
-  // Modal Specific States
   const [confirmRemoveText, setConfirmRemoveText] = useState("");
   const [exportType, setExportType] = useState('info');
   const [exportFormat, setExportFormat] = useState('Excel');
@@ -42,7 +48,6 @@ export default function InternsList() {
     date: '', timeIn: '', timeOut: '', reason: '', notes: ''
   });
 
-  // ─── API FETCH ───
   const fetchInterns = async () => {
     try {
       setLoading(true);
@@ -59,7 +64,68 @@ export default function InternsList() {
 
   useEffect(() => { fetchInterns(); }, []);
 
-  // ─── CHECKBOX LOGIC ───
+  const fullChartData = useMemo(() => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const dataObj = {};
+    
+    const today = new Date();
+    for (let i = 59; i >= 0; i--) {
+      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      dataObj[`${months[d.getMonth()]} ${d.getFullYear()}`] = 0;
+    }
+
+    interns.forEach(intern => {
+      const dateStr = intern.intern?.date_started || intern.date_started || intern.created_at;
+      if (dateStr) {
+         const d = new Date(dateStr);
+         const key = `${months[d.getMonth()]} ${d.getFullYear()}`;
+         if (dataObj[key] !== undefined) {
+             dataObj[key] += 1;
+         }
+      }
+    });
+
+    return Object.keys(dataObj).map(key => ({
+      name: key, 
+      rawMonth: key.split(' ')[0], 
+      rawYear: key.split(' ')[1],  
+      interns: dataObj[key]
+    }));
+  }, [interns]);
+
+  const windowSize = 12;
+  const [startIndex, setStartIndex] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartX, setDragStartX] = useState(0);
+  const [dragStartIndex, setDragStartIndex] = useState(0);
+
+  useEffect(() => {
+    if (fullChartData.length > windowSize) {
+      setStartIndex(fullChartData.length - windowSize);
+    }
+  }, [fullChartData.length]);
+
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    setDragStartX(e.clientX);
+    setDragStartIndex(startIndex);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    const deltaX = e.clientX - dragStartX;
+    const shift = Math.round(deltaX / 25); 
+    let newIndex = dragStartIndex - shift;
+    newIndex = Math.max(0, Math.min(newIndex, fullChartData.length - windowSize));
+    setStartIndex(newIndex);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const visibleData = fullChartData.slice(startIndex, startIndex + windowSize);
+
   const toggleInternSelection = (intern) => {
     setSelectedInterns(prev => 
       prev.some(i => i.id === intern.id) 
@@ -86,21 +152,16 @@ export default function InternsList() {
   const isAllSelected = interns.length > 0 && selectedInterns.length === interns.length;
   const isSelected = (id) => selectedInterns.some(intern => intern.id === id);
 
-  // ─── BULK ACTION API CALLS ───
-
   const handleBulkRemove = async () => {
     try {
       setIsProcessing(true);
       const internIds = selectedInterns.map(i => i.id);
-      
       await api.post('/hr/interns/bulk-remove', { ids: internIds });
-      
       fetchInterns(); 
       clearSelection(); 
-      showNotification(`${internIds.length} interns successfully removed.`); // 👈 TRIGGER NOTIFICATION
-    } catch (err) {
-      console.error("Failed to remove interns:", err);
-      showNotification("Error removing interns. Please check the console.", "error"); // 👈 TRIGGER ERROR
+      showNotification(`${internIds.length} interns successfully removed.`); 
+    } catch  {
+      showNotification("Error removing interns.", "error"); 
     } finally {
       setIsProcessing(false);
     }
@@ -110,7 +171,6 @@ export default function InternsList() {
     try {
       setIsProcessing(true);
       const internIds = selectedInterns.map(i => i.id);
-      
       const response = await api.post('/hr/interns/bulk-export', {
         ids: internIds, type: exportType, format: exportFormat
       }, { responseType: 'blob' }); 
@@ -123,10 +183,9 @@ export default function InternsList() {
       link.click();
       
       clearSelection();
-      showNotification("Export downloaded successfully!"); // 👈 TRIGGER NOTIFICATION
-    } catch (err) {
-      console.error("Failed to export:", err);
-      showNotification("Export failed. Please try again.", "error"); // 👈 TRIGGER ERROR
+      showNotification("Export downloaded successfully!"); 
+    } catch  {
+      showNotification("Export failed.", "error"); 
     } finally {
       setIsProcessing(false);
     }
@@ -151,21 +210,16 @@ export default function InternsList() {
       };
 
       await api.post('/hr/interns/bulk-add-hours', payload);
-      
       fetchInterns();
       clearSelection();
-      showNotification("Hours successfully assigned to selected interns!"); // 👈 TRIGGER NOTIFICATION
-    } catch (err) {
-      console.error("Failed to add hours:", err);
-      // Try to extract exact error from Laravel, otherwise show generic
-      const errorMsg = err.response?.data?.message || "Failed to add hours. Check console.";
-      showNotification(errorMsg, "error"); // 👈 TRIGGER ERROR
+      showNotification("Hours assigned successfully!"); 
+    } catch  {
+      showNotification("Failed to add hours.", "error"); 
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // ─── DATA FORMATTING HELPERS ───
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -173,49 +227,74 @@ export default function InternsList() {
     });
   };
 
-  const getDepartmentName = (id) => {
-    if (!id) return 'N/A';
-    const departments = { "1": "Insurtech - Business Analyst & System Development", "2": "CARES", "3": "EDP", "4": "CESLA", "5": "Finance", "6": "HR" };
-    return departments[String(id)] || id; 
-  };
+  if (loading) {
+    return (
+      <div className={styles.pageWrapper}>
+        <div className={styles.header}>
+          <Sk w={160} h={26} />
+          <div className={styles.flexRow}>
+            <Sk w={36} h={36} r={8} />
+            <Sk w={180} h={36} r={8} />
+          </div>
+        </div>
 
-  const getSchoolName = (id, fallbackName) => {
-    if (!id && !fallbackName) return 'N/A';
-    const schools = { "1": "USTP", "2": "Xavier University (XU)", "3": "Capitol University (CU)", "4": "Liceo de Cagayan" };
-    return schools[String(id)] || fallbackName || id; 
-  };
+        <div className={styles.card}>
+          <div className={styles.sectionHeader}>
+            <Sk w={120} h={18} />
+            <Sk w={40} h={18} />
+          </div>
+          <Sk w="100%" h={220} />
+        </div>
 
-  const stats = [
-    { label: 'Total Interns', value: interns.length },
-    { label: 'Absent', value: 0 },
-    { label: 'Avg. Hours Rendered', value: 0 },
-    { label: 'Active', value: interns.filter(i => i.status?.toLowerCase() === 'active').length },
-  ];
+        <div className={styles.grid4}>
+          {[...Array(4)].map((_, i) => <Sk key={i} w="100%" h={36} r={8} />)}
+        </div>
 
-  if (loading) return <div className={styles.pageWrapper}>Loading interns...</div>;
+        <div className={styles.card}>
+          <div className={styles.sectionHeader}>
+            <Sk w={100} h={18} />
+            <div className={styles.flexRow}>
+              <Sk w={70} h={30} r={8} />
+              <Sk w={36} h={30} r={8} />
+            </div>
+          </div>
+          <div className={styles.flexCol} style={{ marginTop: '10px' }}>
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className={styles.flexRow} style={{ padding: '12px 0', borderBottom: '1px solid #f8fafc' }}>
+                <Sk w={14} h={14} r={4} />
+                <Sk w={32} h={32} r={999} />
+                <div className={styles.flexCol} style={{ flex: 1 }}>
+                  <Sk w={120} h={13} />
+                  <Sk w={80} h={10} />
+                </div>
+                <Sk w={60} h={13} />
+                <Sk w={60} h={13} />
+                <Sk w={60} h={13} />
+                <Sk w={24} h={24} r={6} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className={`relative min-h-screen pb-24 ${styles.pageWrapper}`}>
+    <div className={styles.pageWrapper}>
 
-      {/* ─── TOAST NOTIFICATION UI ─── */}
       {notification.show && (
-        <div className={`fixed top-6 right-6 z-[100] px-5 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-slide-down border transition-all ${
-          notification.type === 'success' 
-            ? 'bg-green-50 border-green-200 text-green-800' 
-            : 'bg-red-50 border-red-200 text-red-800'
-        }`}>
-          {notification.type === 'success' ? <CheckCircle2 size={20} className="text-green-600" /> : <AlertCircle size={20} className="text-red-600" />}
-          <span className="text-sm font-medium">{notification.message}</span>
-          <button onClick={() => setNotification({ show: false, message: '', type: 'success' })} className="ml-2 opacity-50 hover:opacity-100">
-            <X size={16} />
+        <div className={`${styles.toast} ${notification.type === 'success' ? styles.toastSuccess : styles.toastError}`}>
+          {notification.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+          <span className={styles.subText} style={{ color: 'inherit', fontWeight: '600' }}>{notification.message}</span>
+          <button onClick={() => setNotification({ show: false, message: '', type: 'success' })} className={styles.actionBtn}>
+            <X size={14} />
           </button>
         </div>
       )}
       
-      {/* ─── HEADER & STATS ─── */}
       <div className={styles.header}>
-        <h1 className={styles.pageTitle}>Interns</h1>
-        <div className={styles.headerActions}>
+        <h1 className={styles.pageTitle}>Interns Overview</h1>
+        <div className={styles.flexRow}>
           <button className={styles.iconButton} onClick={fetchInterns}><Bell size={16} /></button>
           <div className={styles.dateBadge}>
             <Calendar size={15} />
@@ -224,32 +303,77 @@ export default function InternsList() {
         </div>
       </div>
 
-      <div className={styles.statsGrid}>
-        {stats.map((stat, idx) => (
-          <div key={idx} className={styles.statCard}>
-            <p className={styles.statLabel}>{stat.label}</p>
-            <p className={styles.statValue}>{stat.value}</p>
+      <div className={styles.card}>
+        <div className={styles.sectionHeader} style={{ alignItems: 'flex-end' }}>
+          <div className={styles.flexCol}>
+            <h3 className={styles.sectionTitle}>Active Interns</h3>
+            <p className={styles.subText}>Click and drag the chart left or right to view historical data.</p>
           </div>
-        ))}
+          <div className={styles.flexColEnd} style={{ textAlign: 'right' }}>
+            <p className={styles.statValue}>{interns.length}</p>
+            <p className={styles.label} style={{ color: '#16a34a' }}>Total Active</p>
+          </div>
+        </div>
+
+        <div 
+          className={styles.chartWrapper} 
+          style={{ cursor: isDragging ? 'grabbing' : 'grab', userSelect: 'none' }}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+        >
+          <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
+            <AreaChart data={visibleData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorInterns" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#0B1EAE" stopOpacity={0.4}/>
+                  <stop offset="95%" stopColor="#0B1EAE" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <Tooltip 
+                contentStyle={{ borderRadius: '8px', border: '1px solid #e8eaf0', boxShadow: 'none' }}
+                labelStyle={{ fontWeight: 'bold', color: '#0f172a' }}
+                itemStyle={{ color: '#0B1EAE', fontWeight: 'bold' }}
+                formatter={(value) => [`${value} Interns`, 'Active']}
+              />
+              <Area 
+                type="monotone" 
+                dataKey="interns" 
+                stroke="#0B1EAE" 
+                strokeWidth={2}
+                fillOpacity={1} 
+                fill="url(#colorInterns)" 
+                isAnimationActive={!isDragging} 
+              />
+              <XAxis 
+                dataKey="name" 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fill: '#64748b', fontSize: 11 }} 
+                dy={10}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
-      <div className={styles.filterGrid}>
+      <div className={styles.grid4}>
         {['All Department', 'All School', 'All Status', 'Present'].map((filter, idx) => (
-          <div key={idx} className={styles.selectWrapper}>
-            <select className={styles.filterSelect} defaultValue={filter}><option>{filter}</option></select>
-          </div>
+          <select key={idx} className={styles.select} defaultValue={filter}>
+            <option>{filter}</option>
+          </select>
         ))}
       </div>
 
       {error && <div className={styles.errorBanner}>{error}</div>}
 
-      {/* ─── MAIN TABLE ─── */}
-      <div className={styles.tableContainer}>
-        <div className={styles.tableHeader}>
-          <h2 className={styles.tableTitle}>List Of Interns</h2>
-          <div className={styles.tableControls}>
-            <button className={styles.sortButton}>Sort <SlidersHorizontal size={14} /></button>
-            <button className={styles.iconButton}><Search size={16} /></button>
+      <div className={styles.card} style={{ padding: '16px 18px' }}>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>List Of Interns</h2>
+          <div className={styles.flexRow}>
+            <button className={styles.btn}>Sort <SlidersHorizontal size={14} /></button>
+            <button className={styles.btn}><Search size={14} /></button>
           </div>
         </div>
 
@@ -265,7 +389,7 @@ export default function InternsList() {
                 <th>School</th>
                 <th>Date Started</th>
                 <th>Status</th>
-                <th className={styles.actionCell}></th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -273,48 +397,53 @@ export default function InternsList() {
                 <tr><td colSpan="7" className={styles.emptyRow}>No interns found.</td></tr>
               ) : (
                 interns.map((user) => {
+                  const departmentName = user.intern?.department?.name || user.department?.name || user.assigned_department || 'Not Assigned';
+                  const schoolName = user.intern?.school?.name || user.school?.name || user.school || 'Not Assigned';
+                  
                   return (
-                    <tr key={user.id} className={isSelected(user.id) ? "bg-blue-50/50" : ""}>
+                    <tr key={user.id} className={isSelected(user.id) ? styles.selectedRow : ""}>
                       <td className={styles.checkboxCell}>
                         <input type="checkbox" className={styles.checkbox} checked={isSelected(user.id)} onChange={() => toggleInternSelection(user)}/>
                       </td>
                       <td>
                         <div className={styles.internProfile}>
                           <div className={styles.avatar}>
-                            <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.first_name + user.id}`} alt="avatar" />
+                            <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.first_name + user.id}`} alt="avatar" style={{ width: '100%', height: '100%' }} />
                           </div>
-                          <div>
+                          <div className={styles.flexCol} style={{ gap: '2px' }}>
                             <p className={styles.internName}>{user.first_name} {user.last_name}</p>
                             <p className={styles.internEmail}>{user.email}</p>
                           </div>
                         </div>
                       </td>
-                      <td className={styles.cellText}>{getDepartmentName(user.intern?.department_id)}</td>
-                      <td className={styles.cellText}>{getSchoolName(user.intern?.school_id, user.intern?.school)}</td>
-                      <td className={styles.cellText}>{formatDate(user.intern?.date_started || user.created_at)}</td>
+                      
+                      <td>{departmentName}</td>
+                      <td>{schoolName}</td>
+                      <td>{formatDate(user.intern?.date_started || user.date_started || user.created_at)}</td>
+                      
                       <td>
                         <span className={user.status?.toLowerCase() === 'active' ? styles.statusActive : styles.statusInactive}>
                           {user.status || 'Unknown'}
                         </span>
                       </td>
-                      <td className={styles.actionCell}>
+                      <td style={{ textAlign: 'right' }}>
                         <button 
-                          className={styles.actionButton} 
+                          className={styles.actionBtn} 
                           onClick={() => {
                             setSelectedInternModal({
                               id: user.id, 
                               name: `${user.first_name} ${user.last_name}`,
                               email: user.email,
-                              department: getDepartmentName(user.intern?.department_id),
-                              school: getSchoolName(user.intern?.school_id, user.intern?.school),
-                              course: user.intern?.course || 'N/A',
+                              department: departmentName,
+                              school: schoolName,
+                              course: user.intern?.course || user.course || 'Not Assigned',
                               emergency_name: user.intern?.emergency_name || 'NOT PROVIDED',
                               emergency_number: user.intern?.emergency_number || 'NOT PROVIDED',
                               emergency_address: user.intern?.emergency_address || 'NOT PROVIDED',
                             });
                           }}
                         >
-                          <MoreHorizontal size={18} />
+                          <MoreHorizontal size={16} />
                         </button>
                       </td>
                     </tr>
@@ -326,77 +455,78 @@ export default function InternsList() {
         </div>
       </div>
 
-      {/* Single Intern Details Modal */}
       {selectedInternModal && <InternDetailsModal intern={selectedInternModal} onClose={() => setSelectedInternModal(null)} />}
 
-      {/* ─── FLOATING BULK ACTION BAR ─── */}
       {selectedInterns.length > 0 && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-white rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-200 px-6 py-3 flex items-center gap-6 animate-slide-up z-40">
-          <div className="flex items-center gap-2">
-            <span className="bg-[#0B1EAE] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">{selectedInterns.length}</span>
-            <span className="font-semibold text-slate-700 text-sm">Selected</span>
+        <div className={styles.floatingBar}>
+          <div className={styles.flexRow}>
+            <span className={styles.badgeCircle}>{selectedInterns.length}</span>
+            <span className={styles.sectionTitle} style={{ fontSize: '13px' }}>Selected</span>
           </div>
-          <div className="w-px h-6 bg-slate-300"></div>
-          <div className="flex gap-2">
-            <button onClick={() => setActiveBulkModal('remove')} className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-              <UserMinus size={16} /> Remove
+          <div className={styles.dividerY}></div>
+          <div className={styles.flexRow}>
+            <button onClick={() => setActiveBulkModal('remove')} className={`${styles.btn} ${styles.btnDanger}`}>
+              <UserMinus size={14} /> Remove
             </button>
-            <button onClick={() => setActiveBulkModal('export')} className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
-              <Download size={16} /> Export
+            <button onClick={() => setActiveBulkModal('export')} className={styles.btn}>
+              <Download size={14} /> Export
             </button>
-            <button onClick={() => setActiveBulkModal('addHours')} className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#0B1EAE] hover:bg-blue-50 rounded-lg transition-colors">
-              <Clock size={16} /> Add Hours
+            <button onClick={() => setActiveBulkModal('addHours')} className={`${styles.btn} ${styles.btnPrimary}`}>
+              <Clock size={14} /> Add Hours
             </button>
           </div>
-          <button onClick={clearSelection} className="ml-4 text-slate-400 hover:text-slate-600"><X size={18} /></button>
+          <button onClick={clearSelection} className={styles.actionBtn} style={{ marginLeft: '5px' }}><X size={16} /></button>
         </div>
       )}
 
-      {/* ─── 1. REMOVE INTERNS MODAL ─── */}
+      {/* ─── MODALS ─── */}
       {activeBulkModal === 'remove' && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-xl">
-            <div className="p-6">
-              <div className="flex items-center gap-2 mb-6 text-slate-800">
-                <UserMinus size={24} />
-                <h2 className="text-xl font-semibold">Remove - Selected Interns</h2>
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <div className={styles.flexRow}>
+              <UserMinus size={18} className={styles.sectionTitle} />
+              <h2 className={styles.sectionTitle}>Remove - Selected Interns</h2>
+            </div>
+            
+            <div className={styles.nestedCard} style={{ background: '#fef2f2', borderColor: '#fecaca' }}>
+              <div className={styles.flexRow} style={{ color: '#dc2626' }}>
+                <AlertCircle size={14} />
+                <span style={{ fontSize: '13px', fontWeight: '700' }}>This action cannot be undone</span>
               </div>
-              <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
-                <div className="flex items-center gap-2 text-red-600 font-medium mb-1">
-                  <AlertCircle size={18} /><span>This action cannot be undone</span>
-                </div>
-                <p className="text-sm text-slate-500 pl-6">Removing these interns will permanently delete their profiles, attendance records, time logs, and all associated data from the system.</p>
+              <p className={styles.subText} style={{ paddingLeft: '19px' }}>Removing these interns will permanently delete their profiles, attendance records, time logs, and all associated data from the system.</p>
+            </div>
+
+            <div className={styles.nestedCard}>
+              <div className={styles.flexRowBetween}>
+                <h3 className={styles.label}>Selected Interns</h3>
+                <span className={styles.badgeCircle} style={{ background: '#dc2626', width: 'auto', padding: '0 6px' }}>{selectedInterns.length}</span>
               </div>
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-medium text-slate-700">Selected Interns</h3>
-                  <span className="bg-white border border-red-200 text-red-600 rounded-full px-2 py-0.5 text-sm font-medium">{selectedInterns.length}</span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {selectedInterns.map((intern, idx) => (
-                    <div key={idx} className="bg-white border border-slate-200 rounded-lg px-3 py-1.5 flex items-center gap-2 text-sm text-slate-600 shadow-sm">
-                      <Search size={14} className="text-slate-400" />{intern.first_name} {intern.last_name}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="border border-slate-200 rounded-xl p-4">
-                <label className="block text-sm font-medium text-slate-700 mb-2">Type <span className="text-red-600">REMOVE</span> to confirm</label>
-                <input 
-                  type="text" 
-                  placeholder="Type REMOVE here ...." 
-                  value={confirmRemoveText}
-                  onChange={(e) => setConfirmRemoveText(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg px-4 py-2 outline-none focus:border-red-500"
-                />
+              <div className={styles.flexRow} style={{ flexWrap: 'wrap' }}>
+                {selectedInterns.map((intern, idx) => (
+                  <div key={idx} className={styles.chip}>
+                    <Search size={12} /> {intern.first_name} {intern.last_name}
+                  </div>
+                ))}
               </div>
             </div>
-            <div className="bg-slate-50 px-6 py-4 flex justify-end gap-3 border-t border-slate-100">
-              <button onClick={() => setActiveBulkModal(null)} className="px-5 py-2 text-sm font-medium text-white bg-slate-400 rounded-lg">Cancel</button>
+
+            <div className={styles.nestedCard}>
+              <label className={styles.label}>Type <span style={{ color: '#dc2626' }}>REMOVE</span> to confirm</label>
+              <input 
+                type="text" 
+                placeholder="Type REMOVE here ...." 
+                value={confirmRemoveText}
+                onChange={(e) => setConfirmRemoveText(e.target.value)}
+                className={styles.input}
+              />
+            </div>
+            
+            <div className={styles.flexRowEnd} style={{ marginTop: '5px' }}>
+              <button onClick={() => setActiveBulkModal(null)} className={styles.btn}>Cancel</button>
               <button 
                 onClick={handleBulkRemove}
                 disabled={confirmRemoveText !== 'REMOVE' || isProcessing}
-                className="px-5 py-2 text-sm font-medium text-white bg-[#991B1B] hover:bg-red-900 rounded-lg disabled:opacity-50"
+                className={`${styles.btn} ${styles.btnDangerFill}`}
               >
                 {isProcessing ? 'Removing...' : 'Confirm Remove'}
               </button>
@@ -405,128 +535,131 @@ export default function InternsList() {
         </div>
       )}
 
-      {/* ─── 2. EXPORT MODAL ─── */}
       {activeBulkModal === 'export' && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-xl">
-            <div className="p-6">
-              <div className="flex items-center gap-2 mb-6 text-slate-800"><Clock size={24} /><h2 className="text-xl font-semibold">Export - Selected Interns</h2></div>
-              
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6">
-                <h3 className="font-medium text-slate-700 mb-3 text-sm">Selected Interns</h3>
-                <div className="flex flex-wrap gap-2">
-                  {selectedInterns.map((intern, idx) => (
-                    <div key={idx} className="bg-white border border-slate-200 rounded-lg px-3 py-1.5 flex items-center gap-2 text-sm text-slate-600 shadow-sm">
-                      <Search size={14} className="text-slate-400" />{intern.first_name} {intern.last_name}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <h3 className="font-medium text-slate-700 mb-3 text-sm">What to Export?</h3>
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                {[
-                  { id: 'info', icon: <Search size={24}/>, title: 'Intern Info', desc: 'Name, School, Department, Contacts...' },
-                  { id: 'log', icon: <Clock size={24}/>, title: 'Attendance Log', desc: 'Full time -in/out history' },
-                  { id: 'progress', icon: <Activity size={24}/>, title: 'Hours Progress', desc: 'Rendered vs. Required hrs' },
-                  { id: 'full', icon: <File size={24}/>, title: 'Full Report', desc: 'All data combined' }
-                ].map((opt) => (
-                  <div key={opt.id} onClick={() => setExportType(opt.id)} className={`border rounded-xl p-4 cursor-pointer flex items-start gap-4 ${exportType === opt.id ? 'border-[#0B1EAE] ring-1 ring-[#0B1EAE] bg-blue-50/30' : 'border-slate-200'}`}>
-                    <div className="mt-1 text-slate-700">{opt.icon}</div>
-                    <div><h4 className="font-semibold text-slate-800">{opt.title}</h4><p className="text-xs text-slate-500 mt-1">{opt.desc}</p></div>
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <div className={styles.flexRow}>
+              <Clock size={18} className={styles.sectionTitle} />
+              <h2 className={styles.sectionTitle}>Export - Selected Interns</h2>
+            </div>
+            
+            <div className={styles.nestedCard}>
+              <h3 className={styles.label}>Selected Interns</h3>
+              <div className={styles.flexRow} style={{ flexWrap: 'wrap' }}>
+                {selectedInterns.map((intern, idx) => (
+                  <div key={idx} className={styles.chip}>
+                    <Search size={12} /> {intern.first_name} {intern.last_name}
                   </div>
                 ))}
               </div>
+            </div>
 
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <h3 className="font-medium text-slate-700 mb-3 text-sm">Data Range</h3>
-                  <select className="w-full border border-slate-300 rounded-lg px-4 py-2 outline-none focus:border-[#0B1EAE] text-sm text-slate-700">
-                    <option>This Month</option>
-                    <option>Last Month</option>
-                    <option>All Time</option>
-                  </select>
-                  <p className="text-xs text-slate-400 mt-2">Rendered vs. Required hrs</p>
-                </div>
-                <div>
-                  <h3 className="font-medium text-slate-700 mb-3 text-sm">File Format</h3>
-                  <div className="flex gap-2">
-                    {['Excel', 'CSV', 'PDF'].map(fmt => (
-                      <button key={fmt} onClick={() => setExportFormat(fmt)} className={`px-4 py-2 text-sm rounded-lg border transition-all ${exportFormat === fmt ? 'border-[#0B1EAE] text-[#0B1EAE] font-medium' : 'border-slate-200'}`}>{fmt}</button>
-                    ))}
+            <h3 className={styles.label}>What to Export?</h3>
+            <div className={styles.grid2}>
+              {[
+                { id: 'info', icon: <Search size={18}/>, title: 'Intern Info', desc: 'Name, School, Dept...' },
+                { id: 'log', icon: <Clock size={18}/>, title: 'Attendance Log', desc: 'Time-in/out history' },
+                { id: 'progress', icon: <Activity size={18}/>, title: 'Hours Progress', desc: 'Rendered vs Required' },
+                { id: 'full', icon: <File size={18}/>, title: 'Full Report', desc: 'All data combined' }
+              ].map((opt) => (
+                <div key={opt.id} onClick={() => setExportType(opt.id)} className={`${styles.exportOption} ${exportType === opt.id ? styles.exportOptionActive : ''}`}>
+                  <div style={{ color: exportType === opt.id ? '#0B1EAE' : '#64748b' }}>{opt.icon}</div>
+                  <div className={styles.flexCol}>
+                    <h4 className={styles.sectionTitle} style={{ fontSize: '13px' }}>{opt.title}</h4>
+                    <p className={styles.subText} style={{ fontSize: '11px' }}>{opt.desc}</p>
                   </div>
+                </div>
+              ))}
+            </div>
+
+            <div className={styles.grid2} style={{ marginTop: '5px' }}>
+              <div className={styles.flexCol}>
+                <h3 className={styles.label}>Data Range</h3>
+                <select className={styles.select}>
+                  <option>This Month</option>
+                  <option>Last Month</option>
+                  <option>All Time</option>
+                </select>
+              </div>
+              <div className={styles.flexCol}>
+                <h3 className={styles.label}>File Format</h3>
+                <div className={styles.flexRow}>
+                  {['Excel', 'CSV', 'PDF'].map(fmt => (
+                    <button key={fmt} onClick={() => setExportFormat(fmt)} className={`${styles.btn} ${exportFormat === fmt ? styles.btnPrimary : ''}`} style={{ flex: 1 }}>{fmt}</button>
+                  ))}
                 </div>
               </div>
             </div>
-            <div className="bg-slate-50 px-6 py-4 flex justify-center gap-3 border-t border-slate-100">
-              <button onClick={handleBulkExport} disabled={isProcessing} className="px-8 py-2 text-sm font-medium text-white bg-[#0A114A] hover:bg-[#0B1EAE] rounded-lg disabled:opacity-50">
+            
+            <div className={styles.flexRowEnd} style={{ marginTop: '5px' }}>
+              <button onClick={() => setActiveBulkModal(null)} className={styles.btn}>Cancel</button>
+              <button onClick={handleBulkExport} disabled={isProcessing} className={`${styles.btn} ${styles.btnPrimary}`}>
                 {isProcessing ? 'Exporting...' : 'Export'}
               </button>
-              <button onClick={() => setActiveBulkModal(null)} className="px-8 py-2 text-sm font-medium text-white bg-slate-400 rounded-lg">Cancel</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ─── 3. ADD HOURS MODAL ─── */}
       {activeBulkModal === 'addHours' && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-2xl overflow-y-auto max-h-[90vh] shadow-xl">
-            <div className="p-6">
-              <div className="flex items-center gap-2 mb-6 text-slate-800"><Clock size={24} /><h2 className="text-xl font-semibold">Add Hours - Selected Interns</h2></div>
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <div className={styles.flexRow}>
+              <Clock size={18} className={styles.sectionTitle} />
+              <h2 className={styles.sectionTitle}>Add Hours - Selected Interns</h2>
+            </div>
 
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6">
-                <h3 className="font-medium text-slate-700 mb-3 text-sm">Selected Interns</h3>
-                <div className="flex flex-wrap gap-2">
-                  {selectedInterns.map((intern, idx) => (
-                    <div key={idx} className="bg-white border border-slate-200 rounded-lg px-3 py-1.5 flex items-center gap-2 text-sm text-slate-600 shadow-sm">
-                      <Search size={14} className="text-slate-400" />{intern.first_name} {intern.last_name}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mb-6">
-                <h3 className="font-medium text-slate-700 mb-3 text-sm">Event Type</h3>
-                <div className="flex flex-wrap gap-2">
-                  {['Regular Day', 'Event/ Activity', 'Makeup Hours'].map(type => (
-                    <button key={type} onClick={() => setEventType(type)} className={`px-4 py-1.5 text-sm rounded-lg border transition-all ${eventType === type ? 'border-slate-800 bg-slate-50 font-medium' : 'border-slate-200'}`}>{type}</button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-slate-700 mb-2">Assign To date</label>
-                <input type="date" value={addHoursForm.date} onChange={e => setAddHoursForm({...addHoursForm, date: e.target.value})} className="w-full bg-[#1e2b85] text-white rounded-lg px-4 py-2 outline-none [color-scheme:dark]" />
-              </div>
-
-              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 mb-6">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Time In</label>
-                  <input type="time" value={addHoursForm.timeIn} onChange={e => setAddHoursForm({...addHoursForm, timeIn: e.target.value})} className="w-full bg-[#1e2b85] text-white rounded-lg px-4 py-2 outline-none [color-scheme:dark]" />
-                </div>
-                <span className="text-slate-500 mt-4">To</span>
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Time Out</label>
-                  <input type="time" value={addHoursForm.timeOut} onChange={e => setAddHoursForm({...addHoursForm, timeOut: e.target.value})} className="w-full bg-[#1e2b85] text-white rounded-lg px-4 py-2 outline-none [color-scheme:dark]" />
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Event/ Reason</label>
-                <input type="text" placeholder="Input Reason" value={addHoursForm.reason} onChange={e => setAddHoursForm({...addHoursForm, reason: e.target.value})} className="w-full border border-slate-300 rounded-lg px-4 py-2 text-sm outline-none focus:border-[#0B1EAE]" />
-              </div>
-
-              <div className="mb-2">
-                <label className="block text-sm font-medium text-slate-700 mb-2">Admin Notes</label>
-                <textarea rows="4" placeholder="Add Notes" value={addHoursForm.notes} onChange={e => setAddHoursForm({...addHoursForm, notes: e.target.value})} className="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm outline-none resize-none"></textarea>
+            <div className={styles.nestedCard}>
+              <h3 className={styles.label}>Selected Interns</h3>
+              <div className={styles.flexRow} style={{ flexWrap: 'wrap' }}>
+                {selectedInterns.map((intern, idx) => (
+                  <div key={idx} className={styles.chip}>
+                    <Search size={12} /> {intern.first_name} {intern.last_name}
+                  </div>
+                ))}
               </div>
             </div>
-            <div className="bg-white px-6 py-4 flex justify-center gap-3 border-t border-slate-100 pb-8">
-              <button onClick={handleBulkAddHours} disabled={isProcessing} className="px-8 py-2.5 text-sm font-medium text-white bg-[#0A114A] hover:bg-[#0B1EAE] rounded-lg disabled:opacity-50">
-                {isProcessing ? 'Saving...' : 'Save & Add to All'}
+
+            <div className={styles.flexCol}>
+              <h3 className={styles.label}>Event Type</h3>
+              <div className={styles.flexRow} style={{ flexWrap: 'wrap' }}>
+                {['Regular Day', 'Event/ Activity', 'Makeup Hours'].map(type => (
+                  <button key={type} onClick={() => setEventType(type)} className={`${styles.btn} ${eventType === type ? styles.btnPrimary : ''}`}>{type}</button>
+                ))}
+              </div>
+            </div>
+
+            <div className={styles.flexCol}>
+              <label className={styles.label}>Assign To date</label>
+              <input type="date" value={addHoursForm.date} onChange={e => setAddHoursForm({...addHoursForm, date: e.target.value})} className={styles.input} />
+            </div>
+
+            <div className={styles.grid2}>
+              <div className={styles.flexCol}>
+                <label className={styles.label}>Time In</label>
+                <input type="time" value={addHoursForm.timeIn} onChange={e => setAddHoursForm({...addHoursForm, timeIn: e.target.value})} className={styles.input} />
+              </div>
+              <div className={styles.flexCol}>
+                <label className={styles.label}>Time Out</label>
+                <input type="time" value={addHoursForm.timeOut} onChange={e => setAddHoursForm({...addHoursForm, timeOut: e.target.value})} className={styles.input} />
+              </div>
+            </div>
+
+            <div className={styles.flexCol}>
+              <label className={styles.label}>Event / Reason</label>
+              <input type="text" placeholder="Input Reason" value={addHoursForm.reason} onChange={e => setAddHoursForm({...addHoursForm, reason: e.target.value})} className={styles.input} />
+            </div>
+
+            <div className={styles.flexCol}>
+              <label className={styles.label}>Admin Notes</label>
+              <textarea rows="3" placeholder="Add Notes" value={addHoursForm.notes} onChange={e => setAddHoursForm({...addHoursForm, notes: e.target.value})} className={styles.textarea}></textarea>
+            </div>
+
+            <div className={styles.flexRowEnd} style={{ marginTop: '5px' }}>
+              <button onClick={() => setActiveBulkModal(null)} className={styles.btn}>Cancel</button>
+              <button onClick={handleBulkAddHours} disabled={isProcessing} className={`${styles.btn} ${styles.btnPrimary}`}>
+                {isProcessing ? 'Saving...' : 'Save'}
               </button>
-              <button onClick={() => setActiveBulkModal(null)} className="px-8 py-2.5 text-sm font-medium text-white bg-slate-400 rounded-lg">Cancel</button>
             </div>
           </div>
         </div>

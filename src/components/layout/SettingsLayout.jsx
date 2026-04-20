@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { BookOpen, Sliders, Users, ShieldAlert } from 'lucide-react';
+import { BookOpen, Sliders, Users, ShieldAlert, Building, MapPin } from 'lucide-react';
 import styles from './SettingsLayout.module.css';
 
 export default function SettingsLayout() {
@@ -16,12 +16,26 @@ export default function SettingsLayout() {
         <aside className={styles.sidebar}>
           <nav className={styles.navGroup}>
             
-            {/* 👇 FIXED: Using short relative paths instead of full URLs 👇 */}
             <NavLink 
               to="general" 
               className={({ isActive }) => isActive ? `${styles.navItem} ${styles.activeItem}` : styles.navItem}
             >
               <Sliders size={18} /> General Setup
+            </NavLink>
+
+            <NavLink 
+              to="departments" 
+              className={({ isActive }) => isActive ? `${styles.navItem} ${styles.activeItem}` : styles.navItem}
+            >
+              <Building size={18} /> Departments
+            </NavLink>
+
+            {/* ✨ NEW: Branch Locations (Geo-Fencing) ✨ */}
+            <NavLink 
+              to="branches" 
+              className={({ isActive }) => isActive ? `${styles.navItem} ${styles.activeItem}` : styles.navItem}
+            >
+              <MapPin size={18} /> Branch Locations
             </NavLink>
 
             <NavLink 

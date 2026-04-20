@@ -12,7 +12,9 @@ import InternsList from './pages/hr/interns/InternsList';
 import RoleManagement from './pages/hr/rolemanagement/RoleManagement';
 import ExportReports from './pages/hr/export/ExportReports';
 import SettingsLayout from './components/layout/SettingsLayout'; 
-import SettingsPage from "./pages/hr/settings/SettingsPage";     
+import CurriculumSettings from './pages/hr/settings/CurriculumSettings';  
+import DepartmentSetting from './pages/hr/settings/DepartmentSetting'; // ✨ Added
+import BranchSetting from './pages/hr/settings/BranchSetting';         // ✨ Added
 import TimeTracker from './pages/hr/timetracker/TimeTracker'; 
 import HREventsPage from './pages/hr/events/EventsPage'; 
 import CameraVerification from "./pages/hr/cameraverification/CameraVerification";
@@ -38,7 +40,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* 👇 ROOT REDIRECT: Sends anyone at "/" straight to "/login" */}
+        {/* 👇 ROOT REDIRECT */}
         <Route path="/" element={<Navigate to="/login" replace />} />
 
         {/* PUBLIC ROUTES */}
@@ -53,7 +55,7 @@ export default function App() {
             <Route index element={<DashboardHome />} />
             <Route path="interns" element={<InternsList />} />
             
-            {/* ✨ MOVED HERE: Intern Profile now loads inside the HR layout! ✨ */}
+            {/* Intern Profile loads inside the HR layout */}
             <Route path="interns/:id" element={<InternProfile />} />
             
             <Route path="time-tracker" element={<TimeTracker />} /> 
@@ -65,7 +67,12 @@ export default function App() {
             {/* --- SETTINGS ROUTES --- */}
             <Route path="settings" element={<SettingsLayout />}>
               <Route index element={<Navigate to="curriculum" replace />} />
-              <Route path="curriculum" element={<SettingsPage />} />
+              <Route path="curriculum" element={<CurriculumSettings />} />
+              
+              {/* ✨ Added Department & Branch Routes ✨ */}
+              <Route path="departments" element={<DepartmentSetting />} />
+              <Route path="branches" element={<BranchSetting />} />
+              
               <Route path="general" element={<PlaceholderPage title="General Setup" />} />
               <Route path="accounts" element={<PlaceholderPage title="Admin Accounts" />} />
               <Route path="security" element={<PlaceholderPage title="Security & Logs" />} />
@@ -81,6 +88,7 @@ export default function App() {
             <Route path="forms" element={<Forms />} />
             <Route path="profile" element={<InternProfile />} />
             
+            {/* ✨ RESTORED: History & Announcements ✨ */}
             <Route path="history" element={<PlaceholderPage title="History" />} />
             <Route path="announcements" element={<PlaceholderPage title="Announcements" />} />
           </Route>

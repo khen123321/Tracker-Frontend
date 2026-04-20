@@ -16,7 +16,7 @@ const api = axios.create({
 });
 
 // 1. REQUEST INTERCEPTOR
-// Automatically grabs your token and attaches it to every single request
+// Automatically grabs your token and attaches it to every single request just before it fires
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('cims_token');
@@ -31,7 +31,7 @@ api.interceptors.request.use(
 );
 
 // 2. RESPONSE INTERCEPTOR
-// If the server says "401 Unauthorized" (token expired), 
+// If the server says "401 Unauthorized" (token expired/invalid), 
 // it kicks the user back to the login page automatically.
 api.interceptors.response.use(
   (response) => response,
@@ -40,8 +40,11 @@ api.interceptors.response.use(
     const isLoginRequest = error.config?.url?.includes('/login');
     
     if (error.response?.status === 401 && !isLoginRequest) {
+      console.warn("Session expired. Redirecting to login...");
       localStorage.removeItem('cims_token');
-      // Use window.location for a hard redirect to clear any bad state
+      localStorage.removeItem('user'); // Good practice to clear user data too!
+      
+      // Use window.location for a hard redirect to clear any bad React state
       window.location.href = '/login';
     }
     

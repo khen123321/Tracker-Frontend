@@ -1,16 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard, Clock, ScrollText,
-    FileText, Megaphone, Bell, UserCircle, MoreHorizontal,
+    FileText, Megaphone, UserCircle, MoreHorizontal,
+    Menu, X, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import styles from './InternLayout.module.css';
 import logoImage from '../../assets/logo.png';
-import NotificationBell from '../../pages/intern/NotificationBell'; // ✅ Imported Bell
+import smallLogo from '../../assets/logo-s.png'; 
+import NotificationBell from '../../pages/intern/NotificationBell';
 
 const InternLayout = () => {
     const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('user')) || {};
+    
+    // State to handle sidebar collapse on desktop and visibility on mobile
+    const [isCollapsed, setIsCollapsed] = useState(false);
+    const [isMobileOpen, setIsMobileOpen] = useState(false);
 
     const handleLogout = () => {
         if (window.confirm('Are you sure you want to log out?')) {
@@ -23,43 +29,65 @@ const InternLayout = () => {
     const navCls = ({ isActive }) =>
         isActive ? `${styles.navItem} ${styles.navItemActive}` : styles.navItem;
 
+    const toggleSidebar = () => setIsCollapsed(!isCollapsed);
+    const toggleMobileMenu = () => setIsMobileOpen(!isMobileOpen);
+
     return (
         <div className={styles.layoutWrapper}>
 
+            {/* ─── MOBILE OVERLAY ─── */}
+            {isMobileOpen && (
+                <div 
+                    className={styles.mobileOverlay} 
+                    onClick={() => setIsMobileOpen(false)}
+                />
+            )}
+
             {/* ─── SIDEBAR ─── */}
-            <aside className={styles.sidebar}>
+            <aside className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ''} ${isMobileOpen ? styles.mobileOpen : ''}`}>
+                
+                {/* 🌟 Desktop Collapse Toggle 🌟 */}
+                <button onClick={toggleSidebar} className={styles.collapseToggleBtn}>
+                    {isCollapsed ? <ChevronRight size={16} strokeWidth={2.5} /> : <ChevronLeft size={16} strokeWidth={2.5} />}
+                </button>
+
+                {/* Mobile Close Button */}
+                <button className={styles.mobileCloseBtn} onClick={toggleMobileMenu}>
+                    <X size={24} color="white" />
+                </button>
+
                 <div className={styles.brand}>
-                    <img src={logoImage} alt="CLIMBS Logo" className={styles.logoImage} />
+                    <img 
+                        src={isCollapsed ? smallLogo : logoImage} 
+                        alt="CLIMBS Logo" 
+                        className={isCollapsed ? styles.smallLogoImage : styles.logoImage} 
+                    />
                 </div>
 
                 <nav className={styles.navMenu}>
-                    <NavLink to="/intern-dashboard" end className={navCls}>
+                    <NavLink to="/intern-dashboard" end className={navCls} onClick={() => setIsMobileOpen(false)}>
                         <LayoutDashboard size={20} strokeWidth={1.5} />
-                        <span>Dashboard</span>
+                        <span className={styles.navText}>Dashboard</span>
                     </NavLink>
-                    <NavLink to="/intern-dashboard/attendance" className={navCls}>
+                    <NavLink to="/intern-dashboard/attendance" className={navCls} onClick={() => setIsMobileOpen(false)}>
                         <Clock size={20} strokeWidth={1.5} />
-                        <span>Clock In/Out</span>
+                        <span className={styles.navText}>Clock In/Out</span>
                     </NavLink>
-                    <NavLink to="/intern-dashboard/logs" className={navCls}>
+                    <NavLink to="/intern-dashboard/logs" className={navCls} onClick={() => setIsMobileOpen(false)}>
                         <ScrollText size={20} strokeWidth={1.5} />
-                        <span>My Logs</span>
+                        <span className={styles.navText}>My Logs</span>
                     </NavLink>
-                    <NavLink to="/intern-dashboard/forms" className={navCls}>
+                    <NavLink to="/intern-dashboard/forms" className={navCls} onClick={() => setIsMobileOpen(false)}>
                         <FileText size={20} strokeWidth={1.5} />
-                        <span>Forms</span>
+                        <span className={styles.navText}>Forms</span>
                     </NavLink>
-                    <NavLink to="/intern-dashboard/announcements" className={navCls}>
+                    <NavLink to="/intern-dashboard/announcements" className={navCls} onClick={() => setIsMobileOpen(false)}>
                         <Megaphone size={20} strokeWidth={1.5} />
-                        <span>Announcements</span>
+                        <span className={styles.navText}>Announcements</span>
                     </NavLink>
-                    <NavLink to="/intern-dashboard/notifications" className={navCls}>
-                        <Bell size={20} strokeWidth={1.5} />
-                        <span>Notifications</span>
-                    </NavLink>
-                    <NavLink to="/intern-dashboard/profile" className={navCls}>
+                    <NavLink to="/intern-dashboard/profile" className={navCls} onClick={() => setIsMobileOpen(false)}>
                         <UserCircle size={20} strokeWidth={1.5} />
-                        <span>Profile</span>
+                        <span className={styles.navText}>Profile</span>
                     </NavLink>
                 </nav>
 
@@ -72,16 +100,23 @@ const InternLayout = () => {
                             {user.first_name} {user.last_name}
                         </span>
                     </div>
-                    <MoreHorizontal size={18} color="#94a3b8" />
+                    {!isCollapsed && <MoreHorizontal size={18} color="#94a3b8" className={styles.profileMoreIcon} />}
                 </div>
             </aside>
 
             {/* ─── MAIN CONTENT ─── */}
-            {/* Added flex column here so the header sits nicely above the Outlet */}
             <div className={`${styles.mainWrapper} flex flex-col h-screen overflow-hidden`}>
                 
-                {/* ✅ NEW TOP HEADER JUST FOR NOTIFICATIONS */}
-                <header className="h-16 bg-white border-b border-slate-100 flex items-center justify-end px-8 shrink-0 z-10">
+                {/* ─── TOP HEADER ─── */}
+                <header className="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-4 md:px-8 shrink-0 z-10">
+                    {/* Mobile Hamburger */}
+                    <button className={styles.hamburgerBtn} onClick={toggleMobileMenu}>
+                        <Menu size={24} className="text-slate-700" />
+                    </button>
+                    
+                    {/* Push bell to right on desktop */}
+                    <div className="flex-1"></div> 
+                    
                     <NotificationBell />
                 </header>
 

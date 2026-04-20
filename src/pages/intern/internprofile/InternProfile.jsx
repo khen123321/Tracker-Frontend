@@ -1,22 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
-  ArrowLeft, Building2, GraduationCap, 
-  FileText, CheckCircle2, XCircle, Clock, Calendar, ShieldCheck 
+    ArrowLeft, Building2, GraduationCap, 
+    FileText, CheckCircle2, XCircle, Clock, Calendar, ShieldCheck 
 } from 'lucide-react';
 import api from '../../../api/axios'; 
 import styles from './InternProfile.module.css';
 
 const InternProfile = () => {
-    // 1. Get ID from URL (HR view)
+    // 1. Get ID from URL (This exists when an HR Admin clicks a row in the table)
     const { id: paramId } = useParams(); 
     const navigate = useNavigate();
     
-    // 2. Get logged-in user from storage (Intern view)
-    const loggedInUser = JSON.parse(localStorage.getItem('user')) || {};
-    
-    // ✨ THE FIX: Decide which ID to use
-    const targetId = paramId || loggedInUser.id;
+    // 2. The Smart Fetch Logic
+    const targetId = paramId || 'me';
+    const isViewingOwnProfile = !paramId;
 
     const [intern, setIntern] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -24,34 +22,24 @@ const InternProfile = () => {
 
     useEffect(() => {
         const fetchInternDetails = async () => {
-            // Guard clause: If there's no ID at all, stop loading and show error
-            if (!targetId) {
-                setError("User identity not found.");
-                setLoading(false);
-                return;
-            }
-
             try {
-                // Fetch using the determined targetId
                 const response = await api.get(`/hr/interns/${targetId}`);
                 setIntern(response.data);
                 setError(null);
             } catch (err) {
                 console.error("Failed to fetch intern profile:", err);
-                // Specifically handle 403 Forbidden vs 404 Not Found
                 if (err.response && err.response.status === 403) {
                     setError("You do not have permission to view this profile.");
                 } else {
                     setError("Unable to load profile data.");
                 }
             } finally {
-                // This now ALWAYS runs, fixing the infinite loading
                 setLoading(false);
             }
         };
 
         fetchInternDetails();
-    }, [targetId]); // Re-run if targetId changes
+    }, [targetId]); 
 
     // ─── LOADING STATE ───
     if (loading) {
@@ -88,6 +76,14 @@ const InternProfile = () => {
     
     const isActive = intern.status?.toLowerCase() === 'active';
 
+    // ✨ DYNAMIC DATA MAPPING (No more hardcoded IDs!) ✨
+    const schoolName = profile.school?.name || intern.school?.name || intern.school || profile.school_id || 'Not Assigned by HR';
+    const courseName = profile.course || intern.course || 'Not Assigned by HR';
+    const batchName = profile.batch || intern.batch || 'Current';
+    
+    const branchName = profile.branch?.name || intern.branch?.name || intern.assigned_branch || profile.branch_id || 'Not Assigned by HR';
+    const departmentName = profile.department?.name || intern.department?.name || intern.assigned_department || profile.department_id || 'Not Assigned by HR';
+
     // ─── HELPER COMPONENT ───
     const DocCheck = ({ label, hasDoc }) => (
         <div className={styles.docItem}>
@@ -115,8 +111,7 @@ const InternProfile = () => {
                     <ArrowLeft size={16} /> Back
                 </button>
                 
-                {/* Only show Edit/Export buttons if the user is HR/Admin */}
-                {loggedInUser.role !== 'intern' && (
+                {!isViewingOwnProfile && (
                     <div className={styles.headerActions}>
                         <button className={styles.editBtn}>Edit Profile</button>
                         <button className={styles.exportBtn}>Export Report</button>
@@ -168,7 +163,9 @@ const InternProfile = () => {
 
                         <div className={styles.completionBox}>
                             <span className={styles.completionLabel}>Estimated Completion</span>
-                            <span className={styles.completionDate}>May 24, 2026</span>
+                            <span className={styles.completionDate}>
+                                {profile.date_started ? new Date(new Date(profile.date_started).getTime() + (90 * 24 * 60 * 60 * 1000)).toLocaleDateString() : 'TBD'}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -184,31 +181,37 @@ const InternProfile = () => {
                         <div className={styles.detailsGrid}>
                             <div className={styles.detailItem}>
                                 <label className={styles.detailLabel}>School / University</label>
-                                <p className={styles.detailValue}>{profile.school?.name || profile.school_id || 'Not Specified'}</p>
+                                <p className={styles.detailValue}>
+                                    {schoolName}
+                                </p>
                             </div>
                             <div className={styles.detailItem}>
                                 <label className={styles.detailLabel}>Course & Batch</label>
                                 <p className={styles.detailValue}>
-                                    {profile.course || 'Not Specified'} 
-                                    <span className={styles.detailValueLight}>({profile.batch || 'Current'})</span>
+                                    {courseName}
+                                    {courseName !== 'Not Assigned by HR' && (
+                                        <span className={styles.detailValueLight}> ({batchName})</span>
+                                    )}
                                 </p>
                             </div>
                             <div className={styles.detailItem}>
                                 <label className={styles.detailLabel}>Assigned Branch</label>
                                 <div className={styles.detailValueFlex}>
                                     <Building2 size={16} className={styles.detailIcon} /> 
-                                    {profile.branch?.name || profile.branch_id || 'Headquarters'}
+                                    {branchName}
                                 </div>
                             </div>
                             <div className={styles.detailItem}>
                                 <label className={styles.detailLabel}>Department</label>
-                                <p className={styles.detailValue}>{profile.department?.name || profile.department_id || 'IT & Development'}</p>
+                                <p className={styles.detailValue}>
+                                    {departmentName}
+                                </p>
                             </div>
                             <div className={styles.detailItem}>
                                 <label className={styles.detailLabel}>Start Date</label>
                                 <div className={styles.detailValueFlex}>
                                     <Calendar size={16} className={styles.detailIcon} />
-                                    {profile.date_started ? new Date(profile.date_started).toLocaleDateString() : 'Pending'}
+                                    {profile.date_started ? new Date(profile.date_started).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric'}) : 'Pending'}
                                 </div>
                             </div>
                         </div>
