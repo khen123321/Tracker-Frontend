@@ -1,36 +1,36 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Camera, MapPin, AlertTriangle, CheckCircle, XCircle, X } from 'lucide-react';
+import { Camera, MapPin, AlertTriangle, XCircle, X, MessageSquare } from 'lucide-react';
 import api from "../../../api/axios";
 import styles from './CameraVerification.module.css';
 import toast, { Toaster } from 'react-hot-toast';
 
+const Sk = ({ w = '100%', h = '16px', r = '8px' }) => (
+  <div className={styles.skel} style={{ width: w, height: h, borderRadius: r }} />
+);
+
 export default function CameraVerification() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('flagged'); // 'all' or 'flagged'
+  const [filter, setFilter] = useState('all'); 
   const [searchDate, setSearchDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedImage, setSelectedImage] = useState(null);
 
-  // BASE URL for Laravel Storage
-  const STORAGE_URL = "http://localhost:8000/storage/";
+  // Modal State
+  const [rejectModal, setRejectModal] = useState({ show: false, logId: null, reason: '' });
 
-  /**
-   * FETCH LIVE DATA ONLY
-   * Removed all fallback mock data. If the request fails or is empty,
-   * the UI will reflect the real state of the database.
-   */
+  const BACKEND_HOST = window.location.hostname;
+  const STORAGE_URL = `http://${BACKEND_HOST}:8000/storage/`;
+
   const fetchVerificationLogs = useCallback(async () => {
     setLoading(true);
     try {
       const response = await api.get('/hr/attendance/verification', {
         params: { filter, date: searchDate }
       });
-      
-      // We only set what the database gives us
       setLogs(response.data || []);
     } catch (error) {
-      console.error("Error fetching live logs:", error);
-      toast.error('Failed to connect to the server. Showing empty results.');
+      console.error("Error fetching logs:", error);
+      toast.error('Failed to load camera feeds.');
       setLogs([]); 
     } finally {
       setLoading(false);
@@ -41,24 +41,32 @@ export default function CameraVerification() {
     fetchVerificationLogs();
   }, [fetchVerificationLogs]);
 
-  /**
-   * HANDLE APPROVE / REJECT
-   */
-  const handleAction = async (logId, action) => {
+  const handleRejectAction = async () => {
+    if (!rejectModal.reason.trim()) {
+      toast.error("Please enter a reason for the intern.");
+      return;
+    }
+
     try {
-      await api.post(`/hr/attendance/${logId}/verify`, { action });
-      toast.success(`Attendance ${action === 'approve' ? 'Verified' : 'Rejected'}`);
+      await api.post(`/hr/attendance/${rejectModal.logId}/verify`, { 
+        action: 'reject', 
+        reason: rejectModal.reason 
+      });
+      toast.success(`Rejection sent to intern.`);
+      setRejectModal({ show: false, logId: null, reason: '' });
       fetchVerificationLogs(); 
     } catch (error) {
-      console.error("Status update error:", error);
-      toast.error('Failed to update status on server');
+      const backendError = error.response?.data?.error;
+      console.error("Backend Error Details:", backendError || error);
+      toast.error(backendError ? `Server Error: ${backendError}` : 'Could not process rejection.');
     }
   };
 
-  // Helper to resolve image paths
   const getImageUrl = (path) => {
     if (!path) return null;
-    return path.startsWith('http') ? path : `${STORAGE_URL}${path}`;
+    let cleanPath = path.replace(/^public\//, '');
+    cleanPath = cleanPath.startsWith('/') ? cleanPath.slice(1) : cleanPath;
+    return `${STORAGE_URL}${cleanPath}`;
   };
 
   return (
@@ -68,125 +76,159 @@ export default function CameraVerification() {
       <div className={styles.header}>
         <div className={styles.titleBlock}>
           <h1>Camera Verification</h1>
-          <p>Review attendance selfies and investigate suspicious time logs.</p>
+          <p>Inspect selfies and provide feedback for rejected logs.</p>
         </div>
         
         <div className={styles.filters}>
           <input 
             type="date" 
-            className={styles.filterInput}
-            value={searchDate}
-            onChange={(e) => setSearchDate(e.target.value)}
+            className={styles.filterInput} 
+            value={searchDate} 
+            onChange={(e) => setSearchDate(e.target.value)} 
           />
           <select 
-            className={styles.filterSelect}
-            value={filter}
+            className={styles.filterSelect} 
+            value={filter} 
             onChange={(e) => setFilter(e.target.value)}
           >
-            <option value="flagged">Suspicious / Flagged Only</option>
-            <option value="all">All Attendance Logs</option>
+            <option value="all">All Logs</option>
+            <option value="flagged">Flagged Only</option>
           </select>
         </div>
       </div>
 
       {loading ? (
-        <div className={styles.emptyState}>Loading live camera feeds...</div>
+        <div className={styles.grid}>
+          {[1, 2, 3].map(i => (
+            <div key={i} className={styles.internCard}>
+              <Sk h="320px" />
+            </div>
+          ))}
+        </div>
       ) : logs.length === 0 ? (
         <div className={styles.emptyState}>
-          <Camera size={48} style={{ marginBottom: 12, opacity: 0.2 }} />
-          <p>No actual records found for this date/filter.</p>
+          <div className={styles.emptyIconWrapper}>
+            <Camera size={40} />
+          </div>
+          <h3>No records found</h3>
+          <p>There are no verification logs for this date.</p>
         </div>
       ) : (
         <div className={styles.grid}>
           {logs.map(log => (
-            <div key={log.id} className={styles.card}>
-              
-              {/* Header Info */}
+            <div key={log.id} className={styles.internCard}>
               <div className={styles.cardHeader}>
                 <div className={styles.internInfo}>
                   <h3>{log.intern_name}</h3>
                   <p><MapPin size={14} /> {log.department}</p>
                 </div>
-                {log.is_flagged === 1 ? (
-                  <div className={styles.flagBadge}>
-                    <AlertTriangle size={14} /> Suspicious
-                  </div>
-                ) : (
-                  <div className={styles.safeBadge}>Standard</div>
-                )}
+                {/* ✨ CHANGED: Check purely for is_flagged ✨ */}
+                <div className={log.is_flagged === 1 ? styles.flagBadge : styles.safeBadge}>
+                  {log.is_flagged === 1 ? 'Rejected' : 'Under Review'}
+                </div>
               </div>
 
-              {/* Photos Section */}
               <div className={styles.photoSection}>
-                {/* Time In Column */}
-                <div className={styles.photoBox}>
-                  <span className={styles.photoLabel}>Time In</span>
-                  <div 
-                    className={styles.imageWrapper}
-                    onClick={() => log.image_in && setSelectedImage(getImageUrl(log.image_in))}
-                  >
-                    {log.image_in ? (
-                      <img src={getImageUrl(log.image_in)} alt="Time In Selfie" />
-                    ) : (
-                      <div className={styles.noImage}><Camera size={24} /> No Photo</div>
-                    )}
+                {[
+                  { label: 'AM In', photo: log.image_in },
+                  { label: 'Lunch Out', photo: log.lunch_out_selfie },
+                  { label: 'Lunch In', photo: log.lunch_in_selfie },
+                  { label: 'PM Out', photo: log.image_out }
+                ].map((slot, idx) => (
+                  <div key={idx} className={styles.photoBox}>
+                    <div className={styles.photoHeader}>
+                      <span className={styles.photoLabel}>{slot.label}</span>
+                    </div>
+                    <div 
+                      className={styles.imageWrapper} 
+                      onClick={() => slot.photo && setSelectedImage(getImageUrl(slot.photo))}
+                    >
+                      {slot.photo ? (
+                        <img src={getImageUrl(slot.photo)} alt={`${slot.label} Selfie`} />
+                      ) : (
+                        <div className={styles.noImage}>
+                          <Camera size={20} />
+                          <span>No Image</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className={styles.timeLog}>{log.time_in || '--:--'}</div>
-                </div>
-
-                {/* Time Out Column */}
-                <div className={styles.photoBox}>
-                  <span className={styles.photoLabel}>Time Out</span>
-                  <div 
-                    className={styles.imageWrapper}
-                    onClick={() => log.image_out && setSelectedImage(getImageUrl(log.image_out))}
-                  >
-                    {log.image_out ? (
-                      <img src={getImageUrl(log.image_out)} alt="Time Out Selfie" />
-                    ) : (
-                      <div className={styles.noImage}><Camera size={24} /> No Photo</div>
-                    )}
-                  </div>
-                  <div className={styles.timeLog}>{log.time_out || '--:--'}</div>
-                </div>
+                ))}
               </div>
 
-              {/* Flag Reason */}
-              {log.is_flagged === 1 && log.flag_reason && (
-                <div style={{ padding: '0 16px 12px', fontSize: '12px', color: '#ef4444', textAlign: 'center' }}>
-                  <strong>System Note:</strong> {log.flag_reason}
+              {log.flag_reason && (
+                <div className={styles.alertNote}>
+                  <MessageSquare size={16} className={styles.alertIcon} /> 
+                  <span><strong>HR Feedback:</strong> {log.flag_reason}</span>
                 </div>
               )}
 
-              {/* Action Buttons */}
-              {(log.status === 'pending_review' || log.is_flagged === 1) && (
+              {/* ✨ CHANGED: Only show the Reject button if it hasn't been flagged yet ✨ */}
+              {log.is_flagged !== 1 && (
                 <div className={styles.cardActions}>
-                  <button className={styles.btnApprove} onClick={() => handleAction(log.id, 'approve')}>
-                    <CheckCircle size={16} /> Verify OK
-                  </button>
-                  <button className={styles.btnReject} onClick={() => handleAction(log.id, 'reject')}>
-                    <XCircle size={16} /> Reject / Fraud
+                  <button 
+                    className={styles.btnReject} 
+                    onClick={() => setRejectModal({ show: true, logId: log.id, reason: '' })}
+                  >
+                    <XCircle size={16} /> Reject Log
                   </button>
                 </div>
               )}
-
             </div>
           ))}
         </div>
       )}
 
-      {/* Full Size Image Modal */}
+      {/* FULL IMAGE MODAL */}
       {selectedImage && (
         <div className={styles.modalOverlay} onClick={() => setSelectedImage(null)}>
-          <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+          <div className={styles.modalContentFullImage} onClick={e => e.stopPropagation()}>
             <button className={styles.closeModal} onClick={() => setSelectedImage(null)}>
-              <X size={32} />
+              <X size={24} />
             </button>
-            <img src={selectedImage} alt="Full size selfie" />
+            <img src={selectedImage} alt="Full Size Verification" />
           </div>
         </div>
       )}
 
+      {/* REJECTION REASON MODAL */}
+      {rejectModal.show && (
+        <div className={styles.modalOverlay} onClick={() => setRejectModal({ show: false, logId: null, reason: '' })}>
+          <div className={styles.modalDialog} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2><AlertTriangle size={20} /> Rejection Detail</h2>
+              <button className={styles.closeIconBtn} onClick={() => setRejectModal({ show: false, logId: null, reason: '' })}>
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className={styles.modalBody}>
+              <label className={styles.inputLabel}>Note to Intern:</label>
+              <textarea 
+                className={styles.modalTextarea}
+                placeholder="Briefly explain why... (e.g., Incorrect uniform, blurry photo, location mismatch)"
+                value={rejectModal.reason}
+                onChange={(e) => setRejectModal({ ...rejectModal, reason: e.target.value })}
+                rows={4}
+              />
+              <div className={styles.modalFooter}>
+                <button 
+                  className={styles.btnCancel}
+                  onClick={() => setRejectModal({ show: false, logId: null, reason: '' })}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className={styles.btnSubmitReject}
+                  onClick={handleRejectAction}
+                >
+                  Send & Reject
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

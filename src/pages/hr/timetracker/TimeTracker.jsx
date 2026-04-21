@@ -1,7 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import api from '../../../api/axios';
+import api from '../../../api/axios'; 
 import styles from './TimeTracker.module.css';
-import { Bell, CalendarDays, SlidersHorizontal, Search, User, AlertCircle, ChevronDown } from 'lucide-react';
+import { Bell, CalendarDays, SlidersHorizontal, Search, AlertCircle, ChevronDown } from 'lucide-react';
+
+// ─── SKELETON PRIMITIVE ───
+function Sk({ w = '100%', h = 16, r = 6, mb = 0 }) {
+  return (
+    <div
+      className={styles.skel}
+      style={{ width: w, height: h, borderRadius: r, marginBottom: mb, flexShrink: 0 }}
+    />
+  );
+}
 
 const TimeTracker = () => {
     const [interns, setInterns] = useState([]);
@@ -30,26 +40,21 @@ const TimeTracker = () => {
         }
     };
 
-    const formatDuration = (totalMinutes) => {
-        const minutes = parseFloat(totalMinutes);
-        if (!minutes || minutes <= 0) return '0hrs 00m';
-        let final = minutes;
-        if (minutes < 24 && !Number.isInteger(minutes)) final = Math.round(minutes * 60);
-        const h = Math.floor(final / 60);
-        const m = Math.round(final % 60);
-        return `${h}hrs ${String(m).padStart(2, '0')}m`;
-    };
-
     const fetchAttendance = useCallback(async () => {
         try {
-            const response = await api.get('/hr/interns');
+            const response = await api.get('/hr/interns', {
+                params: { date: selectedDate } 
+            });
             const data = response.data;
             setInterns(data);
+            
             const logs = data.map(u => u.attendance_logs?.[0]);
+            
             setStats({
-                present: logs.filter(l => l?.status === 'present').length,
-                absent:  logs.filter(l => !l || l?.status === 'absent').length,
-                late:    logs.filter(l => l?.status === 'late').length,
+                present: logs.filter(l => l?.status?.toLowerCase() === 'present').length,
+                absent:  logs.filter(l => !l || l?.status?.toLowerCase() === 'absent').length,
+                late:    logs.filter(l => l?.status?.toLowerCase() === 'late').length,
+                // Active if they have clocked in but haven't finished their final time out
                 active:  logs.filter(l => l?.time_in && !l?.time_out).length,
             });
             setError(null);
@@ -59,7 +64,7 @@ const TimeTracker = () => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [selectedDate]);
 
     useEffect(() => {
         fetchAttendance();
@@ -68,7 +73,8 @@ const TimeTracker = () => {
     }, [fetchAttendance]);
 
     const getStatusMeta = (status) => {
-        switch (status) {
+        const normalized = status?.toLowerCase() || 'absent';
+        switch (normalized) {
             case 'present':   return { label: 'Present',            cls: styles.statusPresent };
             case 'late':      return { label: 'Late',               cls: styles.statusLate };
             case 'excused':   return { label: 'Excused',            cls: styles.statusExcused };
@@ -83,7 +89,7 @@ const TimeTracker = () => {
             <div className={styles.pageWrapper}>
                 <div className={styles.pageHeader}>
                     <div className={`${styles.skel} ${styles.skelTitle}`} />
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className={styles.headerRight}>
                         <div className={`${styles.skel} ${styles.skelIconBtn}`} />
                         <div className={`${styles.skel} ${styles.skelDatePill}`} />
                     </div>
@@ -99,7 +105,7 @@ const TimeTracker = () => {
                 </div>
 
                 <div className={styles.filtersRow}>
-                    <div className={`${styles.skel} ${styles.skelFilter}`} />
+                    <div className={`${styles.skel} ${styles.skelFilter}`} style={{ flex: 1 }} />
                     <div className={`${styles.skel} ${styles.skelFilter}`} style={{ flex: 1 }} />
                     <div className={`${styles.skel} ${styles.skelFilter}`} style={{ flex: 1 }} />
                 </div>
@@ -107,7 +113,7 @@ const TimeTracker = () => {
                 <div className={styles.tableSection}>
                     <div className={styles.tableSectionHeader}>
                         <div className={`${styles.skel} ${styles.skelTableTitle}`} />
-                        <div style={{ display: 'flex', gap: '8px' }}>
+                        <div className={styles.tableActions}>
                             <div className={`${styles.skel} ${styles.skelActionBtn}`} />
                             <div className={`${styles.skel} ${styles.skelIconBtn}`} />
                         </div>
@@ -183,11 +189,12 @@ const TimeTracker = () => {
             </div>
 
             <div className={styles.filtersRow}>
-                <div className={styles.dateInput}>
+                <div className={styles.dateInput} style={{ flex: 1 }}>
                     <input
                         type="date"
                         value={selectedDate}
                         onChange={e => setSelectedDate(e.target.value)}
+                        style={{ width: '100%' }}
                     />
                     <CalendarDays size={14} className={styles.inputIcon} />
                 </div>
@@ -224,9 +231,9 @@ const TimeTracker = () => {
                             <tr>
                                 <th>Interns</th>
                                 <th>Time In (AM)</th>
-                                <th>Time Out (AM)</th>
+                                <th>Lunch Out</th>
                                 <th>Time In (PM)</th>
-                                <th>Time Out (PM)</th>
+                                <th>Time Out</th>
                                 <th>Today's Hours</th>
                                 <th>Status</th>
                                 <th>Overall Progress</th>
@@ -236,6 +243,7 @@ const TimeTracker = () => {
                             {interns.length > 0 ? (
                                 interns.map((user) => {
                                     const log = user.attendance_logs?.[0];
+                                    
                                     const status = log?.status || 'absent';
                                     const { label, cls } = getStatusMeta(status);
                                     
@@ -245,25 +253,30 @@ const TimeTracker = () => {
 
                                     return (
                                         <tr key={user.id} className={styles.tableRow}>
-                                            <td className={styles.internCell}>
-                                                {/* ✨ HERE IS THE AUTO-GENERATED AVATAR UPDATE ✨ */}
-                                                <div className={styles.avatar}>
-                                                    <img 
-                                                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.first_name + user.id}`} 
-                                                        alt="avatar" 
-                                                        style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} 
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <p className={styles.internName}>{user.first_name} {user.last_name}</p>
-                                                    <p className={styles.internEmail}>{user.email}</p>
+                                            <td>
+                                                <div className={styles.internCell}>
+                                                    <div className={styles.avatar}>
+                                                        <img 
+                                                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.first_name + user.id}`} 
+                                                            alt="avatar" 
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <p className={styles.internName}>{user.first_name} {user.last_name}</p>
+                                                        <p className={styles.internEmail}>{user.email}</p>
+                                                    </div>
                                                 </div>
                                             </td>
+                                            
+                                            {/* ✨ FIX: MAPPED EXACTLY TO THE DATABASE COLUMNS THE BUTTONS USE ✨ */}
                                             <td className={styles.timeCell}>{formatTime(log?.time_in)}</td>
                                             <td className={styles.timeCell}>{formatTime(log?.lunch_out)}</td>
                                             <td className={styles.timeCell}>{formatTime(log?.lunch_in)}</td>
                                             <td className={styles.timeCell}>{formatTime(log?.time_out)}</td>
-                                            <td className={styles.durationCell}>{formatDuration(log?.hours_rendered)}</td>
+                                            
+                                            <td className={styles.durationCell}>
+                                                {log?.hours_rendered && log.hours_rendered > 0 ? `${log.hours_rendered} hrs` : '0hrs 00m'}
+                                            </td>
                                             
                                             <td>
                                                 <span className={`${styles.statusBadge} ${cls}`}>
@@ -272,23 +285,21 @@ const TimeTracker = () => {
                                                 </span>
                                             </td>
 
-                                            <td className={styles.timeCell}>
-                                                <div className="flex flex-col gap-1.5 min-w-[110px] pr-4">
-                                                    <div className="flex items-end justify-between text-[11px] leading-none">
-                                                        <span className="font-bold text-[#0B1EAE]">{rendered}</span>
-                                                        <span className="text-slate-400 font-medium tracking-tight">/ {required} hrs</span>
-                                                    </div>
-                                                    
-                                                    <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                                                        <div 
-                                                            className="h-full transition-all duration-500" 
-                                                            style={{ 
-                                                                width: `${percent}%`,
-                                                                borderRadius: '30px',
-                                                                background: 'linear-gradient(90deg, #E3BD01 0%, #FFDE3C 50%, #FFE359 75%, #FFEFA3 100%)'
-                                                            }}
-                                                        ></div>
-                                                    </div>
+                                            <td style={{ minWidth: '110px' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontSize: '11px', lineHeight: 1, marginBottom: '5px' }}>
+                                                    <span style={{ fontWeight: 700, color: '#0B1EAE' }}>{rendered}</span>
+                                                    <span style={{ color: '#94a3b8', fontWeight: 500 }}>/ {required} hrs</span>
+                                                </div>
+                                                <div style={{ width: '100%', height: '6px', background: '#f1f5f9', borderRadius: '999px', overflow: 'hidden' }}>
+                                                    <div 
+                                                        style={{ 
+                                                            width: `${percent}%`, 
+                                                            height: '100%', 
+                                                            borderRadius: '999px', 
+                                                            transition: 'width 0.5s ease', 
+                                                            background: 'linear-gradient(90deg, #E3BD01 0%, #FFDE3C 50%, #FFE359 75%, #FFEFA3 100%)' 
+                                                        }} 
+                                                    />
                                                 </div>
                                             </td>
                                         </tr>
@@ -297,7 +308,7 @@ const TimeTracker = () => {
                             ) : (
                                 <tr>
                                     <td colSpan="8" className={styles.emptyRow}>
-                                        No interns found in the system.
+                                        No interns found in the system for this date.
                                     </td>
                                 </tr>
                             )}

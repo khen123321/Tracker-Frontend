@@ -1,7 +1,7 @@
-import React, { useState, useEffect,  useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Bell, Calendar, Search, SlidersHorizontal, MoreHorizontal, 
-  UserMinus, Download, Clock, AlertCircle, X, FileText, Activity, File, CheckCircle2 
+  UserMinus, Download, Clock, AlertCircle, X, FileText, Activity, File, CheckCircle2, Award 
 } from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
@@ -9,6 +9,11 @@ import {
 import api from '../../../api/axios';
 import styles from './InternsList.module.css';
 import InternDetailsModal from '../internsdetail/InternDetailsModal';
+
+// ✨ PDF SNAPSHOT TOOLS ✨
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
+import CertificateTemplate from './CertificateTemplate';
 
 // ─── SKELETON PRIMITIVE ───
 function Sk({ w = '100%', h = 16, r = 6, mb = 0 }) {
@@ -27,6 +32,12 @@ export default function InternsList() {
   
   const [selectedInternModal, setSelectedInternModal] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
+
+  // ✨ CERTIFICATE STATE & REF ✨
+  const certificateRef = useRef(null);
+  const [certData, setCertData] = useState({ 
+    name: '', course: '', school: '', hours: 0, department: '', dateStarted: '', dateCompleted: '' 
+  });
 
   const showNotification = (message, type = 'success') => {
     setNotification({ show: true, message, type });
@@ -220,6 +231,54 @@ export default function InternsList() {
     }
   };
 
+  // ✨ HTML-TO-PDF CERTIFICATE GENERATOR FUNCTION ✨
+  const handleGenerateCertificate = async (user) => {
+    try {
+      showNotification('Generating high-quality certificate...', 'success');
+      
+      // 1. Populate the hidden template with exact formatting
+      setCertData({
+        // Formats as "LASTNAME, FIRSTNAME" based on your example
+        name: `${user.last_name}, ${user.first_name}`.toUpperCase(),
+        course: user.intern?.course || user.course || 'Bachelor of Science in Business Administration Major in Financial Management',
+        school: user.intern?.school?.name || user.school?.name || user.school || 'PHINMA Cagayan de Oro College',
+        hours: Math.floor(user.attendance_logs_sum_hours_rendered || 0),
+        department: user.intern?.department?.name || user.assigned_department || 'business administration',
+        gender: user.gender || 'female', // Assuming female based on your example, can be dynamic!
+        
+        // Formats dates to "June 11, 2025"
+        dateStarted: new Date(user.intern?.date_started || user.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+        dateCompleted: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+      });
+
+      // 2. Wait exactly half a second for React to render the text
+      setTimeout(async () => {
+        const element = certificateRef.current;
+        
+        const canvas = await html2canvas(element, { 
+          scale: 2, 
+          useCORS: true, 
+          backgroundColor: null 
+        }); 
+        
+        const dataImage = canvas.toDataURL('image/png');
+
+        const pdf = new jsPDF('landscape', 'px', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+
+        pdf.addImage(dataImage, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`${user.last_name}_Certificate.pdf`);
+        
+        showNotification('Certificate downloaded successfully!', 'success');
+      }, 500);
+
+    } catch (error) {
+      console.error("Error generating certificate:", error);
+      showNotification("Failed to generate certificate.", "error");
+    }
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -389,12 +448,13 @@ export default function InternsList() {
                 <th>School</th>
                 <th>Date Started</th>
                 <th>Status</th>
+                <th>Certificate</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
               {interns.length === 0 ? (
-                <tr><td colSpan="7" className={styles.emptyRow}>No interns found.</td></tr>
+                <tr><td colSpan="8" className={styles.emptyRow}>No interns found.</td></tr>
               ) : (
                 interns.map((user) => {
                   const departmentName = user.intern?.department?.name || user.department?.name || user.assigned_department || 'Not Assigned';
@@ -426,6 +486,19 @@ export default function InternsList() {
                           {user.status || 'Unknown'}
                         </span>
                       </td>
+
+                      {/* ✨ CERTIFICATE COLUMN (ALWAYS UNLOCKED) ✨ */}
+                      <td>
+                        <button 
+                          onClick={() => handleGenerateCertificate(user)}
+                          className={styles.btnPrimary}
+                          style={{ padding: '6px 10px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px', border: 'none', borderRadius: '4px', cursor: 'pointer', background: '#0B1EAE', color: 'white' }}
+                          title={`Generate Certificate for ${user.first_name}`}
+                        >
+                          <Award size={14} /> Get Certificate
+                        </button>
+                      </td>
+
                       <td style={{ textAlign: 'right' }}>
                         <button 
                           className={styles.actionBtn} 
@@ -664,6 +737,10 @@ export default function InternsList() {
           </div>
         </div>
       )}
+
+      {/* ✨ HIDDEN TEMPLATE COMPONENT ✨ */}
+      <CertificateTemplate intern={certData} forwardRef={certificateRef} />
+      
     </div>
   );
 }
