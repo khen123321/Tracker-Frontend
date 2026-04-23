@@ -32,8 +32,7 @@ const Attendance = () => {
     // ─── FETCH INTERN BRANCH DATA ───
     const fetchInternData = useCallback(async () => {
         try {
-            const response = await api.get('/auth/me'); // Or your specific profile endpoint
-            // Accessing branch through the intern profile relation
+            const response = await api.get('/auth/me'); 
             if (response.data?.intern?.branch) {
                 setAssignedBranch(response.data.intern.branch);
             }
@@ -79,7 +78,6 @@ const Attendance = () => {
                 const userLng = pos.coords.longitude;
                 setCoords({ lat: userLat, lng: userLng });
 
-                // REAL CHECK: Compare current GPS to Branch GPS
                 const distance = calculateDistance(
                     userLat, userLng, 
                     assignedBranch.latitude, assignedBranch.longitude
@@ -134,7 +132,25 @@ const Attendance = () => {
             };
 
             const response = await api.post('/attendance/log', payload);
-            toast.success(response.data?.message || "Attendance logged!", { id: loadingToast });
+            const msg = response.data?.message || "Attendance logged!";
+
+            // ✨ SMART TOAST INTERCEPTOR ✨
+            // We give it 6 seconds (6000ms) so they can read the full rule text
+            if (msg.includes('⚠️')) {
+                // If it's a late warning, make the toast yellow/orange instead of green
+                toast(msg, { 
+                    id: loadingToast, 
+                    icon: '⚠️', 
+                    duration: 6000, 
+                    style: { background: '#FEF08A', color: '#854D0E', fontWeight: 'bold' } 
+                });
+            } else {
+                // Standard green success for on-time or early clock-ins
+                toast.success(msg, { 
+                    id: loadingToast, 
+                    duration: 6000 
+                });
+            }
             
             // Success Reset
             setModalStep(0);

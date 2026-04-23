@@ -1,10 +1,10 @@
-/* ─── Wrapper ─────────────────────────────────────────────────── */
+/* --- Wrapper --- */
 .layoutWrapper {
   display: flex;
   height: 100vh;
   background-color: #f8f9fc;
   overflow: hidden;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', sans-serif;
   position: relative;
 }
 
@@ -13,17 +13,15 @@
 ══════════════════════════════════════════════════════════════ */
 .sidebar {
   width: 260px;
-  background: var(--Main-color,
-    linear-gradient(270deg, #0B1EAE 0%, #152286 23.56%, #0D1767 63.46%, #050C48 100%)
-  );
+  background: linear-gradient(270deg, #0B1EAE 0%, #152286 23.56%, #0D1767 63.46%, #050C48 100%);
   color: white;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.12);
-  z-index: 40;
+  z-index: 100;
   transition: width 0.3s ease, transform 0.3s ease;
-  position: relative; /* 👈 ADD THIS LINE */
+  position: relative; 
 }
 
 /* Collapsed State (Desktop) */
@@ -38,7 +36,7 @@
   align-items: center;
   justify-content: center;
   margin-bottom: 0.5rem;
-  height: 80px; /* Keep height consistent during animation */
+  height: 80px; 
 }
 
 .logoImage {
@@ -65,7 +63,7 @@
 }
 
 .sidebar.collapsed .navMenu {
-  padding-left: 0.5rem; /* Adjust padding when small */
+  padding-left: 0.5rem; 
 }
 
 .navItem {
@@ -79,14 +77,14 @@
   font-size: 0.9rem;
   font-weight: 400;
   transition: all 0.2s ease;
-  white-space: nowrap; /* Prevent text wrapping during collapse */
+  white-space: nowrap; 
   overflow: hidden;
 }
 
 .sidebar.collapsed .navItem {
   justify-content: center;
   padding: 0.875rem;
-  border-radius: 8px; /* Round all corners when collapsed */
+  border-radius: 8px; 
   margin-right: 0.5rem;
 }
 
@@ -117,11 +115,11 @@
   color: #061178;
 }
 
-/* Desktop Collapse Button (Floating Edge Arrow) */
+/* Desktop Collapse Button */
 .collapseToggleBtn {
   position: absolute;
-  top: 36px; /* Aligns vertically with the logo */
-  right: -14px; /* Pulls it exactly half-way out of the sidebar */
+  top: 36px; 
+  right: -14px; 
   background-color: #ffffff;
   border: 1px solid #e5e7eb;
   color: #0B1EAE;
@@ -133,7 +131,7 @@
   justify-content: center;
   cursor: pointer;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  z-index: 50;
+  z-index: 110;
   padding: 0;
   margin: 0;
   transition: all 0.2s ease;
@@ -141,12 +139,7 @@
 
 .collapseToggleBtn:hover {
   background-color: #f8fafc;
-  transform: scale(1.1); /* Slight pop effect on hover */
-}
-
-/* Remove the old collapse margin rule, you no longer need it! */
-.sidebar.collapsed .collapseToggleBtn {
-  /* Nothing needed here, absolute positioning handles it! */
+  transform: scale(1.1); 
 }
 
 
@@ -209,22 +202,40 @@
 
 
 /* ══════════════════════════════════════════════════════════════
-   MAIN WRAPPER & MOBILE
+   MAIN CONTENT AREA
 ══════════════════════════════════════════════════════════════ */
 .mainWrapper {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
   position: relative;
+}
+
+.contentArea {
+  flex: 1;
+  overflow-y: auto;
   background-color: #f8f9fc;
-  transition: margin-left 0.3s ease;
+  position: relative;
+  /* ✨ Full screen padding for desktop */
+  padding: 24px; 
 }
 
 /* Mobile Specific UI */
 .hamburgerBtn {
-  display: none;
-  background: none;
-  border: none;
+  display: none; /* Hidden on Desktop */
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 50;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px;
+  color: #334155;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   cursor: pointer;
-  padding: 0.5rem;
 }
 
 .mobileCloseBtn {
@@ -242,7 +253,7 @@
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.5);
-  z-index: 30;
+  z-index: 90;
   backdrop-filter: blur(2px);
 }
 
@@ -257,7 +268,7 @@
   }
 
   .collapseToggleBtn {
-    display: none; /* Hide the desktop collapse button on mobile */
+    display: none; 
   }
 
   /* Hide sidebar off-screen by default on mobile */
@@ -267,7 +278,7 @@
     left: 0;
     height: 100vh;
     transform: translateX(-100%);
-    width: 280px !important; /* Force full width on mobile when open */
+    width: 280px !important; 
   }
 
   /* Slide in when mobile menu is open */
@@ -297,5 +308,10 @@
   .sidebar.mobileOpen ~ .mobileOverlay,
   .mobileOverlay {
     display: block;
+  }
+
+  /* ✨ Push content down slightly on mobile so the floating hamburger doesn't cover anything ✨ */
+  .contentArea {
+      padding: 70px 16px 24px 16px; 
   }
 }

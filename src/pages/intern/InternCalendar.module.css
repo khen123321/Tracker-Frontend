@@ -1,0 +1,152 @@
+.pageWrapper {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.pageTitle {
+    font-size: 24px;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+}
+
+.subText {
+    color: #64748b;
+    font-size: 14px;
+    margin-top: 2px;
+}
+
+.calendarCard {
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* Modal Styling */
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modalContent {
+    background: white;
+    width: 100%;
+    max-width: 450px;
+    border-radius: 16px;
+    overflow: hidden;
+    animation: slideUp 0.3s ease;
+}
+
+.modalHeader {
+    padding: 20px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modalTitle {
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+
+.closeBtn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: color 0.2s;
+    padding: 4px;
+}
+
+.closeBtn:hover {
+    color: #ef4444;
+}
+
+.modalBody {
+    padding: 24px;
+}
+
+.eventHeading {
+    font-size: 20px;
+    font-weight: 800;
+    color: #0B1EAE;
+    margin: 0 0 16px 0;
+}
+
+.infoRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #475569;
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+
+.descriptionBox {
+    margin-top: 20px;
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #334155;
+}
+
+.modalFooter {
+    padding: 16px 24px;
+    background: #f8fafc;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btnPrimary {
+    background: #0B1EAE;
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btnPrimary:hover {
+    background: #050C48;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* FullCalendar Custom Overrides */
+:global(.fc-col-header-cell-cushion),
+:global(.fc-daygrid-day-number) {
+    color: #334155;
+    text-decoration: none;
+}
+:global(.fc-event) {
+    cursor: pointer !important;
+}

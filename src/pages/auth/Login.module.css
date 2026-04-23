@@ -1,251 +1,313 @@
-/* --- LAYOUT WRAPPER --- */
-.pageWrapper {
+/* =========================================
+   SPLIT SCREEN LOGIN (HALF BLUE / HALF WHITE)
+   ========================================= */
+.loginWrapper {
   display: flex;
-  flex-direction: row; /* Explicitly state row for desktop */
   min-height: 100vh;
   width: 100%;
   font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
 }
 
-/* --- LEFT PANEL: Branding --- */
-.brandSide {
-  flex: 1; /* Takes up 50% of the screen */
+/* ─── LEFT SIDE (Deep Blue) ─── */
+.leftSide {
+  flex: 1;
   background: linear-gradient(270deg, #0B1EAE 0%, #152286 23.56%, #0D1767 63.46%, #050C48 100%);
+  padding: 3rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 4rem;
-  color: white;
-  text-align: center;
-}
-
-.brandLogo {
-  max-width: 320px;
-  margin-bottom: 2rem;
-  filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.3));
-}
-
-.brandSide h2 {
-  font-size: 1.75rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  margin-top: 1rem;
-  text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.5);
-}
-
-/* --- RIGHT PANEL: Form Side --- */
-.formSide {
-  flex: 1; /* Takes up the other 50% of the screen */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  justify-content: center; 
   position: relative;
-  
-  /* Your Background Image */
-  background-image: linear-gradient(rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.92)), 
-                    url("../../assets/Bg image.png");
+}
+
+/* ✨ YELLOW GREETING TEXT ✨ */
+.mascotGreeting {
+  color: #FFD700;
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  letter-spacing: 0.5px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.mascotImgLogin {
+  height: 400px;
+  object-fit: contain;
+  margin-bottom: 2rem; 
+  filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.15));
+  transition: opacity 0.3s ease-in-out;
+}
+
+.leftHeader {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem; 
+  width: 100%;
+  white-space: nowrap; 
+}
+
+/* ✨ ENLARGED LOGO ✨ */
+.leftLogo {
+  height: 85px; 
+  width: auto;
+}
+
+.leftTitle {
+  color: white;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: clamp(0.9rem, 2.5vw, 1.4rem); 
+  letter-spacing: 0.5px;
+}
+
+/* ─── RIGHT SIDE (Light/White Form Area) ─── */
+.rightSide {
+  flex: 1;
+  background-image: linear-gradient(rgba(248, 250, 252, 0.95), rgba(248, 250, 252, 0.95)), url("../../assets/Bg image.png");
   background-size: cover;
   background-position: center;
-  background-repeat: no-repeat;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
 }
 
-/* --- FORM & CARD STYLES --- */
-.headerArea {
+.formHeader {
   text-align: center;
   margin-bottom: 1.5rem;
-  z-index: 2;
 }
 
 .welcomeText {
   font-size: 3rem;
   font-weight: 900;
   color: #0B1EAE;
-  margin-bottom: 0.25rem;
+  margin: 0 0 0.25rem 0;
 }
 
 .subText {
-  font-size: 1.1rem;
-  color: #0B1EAE;
-  font-weight: 400;
+  color: #475569;
+  font-size: 1rem;
+  font-weight: 500;
 }
 
-.loginCard {
+.formCard {
+  background: white;
+  padding: 2.5rem;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
   width: 100%;
   max-width: 420px;
-  padding: 2.5rem;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  z-index: 2;
 }
 
-/* --- TOGGLE BUTTONS --- */
-.toggleContainer {
+/* ─── PILL TOGGLE ─── */
+.pillContainer {
   display: flex;
-  background-color: #e5e7eb;
-  border-radius: 8px;
+  background-color: #f1f5f9;
+  border-radius: 999px;
   padding: 4px;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
-.toggleBtn {
+.pillBtn {
   flex: 1;
-  padding: 0.75rem;
-  text-align: center;
-  font-weight: 500;
-  font-size: 0.95rem;
-  color: #6b7280;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  padding: 0.6rem 1rem;
+  border-radius: 999px;
   border: none;
   background: transparent;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.toggleBtnActive {
+.pillActive {
   background-color: white;
-  color: #111827;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  color: #0f172a;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
-/* --- INPUT FIELDS --- */
+/* ─── FORM INPUTS (Perfectly Aligned) ─── */
 .inputGroup {
+  margin-bottom: 1.25rem;
+}
+
+.inputLabel {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 0.4rem;
+}
+
+.inputWrapper {
   position: relative;
-  margin-bottom: 1.5rem;
+  width: 100%;
 }
 
 .inputIcon {
   position: absolute;
-  left: 1rem;
-  top: 36px;
-  color: #cbd5e1;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
 }
 
 .inputField {
   width: 100%;
-  padding: 0.875rem 1rem 0.875rem 2.75rem;
-  border: 1px solid #e2e8f0;
+  padding: 0.8rem 1rem 0.8rem 2.5rem;
+  border: 1px solid #cbd5e1;
   border-radius: 8px;
-  background-color: #f8fafc;
   font-size: 0.95rem;
+  outline: none;
+  background-color: #f8fafc;
   transition: all 0.2s;
 }
 
 .inputField:focus {
-  outline: none;
   border-color: #0B1EAE;
-  box-shadow: 0 0 0 3px rgba(11, 30, 174, 0.1);
   background-color: white;
+  box-shadow: 0 0 0 3px rgba(11, 30, 174, 0.1);
 }
 
-.inputError {
-  border-color: #ef4444;
+.passwordToggleBtn {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.errorText {
-  color: #ef4444;
-  font-size: 0.75rem;
-  margin-top: 0.35rem;
-  display: block;
+.passwordToggleBtn:hover {
+  color: #475569;
+}
+
+.optionsRow {
+  display: flex;
+  margin-top: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.checkbox {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  accent-color: #0B1EAE;
 }
 
 .loginBtn {
   width: 100%;
-  padding: 0.875rem;
   background-color: #0B1EAE;
   color: white;
   border: none;
+  padding: 0.875rem;
   border-radius: 8px;
-  font-weight: 600;
-  font-size: 1.05rem;
+  font-weight: 700;
+  font-size: 1rem;
   cursor: pointer;
   transition: background 0.2s;
-  margin-top: 1rem;
 }
 
 .loginBtn:hover {
   background-color: #050C48;
 }
 
-.loginBtn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
+.forgotPasswordRow {
+  text-align: center;
+  margin-top: 1.25rem;
+}
+
+.forgotPasswordText {
+  color: #0B1EAE;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* ✨ SIGN UP LINK ROW ✨ */
+.signupRow {
+  text-align: center;
+  margin-top: 1.25rem;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.signupLink {
+  color: #0B1EAE;
+  font-weight: 700;
+  text-decoration: none;
+  margin-left: 4px;
+}
+
+.signupLink:hover {
+  text-decoration: underline;
 }
 
 /* =========================================
-   📱 RESPONSIVE MOBILE STYLES (NEW!)
+   📱 RESPONSIVE MOBILE STYLES
    ========================================= */
-
-/* Triggers on tablets and smaller screens */
-@media (max-width: 860px) {
-  .pageWrapper {
-    flex-direction: column; /* Stack top and bottom */
+@media (max-width: 900px) {
+  .loginWrapper {
+    flex-direction: column; 
+    height: auto;
   }
 
-  .brandSide {
-    flex: none; /* Stop taking up 50% */
-    padding: 3rem 1.5rem; /* Shrink padding slightly */
-  }
-
-  .brandLogo {
-    max-width: 220px; /* Make logo smaller */
-    margin-bottom: 1rem;
-  }
-
-  .brandSide h2 {
-    font-size: 1.25rem; /* Shrink title */
-    margin-top: 0.5rem;
-  }
-
-  .formSide {
-    flex: 1; /* Take up the rest of the height */
-    padding: 2rem 1.25rem;
-    justify-content: flex-start; /* Push the form to the top of the white area */
-  }
-
-  .headerArea {
-    margin-top: 1rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .welcomeText {
-    font-size: 2.5rem;
-  }
-
-  .loginCard {
-    padding: 1.75rem;
-    max-width: 100%; /* Let it fill the screen padding width */
-  }
-}
-
-/* Extra tweaks for very small phones */
-@media (max-width: 480px) {
-  .brandSide {
+  .leftSide {
+    flex: 0 0 auto;
     padding: 2rem 1rem;
   }
 
-  .brandLogo {
-    max-width: 180px;
+  /* Hide mascot and greeting on mobile to save space */
+  .mascotImgLogin, .mascotGreeting {
+    display: none;
   }
 
-  .brandSide h2 {
-    font-size: 1.1rem;
+  .leftHeader {
+    gap: 0.75rem; 
+  }
+
+  .leftLogo {
+    height: 50px; 
+  }
+
+  .rightSide {
+    padding: 2rem 1rem;
+    justify-content: flex-start; 
   }
 
   .welcomeText {
     font-size: 2.25rem;
   }
-
-  .loginCard {
-    padding: 1.25rem;
-  }
   
-  .toggleBtn {
-    padding: 0.6rem;
-    font-size: 0.85rem;
+  .formCard {
+    padding: 1.5rem;
   }
 }

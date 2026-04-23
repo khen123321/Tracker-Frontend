@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  Bell, Calendar, UserCheck, UserX, UserMinus, Clock, 
+  Calendar, UserCheck, UserX, UserMinus, Clock, 
   PieChart as PieIcon, BarChart2 as BarIcon 
 } from 'lucide-react';
 import { 
@@ -11,6 +11,9 @@ import {
 } from 'recharts';
 import api from '../../api/axios';
 import styles from './DashboardHome.module.css';
+
+// ✨ IMPORT YOUR NEW UNIFIED COMPONENT ✨
+import NotificationBell from '../../components/NotificationBell';
 
 const COLORS = ['#0B1EAE', '#4F63F1', '#8A98E8', '#C2CBF5', '#64748B', '#94A3B8'];
 
@@ -152,9 +155,6 @@ function DashboardSkeleton() {
 // ─── MAIN COMPONENT ───
 export default function DashboardHome() {
   const [loading, setLoading] = useState(true);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState([]);
-  const dropdownRef = useRef(null);
 
   // Toggle State for the Chart: 'pie' | 'bar'
   const [chartView, setChartView] = useState('pie');
@@ -183,28 +183,6 @@ export default function DashboardHome() {
       }
     };
     fetchStats();
-  }, []);
-
-  useEffect(() => {
-    const fetchNotifs = async () => {
-      try {
-        const res = await api.get('/notifications');
-        setNotifications(res.data);
-      } catch (err) {
-        console.error('Failed to fetch notifications:', err);
-      }
-    };
-    fetchNotifs();
-  }, []);
-
-  useEffect(() => {
-    const handler = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setShowNotifications(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
   }, []);
 
   const todayStr = new Date().toLocaleDateString('en-US', {
@@ -236,39 +214,10 @@ export default function DashboardHome() {
       <div className={styles.header}>
         <h1 className={styles.pageTitle}>Dashboard</h1>
         <div className={styles.headerActions}>
-          <div className={styles.notifContainer} ref={dropdownRef}>
-            <button
-              className={styles.iconButton}
-              onClick={() => setShowNotifications(prev => !prev)}
-            >
-              <Bell size={18} strokeWidth={1.5} />
-              {notifications.length > 0 && <span className={styles.notifDot} />}
-            </button>
-            {showNotifications && (
-              <div className={styles.notifDropdown}>
-                <div className={styles.notifDropdownHeader}>
-                  <span>Notifications</span>
-                  {notifications.length > 0 && (
-                    <span className={styles.notifCount}>{notifications.length}</span>
-                  )}
-                </div>
-                <div className={styles.notifList}>
-                  {notifications.length === 0 ? (
-                    <p className={styles.notifEmpty}>No pending requests</p>
-                  ) : (
-                    notifications.map(n => (
-                      <div key={n.id} className={styles.notifItem}>
-                        <p>
-                          <strong>{n.data?.intern_name || 'Intern'}</strong> {n.data?.message}
-                        </p>
-                        <span className={styles.notifTime}>{n.data?.date_submitted}</span>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+          
+          {/* ✨ UNIFIED NOTIFICATION COMPONENT ✨ */}
+          <NotificationBell role="hr" />
+          
           <div className={styles.dateBadge}>
             <Calendar size={15} strokeWidth={1.5} />
             <span>{todayStr}</span>
@@ -311,7 +260,7 @@ export default function DashboardHome() {
               {chartView === 'pie' ? 'Interns by Course' : 'Attendance by Dept'}
             </h3>
             
-            {/* ✨ Single Flip Toggle Switch ✨ */}
+            {/* Single Flip Toggle Switch */}
             <button 
               onClick={() => setChartView(prev => prev === 'pie' ? 'bar' : 'pie')}
               onMouseEnter={() => setIsHovered(true)}
@@ -331,7 +280,6 @@ export default function DashboardHome() {
                 boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
               }}
             >
-              {/* Shows the icon of the view you will switch TO */}
               {chartView === 'pie' ? <BarIcon size={18} strokeWidth={2} /> : <PieIcon size={18} strokeWidth={2} />}
             </button>
           </div>

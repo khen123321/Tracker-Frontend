@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
-  Bell, Calendar, Search, SlidersHorizontal, MoreHorizontal, 
+  Calendar, Search, SlidersHorizontal, MoreHorizontal, 
   UserMinus, Download, Clock, AlertCircle, X, FileText, Activity, File, CheckCircle2, Award 
 } from 'lucide-react';
 import { 
@@ -10,6 +10,9 @@ import api from '../../../api/axios';
 import styles from './InternsList.module.css';
 import InternDetailsModal from '../internsdetail/InternDetailsModal';
 
+// ✨ IMPORT YOUR UNIFIED NOTIFICATION BELL ✨
+// ✅ CORRECT IMPORT (3 dots-and-slashes)
+import NotificationBell from '../../../components/NotificationBell';
 // ✨ PDF SNAPSHOT TOOLS ✨
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -59,6 +62,13 @@ export default function InternsList() {
     date: '', timeIn: '', timeOut: '', reason: '', notes: ''
   });
 
+  // ✨ SEARCH & 4 DROPDOWN FILTERS STATES ✨
+  const [searchTerm, setSearchTerm] = useState('');
+  const [deptFilter, setDeptFilter] = useState('All');
+  const [schoolFilter, setSchoolFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [presentFilter, setPresentFilter] = useState('All');
+
   const fetchInterns = async () => {
     try {
       setLoading(true);
@@ -74,6 +84,32 @@ export default function InternsList() {
   };
 
   useEffect(() => { fetchInterns(); }, []);
+
+  // ✨ DYNAMIC FILTER OPTIONS ✨
+  const uniqueDepartments = useMemo(() => ['All', ...new Set(interns.map(i => i.intern?.department?.name || i.department?.name || i.assigned_department || 'Not Assigned'))], [interns]);
+  const uniqueSchools = useMemo(() => ['All', ...new Set(interns.map(i => i.intern?.school?.name || i.school?.name || i.school || 'Not Assigned'))], [interns]);
+  const uniqueStatuses = useMemo(() => ['All', ...new Set(interns.map(i => i.status || 'Unknown'))], [interns]);
+
+  // ✨ COMBINED SEARCH & 4 FILTERS LOGIC ✨
+  const processedInterns = useMemo(() => {
+    return interns.filter(user => {
+      const name = `${user.first_name} ${user.last_name}`.toLowerCase();
+      const email = (user.email || '').toLowerCase();
+      const dept = user.intern?.department?.name || user.department?.name || user.assigned_department || 'Not Assigned';
+      const school = user.intern?.school?.name || user.school?.name || user.school || 'Not Assigned';
+      const status = user.status || 'Unknown';
+
+      const matchesSearch = name.includes(searchTerm.toLowerCase()) || email.includes(searchTerm.toLowerCase());
+      const matchesDept = deptFilter === 'All' || dept === deptFilter;
+      const matchesSchool = schoolFilter === 'All' || school === schoolFilter;
+      const matchesStatus = statusFilter === 'All' || status === statusFilter;
+      const matchesPresent = presentFilter === 'All' || 
+                             (presentFilter === 'Present' && user.is_present_today) || 
+                             (presentFilter === 'Absent' && !user.is_present_today);
+
+      return matchesSearch && matchesDept && matchesSchool && matchesStatus && matchesPresent;
+    });
+  }, [interns, searchTerm, deptFilter, schoolFilter, statusFilter, presentFilter]);
 
   const fullChartData = useMemo(() => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -131,10 +167,7 @@ export default function InternsList() {
     setStartIndex(newIndex);
   };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
+  const handleMouseUp = () => setIsDragging(false);
   const visibleData = fullChartData.slice(startIndex, startIndex + windowSize);
 
   const toggleInternSelection = (intern) => {
@@ -146,10 +179,10 @@ export default function InternsList() {
   };
 
   const toggleAllSelection = () => {
-    if (selectedInterns.length === interns.length) {
+    if (selectedInterns.length === processedInterns.length) {
       setSelectedInterns([]); 
     } else {
-      setSelectedInterns([...interns]); 
+      setSelectedInterns([...processedInterns]); 
     }
   };
 
@@ -160,7 +193,7 @@ export default function InternsList() {
     setAddHoursForm({ date: '', timeIn: '', timeOut: '', reason: '', notes: '' });
   };
 
-  const isAllSelected = interns.length > 0 && selectedInterns.length === interns.length;
+  const isAllSelected = processedInterns.length > 0 && selectedInterns.length === processedInterns.length;
   const isSelected = (id) => selectedInterns.some(intern => intern.id === id);
 
   const handleBulkRemove = async () => {
@@ -231,45 +264,30 @@ export default function InternsList() {
     }
   };
 
-  // ✨ HTML-TO-PDF CERTIFICATE GENERATOR FUNCTION ✨
   const handleGenerateCertificate = async (user) => {
     try {
       showNotification('Generating high-quality certificate...', 'success');
       
-      // 1. Populate the hidden template with exact formatting
       setCertData({
-        // Formats as "LASTNAME, FIRSTNAME" based on your example
         name: `${user.last_name}, ${user.first_name}`.toUpperCase(),
         course: user.intern?.course || user.course || 'Bachelor of Science in Business Administration Major in Financial Management',
         school: user.intern?.school?.name || user.school?.name || user.school || 'PHINMA Cagayan de Oro College',
         hours: Math.floor(user.attendance_logs_sum_hours_rendered || 0),
         department: user.intern?.department?.name || user.assigned_department || 'business administration',
-        gender: user.gender || 'female', // Assuming female based on your example, can be dynamic!
-        
-        // Formats dates to "June 11, 2025"
+        gender: user.gender || 'female', 
         dateStarted: new Date(user.intern?.date_started || user.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
         dateCompleted: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
       });
 
-      // 2. Wait exactly half a second for React to render the text
       setTimeout(async () => {
         const element = certificateRef.current;
-        
-        const canvas = await html2canvas(element, { 
-          scale: 2, 
-          useCORS: true, 
-          backgroundColor: null 
-        }); 
-        
+        const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: null }); 
         const dataImage = canvas.toDataURL('image/png');
-
         const pdf = new jsPDF('landscape', 'px', 'a4');
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
-
         pdf.addImage(dataImage, 'PNG', 0, 0, pdfWidth, pdfHeight);
         pdf.save(`${user.last_name}_Certificate.pdf`);
-        
         showNotification('Certificate downloaded successfully!', 'success');
       }, 500);
 
@@ -281,9 +299,7 @@ export default function InternsList() {
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short', day: 'numeric', year: 'numeric'
-    });
+    return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
   if (loading) {
@@ -353,8 +369,10 @@ export default function InternsList() {
       
       <div className={styles.header}>
         <h1 className={styles.pageTitle}>Interns Overview</h1>
+        
+        {/* ✨ REPLACED DUMMY BUTTON WITH REAL NOTIFICATION COMPONENT ✨ */}
         <div className={styles.flexRow}>
-          <button className={styles.iconButton} onClick={fetchInterns}><Bell size={16} /></button>
+          <NotificationBell role="hr" />
           <div className={styles.dateBadge}>
             <Calendar size={15} />
             <span>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</span>
@@ -396,33 +414,29 @@ export default function InternsList() {
                 itemStyle={{ color: '#0B1EAE', fontWeight: 'bold' }}
                 formatter={(value) => [`${value} Interns`, 'Active']}
               />
-              <Area 
-                type="monotone" 
-                dataKey="interns" 
-                stroke="#0B1EAE" 
-                strokeWidth={2}
-                fillOpacity={1} 
-                fill="url(#colorInterns)" 
-                isAnimationActive={!isDragging} 
-              />
-              <XAxis 
-                dataKey="name" 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fill: '#64748b', fontSize: 11 }} 
-                dy={10}
-              />
+              <Area type="monotone" dataKey="interns" stroke="#0B1EAE" strokeWidth={2} fillOpacity={1} fill="url(#colorInterns)" isAnimationActive={!isDragging} />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} dy={10} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
       </div>
 
+      {/* ✨ 4 DROPDOWN FILTERS ✨ */}
       <div className={styles.grid4}>
-        {['All Department', 'All School', 'All Status', 'Present'].map((filter, idx) => (
-          <select key={idx} className={styles.select} defaultValue={filter}>
-            <option>{filter}</option>
-          </select>
-        ))}
+        <select className={styles.select} value={deptFilter} onChange={e => setDeptFilter(e.target.value)}>
+          {uniqueDepartments.map(d => <option key={d} value={d}>{d === 'All' ? 'All Departments' : d}</option>)}
+        </select>
+        <select className={styles.select} value={schoolFilter} onChange={e => setSchoolFilter(e.target.value)}>
+          {uniqueSchools.map(s => <option key={s} value={s}>{s === 'All' ? 'All Schools' : s}</option>)}
+        </select>
+        <select className={styles.select} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+          {uniqueStatuses.map(s => <option key={s} value={s}>{s === 'All' ? 'All Status' : s}</option>)}
+        </select>
+        <select className={styles.select} value={presentFilter} onChange={e => setPresentFilter(e.target.value)}>
+          <option value="All">All Attendance</option>
+          <option value="Present">Present Today</option>
+          <option value="Absent">Absent Today</option>
+        </select>
       </div>
 
       {error && <div className={styles.errorBanner}>{error}</div>}
@@ -430,15 +444,27 @@ export default function InternsList() {
       <div className={styles.card} style={{ padding: '16px 18px' }}>
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>List Of Interns</h2>
+          
+          {/* ✨ SEARCH BAR ✨ */}
           <div className={styles.flexRow}>
-            <button className={styles.btn}>Sort <SlidersHorizontal size={14} /></button>
-            <button className={styles.btn}><Search size={14} /></button>
+            <div style={{ position: 'relative' }}>
+              <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
+              <input 
+                type="text" 
+                placeholder="Search name or email..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className={styles.input}
+                style={{ paddingLeft: '32px', height: '34px', width: '220px' }}
+              />
+            </div>
           </div>
         </div>
 
         <div className={styles.tableWrapper}>
           <table className={styles.dataTable}>
             <thead>
+              {/* ✨ NO MORE CLICKABLE ARROWS HERE ✨ */}
               <tr>
                 <th className={styles.checkboxCell}>
                   <input type="checkbox" className={styles.checkbox} checked={isAllSelected} onChange={toggleAllSelection}/>
@@ -453,10 +479,10 @@ export default function InternsList() {
               </tr>
             </thead>
             <tbody>
-              {interns.length === 0 ? (
-                <tr><td colSpan="8" className={styles.emptyRow}>No interns found.</td></tr>
+              {processedInterns.length === 0 ? (
+                <tr><td colSpan="8" className={styles.emptyRow}>No interns found matching filters.</td></tr>
               ) : (
-                interns.map((user) => {
+                processedInterns.map((user) => {
                   const departmentName = user.intern?.department?.name || user.department?.name || user.assigned_department || 'Not Assigned';
                   const schoolName = user.intern?.school?.name || user.school?.name || user.school || 'Not Assigned';
                   
@@ -487,7 +513,6 @@ export default function InternsList() {
                         </span>
                       </td>
 
-                      {/* ✨ CERTIFICATE COLUMN (ALWAYS UNLOCKED) ✨ */}
                       <td>
                         <button 
                           onClick={() => handleGenerateCertificate(user)}

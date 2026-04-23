@@ -19,29 +19,36 @@
   padding: 16px 24px;
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border: 1px solid #e8eaf0;
 }
 
 .headerTitle {
-  font-size: 24px;
-  font-weight: 800;
-  color: #111827;
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
   margin: 0;
 }
 
-.themeToggle {
-  background: #ffffff;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  width: 40px;
-  height: 40px;
+.headerActions {
   display: flex;
   align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: #4b5563;
-  transition: all 0.2s;
+  gap: 10px;
 }
-.themeToggle:hover { background: #f3f4f6; }
+
+.dateBadge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: white;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  font-size: 13px;
+  color: #475569;
+  font-weight: 500;
+  white-space: nowrap;
+}
 
 .welcomeSection {
   background: #ffffff;
@@ -301,5 +308,6 @@
 }
 
 @media (max-width: 640px) {
+  .headerActions { flex-wrap: wrap; justify-content: flex-end; }
   .weeklyBoxes { flex-direction: column; }
 }

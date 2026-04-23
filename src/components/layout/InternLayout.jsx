@@ -8,7 +8,6 @@ import {
 import styles from './InternLayout.module.css';
 import logoImage from '../../assets/logo.png';
 import smallLogo from '../../assets/logo-s.png'; 
-import NotificationBell from '../../pages/intern/NotificationBell';
 
 const InternLayout = () => {
     const navigate = useNavigate();
@@ -105,23 +104,18 @@ const InternLayout = () => {
             </aside>
 
             {/* ─── MAIN CONTENT ─── */}
-            <div className={`${styles.mainWrapper} flex flex-col h-screen overflow-hidden`}>
+            <div className={styles.mainWrapper}>
                 
-                {/* ─── TOP HEADER ─── */}
-                <header className="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-4 md:px-8 shrink-0 z-10">
-                    {/* Mobile Hamburger */}
-                    <button className={styles.hamburgerBtn} onClick={toggleMobileMenu}>
-                        <Menu size={24} className="text-slate-700" />
-                    </button>
-                    
-                    {/* Push bell to right on desktop */}
-                    <div className="flex-1"></div> 
-                    
-                    <NotificationBell />
-                </header>
+                {/* ✨ FLOATING MOBILE HAMBURGER ✨ */}
+                <button 
+                    className={styles.hamburgerBtn} 
+                    onClick={toggleMobileMenu}
+                >
+                    <Menu size={24} className="text-slate-700" />
+                </button>
 
                 {/* PAGE CONTENT WRAPPER */}
-                <div className="flex-1 overflow-y-auto bg-slate-50 relative">
+                <div className={styles.contentArea}>
                     <Outlet />
                 </div>
             </div>

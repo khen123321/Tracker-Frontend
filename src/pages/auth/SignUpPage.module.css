@@ -1,42 +1,77 @@
-/* Layouts */
+/* =========================================
+   LAYOUTS (Mirrors Login Page)
+   ========================================= */
 .pageWrapper {
   min-height: 100vh;
   display: flex;
+  flex-direction: row; /* Enforces the side-by-side split */
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  overflow-x: hidden;
 }
 
+/* ─── LEFT SIDE (Deep Blue / Mascot Area) ─── */
 .leftPane {
-  display: none;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 3rem;
-  color: white;
-  position: relative;
-  overflow: hidden;
+  flex: 1;
   background: linear-gradient(270deg, #0B1EAE 0%, #152286 23.56%, #0D1767 63.46%, #050C48 100%);
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
-@media (min-width: 1024px) {
-  .leftPane {
-    display: flex;
-    width: 42%;
-  }
-}
-
-.logo {
-  width: 11rem;
+/* Yellow Greeting Text */
+.mascotGreeting {
+  color: #FFD700;
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-top: 0;
   margin-bottom: 1.5rem;
-  z-index: 10;
+  text-align: center;
+  letter-spacing: 0.5px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Mascot Image */
+.mascotImgSignUp {
+  height: 400px;
+  object-fit: contain;
+  margin-bottom: 2rem;
+  filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.15));
+}
+
+/* Grouping Logo and Text */
+.leftHeader {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  width: 100%;
+  white-space: nowrap;
+}
+
+/* Enlarged Logo matching login */
+.leftLogo {
+  height: 85px;
+  width: auto;
 }
 
 .leftTitle {
-  font-size: 1.5rem;
-  font-weight: 900;
-  text-align: center;
-  z-index: 10;
+  color: white;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: clamp(0.9rem, 2.5vw, 1.4rem);
+  letter-spacing: 0.5px;
 }
 
+/* ─── RIGHT SIDE (Form Area) ─── */
 .rightPane {
   flex: 1;
   display: flex;
@@ -94,7 +129,9 @@
   border: 1px solid #f1f5f9;
 }
 
-/* Form Controls */
+/* =========================================
+   FORM CONTROLS (Untouched)
+   ========================================= */
 .label {
   display: block;
   font-size: 0.875rem;
@@ -143,7 +180,9 @@
   pointer-events: none;
 }
 
-/* Stepper */
+/* =========================================
+   STEPPER
+   ========================================= */
 .stepperContainer {
   display: flex;
   align-items: flex-start;
@@ -222,7 +261,9 @@
   background-color: #e2e8f0;
 }
 
-/* Buttons */
+/* =========================================
+   BUTTONS
+   ========================================= */
 .btnContainer {
   margin-top: 1.75rem;
   display: flex;
@@ -265,7 +306,9 @@
   margin-left: auto;
 }
 
-/* Sub-sections & Checkboxes */
+/* =========================================
+   SUB-SECTIONS & CHECKBOXES
+   ========================================= */
 .sectionTitle {
   font-size: 0.75rem;
   font-weight: 700;
@@ -321,4 +364,46 @@
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
+}
+
+/* =========================================
+   📱 RESPONSIVE MOBILE STYLES (Matches Login)
+   ========================================= */
+@media (max-width: 900px) {
+  .pageWrapper {
+    flex-direction: column;
+  }
+  
+  .leftPane {
+    flex: 0 0 auto;
+    padding: 2rem 1rem;
+  }
+  
+  /* Hide mascot and greeting on mobile */
+  .mascotImgSignUp, .mascotGreeting {
+    display: none;
+  }
+  
+  .leftHeader {
+    gap: 0.75rem;
+  }
+  
+  .leftLogo {
+    height: 50px;
+  }
+  
+  .contentWrapper {
+    padding: 1rem;
+  }
+
+  .welcomeTitle {
+    font-size: 2.25rem;
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 380px) {
+  .leftLogo { width: 70px; height: auto; }
+  .leftTitle { font-size: 0.9rem; }
+  .welcomeTitle { font-size: 1.8rem; }
 }

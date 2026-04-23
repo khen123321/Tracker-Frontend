@@ -1,7 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import api from '../../../api/axios'; 
 import styles from './TimeTracker.module.css';
-import { Bell, CalendarDays, SlidersHorizontal, Search, AlertCircle, ChevronDown } from 'lucide-react';
+import { CalendarDays, Search, AlertCircle, ChevronDown } from 'lucide-react';
+
+// ✨ IMPORT YOUR UNIFIED NOTIFICATION BELL ✨
+import NotificationBell from '../../../components/NotificationBell';
 
 // ─── SKELETON PRIMITIVE ───
 function Sk({ w = '100%', h = 16, r = 6, mb = 0 }) {
@@ -19,8 +22,12 @@ const TimeTracker = () => {
     const [error, setError] = useState(null);
     const [stats, setStats] = useState({ present: 0, absent: 0, late: 0, active: 0 });
     const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
-    const [department, setDepartment] = useState('');
-    const [school, setSchool] = useState('');
+    
+    // ✨ SEARCH & FILTER STATES ✨
+    const [searchTerm, setSearchTerm] = useState('');
+    const [deptFilter, setDeptFilter] = useState('All');
+    const [schoolFilter, setSchoolFilter] = useState('All');
+    const [statusFilter, setStatusFilter] = useState('All');
 
     const todayLabel = new Date().toLocaleDateString('en-US', {
         weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
@@ -54,7 +61,6 @@ const TimeTracker = () => {
                 present: logs.filter(l => l?.status?.toLowerCase() === 'present').length,
                 absent:  logs.filter(l => !l || l?.status?.toLowerCase() === 'absent').length,
                 late:    logs.filter(l => l?.status?.toLowerCase() === 'late').length,
-                // Active if they have clocked in but haven't finished their final time out
                 active:  logs.filter(l => l?.time_in && !l?.time_out).length,
             });
             setError(null);
@@ -71,6 +77,36 @@ const TimeTracker = () => {
         const interval = setInterval(fetchAttendance, 30000);
         return () => clearInterval(interval);
     }, [fetchAttendance]);
+
+    // ✨ DYNAMIC FILTER OPTIONS ✨
+    const uniqueDepartments = useMemo(() => ['All', ...new Set(interns.map(i => i.intern?.department?.name || i.department?.name || i.assigned_department || 'Not Assigned'))], [interns]);
+    const uniqueSchools = useMemo(() => ['All', ...new Set(interns.map(i => i.intern?.school?.name || i.school?.name || i.school || 'Not Assigned'))], [interns]);
+    const uniqueStatuses = useMemo(() => {
+        const statuses = interns.map(i => {
+            const st = i.attendance_logs?.[0]?.status || 'absent';
+            return st.charAt(0).toUpperCase() + st.slice(1).toLowerCase();
+        });
+        return ['All', ...new Set(statuses)];
+    }, [interns]);
+
+    // ✨ COMBINED SEARCH & FILTER LOGIC ✨
+    const processedInterns = useMemo(() => {
+        return interns.filter(user => {
+            const log = user.attendance_logs?.[0];
+            const name = `${user.first_name} ${user.last_name}`.toLowerCase();
+            const email = (user.email || '').toLowerCase();
+            const dept = user.intern?.department?.name || user.department?.name || user.assigned_department || 'Not Assigned';
+            const school = user.intern?.school?.name || user.school?.name || user.school || 'Not Assigned';
+            const status = (log?.status || 'absent').toLowerCase();
+
+            const matchesSearch = name.includes(searchTerm.toLowerCase()) || email.includes(searchTerm.toLowerCase());
+            const matchesDept = deptFilter === 'All' || dept === deptFilter;
+            const matchesSchool = schoolFilter === 'All' || school === schoolFilter;
+            const matchesStatus = statusFilter === 'All' || status === statusFilter.toLowerCase();
+
+            return matchesSearch && matchesDept && matchesSchool && matchesStatus;
+        });
+    }, [interns, searchTerm, deptFilter, schoolFilter, statusFilter]);
 
     const getStatusMeta = (status) => {
         const normalized = status?.toLowerCase() || 'absent';
@@ -153,9 +189,10 @@ const TimeTracker = () => {
             <div className={styles.pageHeader}>
                 <h1 className={styles.pageTitle}>Time Tracker</h1>
                 <div className={styles.headerRight}>
-                    <button className={styles.iconBtn}>
-                        <Bell size={16} />
-                    </button>
+                    
+                    {/* ✨ UNIFIED NOTIFICATION COMPONENT ✨ */}
+                    <NotificationBell role="hr" />
+                    
                     <div className={styles.datePill}>
                         <CalendarDays size={14} />
                         <span>{todayLabel}</span>
@@ -188,6 +225,7 @@ const TimeTracker = () => {
                 </div>
             </div>
 
+            {/* ✨ DYNAMIC FILTERS ✨ */}
             <div className={styles.filtersRow}>
                 <div className={styles.dateInput} style={{ flex: 1 }}>
                     <input
@@ -196,17 +234,23 @@ const TimeTracker = () => {
                         onChange={e => setSelectedDate(e.target.value)}
                         style={{ width: '100%' }}
                     />
-                    <CalendarDays size={14} className={styles.inputIcon} />
+                    {/* The duplicate custom Calendar icon was removed from here! */}
                 </div>
                 <div className={styles.selectWrap}>
-                    <select value={department} onChange={e => setDepartment(e.target.value)}>
-                        <option value="">All Department</option>
+                    <select value={deptFilter} onChange={e => setDeptFilter(e.target.value)} style={{ width: '100%' }}>
+                        {uniqueDepartments.map(d => <option key={d} value={d}>{d === 'All' ? 'All Departments' : d}</option>)}
                     </select>
                     <ChevronDown size={13} className={styles.selectIcon} />
                 </div>
                 <div className={styles.selectWrap}>
-                    <select value={school} onChange={e => setSchool(e.target.value)}>
-                        <option value="">All School</option>
+                    <select value={schoolFilter} onChange={e => setSchoolFilter(e.target.value)} style={{ width: '100%' }}>
+                        {uniqueSchools.map(s => <option key={s} value={s}>{s === 'All' ? 'All Schools' : s}</option>)}
+                    </select>
+                    <ChevronDown size={13} className={styles.selectIcon} />
+                </div>
+                <div className={styles.selectWrap}>
+                    <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ width: '100%' }}>
+                        {uniqueStatuses.map(s => <option key={s} value={s}>{s === 'All' ? 'All Status' : s}</option>)}
                     </select>
                     <ChevronDown size={13} className={styles.selectIcon} />
                 </div>
@@ -215,19 +259,32 @@ const TimeTracker = () => {
             <div className={styles.tableSection}>
                 <div className={styles.tableSectionHeader}>
                     <h2 className={styles.tableTitle}>List Of Interns</h2>
-                    <div className={styles.tableActions}>
-                        <button className={styles.actionBtn}>
-                            <SlidersHorizontal size={13} /> Sort
-                        </button>
-                        <button className={styles.actionBtn}>
-                            <Search size={13} />
-                        </button>
+                    
+                    {/* ✨ FUNCTIONAL SEARCH BAR ✨ */}
+                    <div style={{ position: 'relative' }}>
+                        <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
+                        <input 
+                            type="text" 
+                            placeholder="Search name or email..." 
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            style={{ 
+                                paddingLeft: '32px', 
+                                height: '34px', 
+                                width: '220px', 
+                                borderRadius: '8px', 
+                                border: '1px solid #e2e8f0', 
+                                fontSize: '13px',
+                                outline: 'none'
+                            }}
+                        />
                     </div>
                 </div>
 
                 <div className={styles.tableContainer}>
                     <table className={styles.trackerTable}>
                         <thead>
+                            {/* ✨ PLAIN HEADERS - NO ARROWS OR CLICKING ✨ */}
                             <tr>
                                 <th>Interns</th>
                                 <th>Time In (AM)</th>
@@ -240,8 +297,8 @@ const TimeTracker = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {interns.length > 0 ? (
-                                interns.map((user) => {
+                            {processedInterns.length > 0 ? (
+                                processedInterns.map((user) => {
                                     const log = user.attendance_logs?.[0];
                                     
                                     const status = log?.status || 'absent';
@@ -268,7 +325,6 @@ const TimeTracker = () => {
                                                 </div>
                                             </td>
                                             
-                                            {/* ✨ FIX: MAPPED EXACTLY TO THE DATABASE COLUMNS THE BUTTONS USE ✨ */}
                                             <td className={styles.timeCell}>{formatTime(log?.time_in)}</td>
                                             <td className={styles.timeCell}>{formatTime(log?.lunch_out)}</td>
                                             <td className={styles.timeCell}>{formatTime(log?.lunch_in)}</td>
@@ -307,8 +363,8 @@ const TimeTracker = () => {
                                 })
                             ) : (
                                 <tr>
-                                    <td colSpan="8" className={styles.emptyRow}>
-                                        No interns found in the system for this date.
+                                    <td colSpan="8" className={styles.emptyRow} style={{ textAlign: 'center', padding: '32px', color: '#94a3b8', fontStyle: 'italic' }}>
+                                        No interns found matching your filters.
                                     </td>
                                 </tr>
                             )}

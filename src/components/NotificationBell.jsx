@@ -1,94 +1,200 @@
 import React, { useState, useEffect } from 'react';
-import api from '../api/axios';
+import api from '../api/axios'; // Ensure this path is correct for your project
+import { Bell, AlertTriangle, X } from 'lucide-react';
 
-const NotificationBell = () => {
+// We accept a 'role' prop that defaults to 'intern'. 
+// It can be passed as <NotificationBell role="hr" /> or <NotificationBell role="intern" />
+const NotificationBell = ({ role = 'intern' }) => {
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [isOpen, setIsOpen] = useState(false);
+    const [internHasViewed, setInternHasViewed] = useState(false); 
+
+    const isHR = role === 'hr';
+
+    // HR relies on the backend count, Intern relies on a local "has viewed" toggle
+    const displayCount = isHR ? unreadCount : (internHasViewed ? 0 : notifications.length);
 
     useEffect(() => {
-        // We define the function INSIDE the effect to satisfy the linter
-        const getNotifications = async () => {
+        let isMounted = true;
+
+        const fetchNotifications = async () => {
             try {
-                // Destructure { data } to avoid the 'unused response' error
-                const { data } = await api.get('/notifications');
-                setNotifications(data.notifications || []);
-                setUnreadCount(data.unread_count || 0);
+                // 1. Pick the correct endpoint based on the role
+                const endpoint = isHR ? '/notifications' : '/intern/notifications';
+                const { data } = await api.get(endpoint);
+
+                if (!isMounted) return;
+
+                // 2. Handle the data differently based on the role's backend structure
+                if (isHR) {
+                    setNotifications(data.notifications || data || []);
+                    setUnreadCount(data.unread_count !== undefined ? data.unread_count : (data.length || 0));
+                } else {
+                    const notifs = data || [];
+                    setNotifications(notifs);
+                    // If an intern gets a new notification, reset the viewed status so the red dot reappears
+                    if (notifs.length > notifications.length) {
+                        setInternHasViewed(false);
+                    }
+                }
             } catch (err) {
-                console.error("Error fetching notifications:", err);
+                console.error(`Error fetching ${role} notifications:`, err);
             }
         };
 
-        // 1. Initial Call
-        getNotifications();
+        fetchNotifications();
+        const interval = setInterval(fetchNotifications, 30000); // Poll every 30 seconds
 
-        // 2. Set up Polling (30 seconds)
-        const interval = setInterval(getNotifications, 30000);
+        return () => { 
+            isMounted = false; 
+            clearInterval(interval);
+        };
+    
+    }, [isHR, role, notifications.length]);
 
-        // 3. Cleanup to prevent memory leaks
-        return () => clearInterval(interval);
-    }, []); // Empty array is now safe because getNotifications is local to the effect
+    // Handle Escape key to close the drawer
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') setIsOpen(false);
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
     const handleToggle = async () => {
-        setIsOpen((prev) => !prev);
+        setIsOpen(!isOpen);
         
-        if (!isOpen && unreadCount > 0) {
-            try {
-                await api.post('/notifications/mark-as-read');
-                setUnreadCount(0);
-            } catch (err) {
-                console.error("Failed to mark as read:", err);
+        // When opening the drawer, clear the red dot
+        if (!isOpen && displayCount > 0) {
+            if (isHR) {
+                try {
+                    await api.post('/notifications/mark-as-read');
+                    setUnreadCount(0);
+                } catch (err) {
+                    console.error("Failed to mark as read:", err);
+                }
+            } else {
+                setInternHasViewed(true);
             }
         }
     };
 
     return (
-        <div className="relative inline-block">
-            {/* The Bell Icon */}
+        <>
+            {/* --- BELL ICON BUTTON --- */}
             <button 
-                onClick={handleToggle}
-                className="p-2 rounded-full hover:bg-gray-100 transition-colors relative focus:outline-none"
+                onClick={handleToggle} 
+                className="relative p-2 rounded-full text-slate-500 hover:bg-slate-100 transition focus:outline-none z-30"
             >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-                {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 flex h-4 w-4">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500 text-white text-[10px] items-center justify-center font-bold">
-                            {unreadCount}
-                        </span>
+                <Bell size={24} />
+                {displayCount > 0 && (
+                    <span className="absolute top-1 right-1 flex items-center justify-center w-5 h-5 text-[10px] font-bold text-white bg-red-500 border-2 border-white rounded-full">
+                        {displayCount > 9 ? '9+' : displayCount}
                     </span>
                 )}
             </button>
 
-            {/* Dropdown Menu */}
+            {/* --- DARK OVERLAY BACKGROUND --- */}
             {isOpen && (
-                <>
-                    <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)}></div>
-                    <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 z-20 overflow-hidden">
-                        <div className="p-4 bg-gray-50 border-b border-gray-100 font-bold text-gray-700">
-                            Notifications
-                        </div>
-                        <div className="max-h-80 overflow-y-auto">
-                            {notifications.length === 0 ? (
-                                <div className="p-8 text-center text-gray-400 text-sm italic">No notifications yet.</div>
-                            ) : (
-                                notifications.map((n) => (
-                                    <div key={n.id} className="p-4 border-b border-gray-50 hover:bg-yellow-50 transition cursor-default">
-                                        <p className="text-sm text-gray-800 font-semibold">{n.data.intern_name}</p>
-                                        <p className="text-xs text-gray-600 leading-tight">{n.data.message}</p>
-                                        <p className="text-[10px] text-gray-400 mt-2 italic text-right">
-                                            {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        </p>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </div>
-                </>
+                <div 
+                    className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
+                    style={{ zIndex: 9998 }}
+                    onClick={() => setIsOpen(false)}
+                />
             )}
-        </div>
+
+            {/* --- SLIDE-OUT DRAWER PANEL --- */}
+            <div 
+                className={`fixed top-0 right-0 h-screen w-80 sm:w-96 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col ${
+                    isOpen ? 'translate-x-0' : 'translate-x-full'
+                }`}
+                style={{ zIndex: 9999 }}
+            >
+                
+                {/* Drawer Header */}
+                <div className="flex items-center justify-between px-6 py-5 bg-slate-50 border-b border-slate-100 flex-shrink-0">
+                    <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
+                        <Bell size={18} className="text-slate-500" /> 
+                        {isHR ? "HR Alerts" : "Notifications"}
+                    </h3>
+                    <button 
+                        onClick={() => setIsOpen(false)}
+                        className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors focus:outline-none"
+                    >
+                        <X size={20} />
+                    </button>
+                </div>
+
+                {/* Drawer Body */}
+                <div className="flex-1 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-full text-slate-400 p-8 text-center gap-3">
+                            <Bell size={48} className="text-slate-200" />
+                            <p className="text-sm">You have no new notifications.</p>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col">
+                            {notifications.map((n) => {
+                                // ✨ DYNAMIC DATA MAPPING ✨
+                                // We pull the right variables depending on if the HR or Intern is viewing it
+                                const title = isHR ? (n.data?.intern_name || 'System Notice') : n.title;
+                                const message = isHR ? (n.data?.message || 'New action recorded.') : n.message;
+                                const timeText = isHR 
+                                    ? new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+                                    : n.created_at; // Intern uses diffForHumans() e.g. "2 hours ago"
+                                
+                                return (
+                                    <div 
+                                        key={n.id} 
+                                        className={`flex gap-4 p-5 border-b border-slate-50 transition cursor-default bg-white ${
+                                            isHR ? 'hover:bg-blue-50/50' : 'hover:bg-red-50/50'
+                                        }`}
+                                    >
+                                        {/* Icon (Only show warning triangle for Intern rejections) */}
+                                        {!isHR && (
+                                            <div className="flex-shrink-0 mt-1">
+                                                <div className="p-2 bg-red-100 text-red-600 rounded-full shadow-sm">
+                                                    <AlertTriangle size={16} />
+                                                </div>
+                                            </div>
+                                        )}
+                                        
+                                        {/* Content */}
+                                        <div className="flex-1">
+                                            <div className="flex justify-between items-start mb-1">
+                                                <p className={`text-sm font-bold leading-tight ${isHR ? 'text-blue-700' : 'text-slate-800'}`}>
+                                                    {title}
+                                                </p>
+                                                <span className="text-[10px] font-semibold text-slate-400 whitespace-nowrap ml-2 bg-slate-100 px-2 py-0.5 rounded-full">
+                                                    {timeText}
+                                                </span>
+                                            </div>
+                                            
+                                            {/* Interns get an extra date label */}
+                                            {!isHR && n.date && (
+                                                <p className="text-[11px] font-semibold text-slate-500 mb-2">
+                                                    For log on: {n.date}
+                                                </p>
+                                            )}
+                                            
+                                            <div className={`text-xs leading-relaxed p-3 rounded-lg border relative ${
+                                                isHR ? 'text-slate-600 bg-transparent border-transparent p-0' : 'text-slate-700 bg-red-50/50 border-red-100/50'
+                                            }`}>
+                                                {!isHR && <span className="absolute top-2 left-2 text-red-300">"</span>}
+                                                <span className={`${!isHR && 'pl-3 block italic'}`}>
+                                                    {message}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </>
     );
 };
 

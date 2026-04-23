@@ -60,7 +60,6 @@ export default function SignUpPage() {
   useEffect(() => {
     const fetchDropdownData = async () => {
       try {
-        // Promise.all fetches all three at the exact same time for speed
         const [schoolsRes, branchesRes, deptsRes] = await Promise.all([
           axios.get('/public/schools'),
           axios.get('/public/branches'),
@@ -365,11 +364,19 @@ export default function SignUpPage() {
     <div className={styles.pageWrapper}>
       <Toaster position="top-right" />
       
+      {/* ─── LEFT PANE (Matching the Login Mascot Setup) ─── */}
       <div className={styles.leftPane}>
-        <img src={logo} alt="Logo" className={styles.logo} />
-        <h1 className={styles.leftTitle}>CLIMBS INTERNSHIP MONITORING SYSTEM</h1>
+        <h2 className={styles.mascotGreeting}>Hello, I'm an Intern!</h2>
+        <img src="/intern mordie.png" alt="Intern Mascot" className={styles.mascotImgSignUp} />
+        <div className={styles.leftHeader}>
+          <img src={logo} alt="CLIMBS Logo" className={styles.leftLogo} />
+          <span className={styles.leftTitle}>
+            CLIMBS INTERNSHIP MONITORING SYSTEM
+          </span>
+        </div>
       </div>
 
+      {/* ─── RIGHT PANE (Form Area) ─── */}
       <div className={styles.rightPane}>
         <div className={styles.bgImage} />
         <div className={styles.bgOverlay} />

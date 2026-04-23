@@ -13,8 +13,8 @@ import RoleManagement from './pages/hr/rolemanagement/RoleManagement';
 import ExportReports from './pages/hr/export/ExportReports';
 import SettingsLayout from './components/layout/SettingsLayout'; 
 import CurriculumSettings from './pages/hr/settings/CurriculumSettings';  
-import DepartmentSetting from './pages/hr/settings/DepartmentSetting'; // ✨ Added
-import BranchSetting from './pages/hr/settings/BranchSetting';         // ✨ Added
+import DepartmentSetting from './pages/hr/settings/DepartmentSetting'; 
+import BranchSetting from './pages/hr/settings/BranchSetting';         
 import TimeTracker from './pages/hr/timetracker/TimeTracker'; 
 import HREventsPage from './pages/hr/events/EventsPage'; 
 import CameraVerification from "./pages/hr/cameraverification/CameraVerification";
@@ -23,10 +23,12 @@ import CameraVerification from "./pages/hr/cameraverification/CameraVerification
 import InternLayout from './components/layout/InternLayout';
 import InternDashboardHome from './pages/intern/InternDashboardHome';
 import Attendance from './pages/intern/attendance/Attendance';
-import InternEventsPage from './pages/intern/events/EventsPage'; 
 import Logs from './pages/intern/logs/Logs';
 import Forms from './pages/intern/forms/Forms'; 
 import InternProfile from './pages/intern/internprofile/InternProfile';
+
+// ✨ NEW: Import the dedicated Read-Only Intern Calendar ✨
+import InternCalendar from './pages/intern/InternCalendar'; 
 
 // Placeholder for sections still being developed
 const PlaceholderPage = ({ title }) => (
@@ -69,7 +71,6 @@ export default function App() {
               <Route index element={<Navigate to="curriculum" replace />} />
               <Route path="curriculum" element={<CurriculumSettings />} />
               
-              {/* ✨ Added Department & Branch Routes ✨ */}
               <Route path="departments" element={<DepartmentSetting />} />
               <Route path="branches" element={<BranchSetting />} />
               
@@ -83,12 +84,14 @@ export default function App() {
           <Route path="/intern-dashboard" element={<InternLayout />}>
             <Route index element={<InternDashboardHome />} />
             <Route path="attendance" element={<Attendance />} />
-            <Route path="events" element={<InternEventsPage />} />
+            
+            {/* ✨ UPDATED: Now using the dedicated InternCalendar component ✨ */}
+            <Route path="events" element={<InternCalendar />} />
+            
             <Route path="logs" element={<Logs />} />
             <Route path="forms" element={<Forms />} />
             <Route path="profile" element={<InternProfile />} />
             
-            {/* ✨ RESTORED: History & Announcements ✨ */}
             <Route path="history" element={<PlaceholderPage title="History" />} />
             <Route path="announcements" element={<PlaceholderPage title="Announcements" />} />
           </Route>
