@@ -6,7 +6,7 @@ import SignUpPage from './pages/auth/SignUpPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 // --- HR ADMIN IMPORTS ---
-import DashboardLayout from './components/layout/DashboardLayout';
+import DashboardLayout from './components/layout/HrNavBar';
 import DashboardHome from './pages/hr/DashboardHome';
 import InternsList from './pages/hr/interns/InternsList';
 import RoleManagement from './pages/hr/rolemanagement/RoleManagement';
@@ -20,12 +20,15 @@ import HREventsPage from './pages/hr/events/EventsPage';
 import CameraVerification from "./pages/hr/cameraverification/CameraVerification";
 
 // --- INTERN IMPORTS ---
-import InternLayout from './components/layout/InternLayout';
+import InternLayout from './components/layout/InternNavBar';
 import InternDashboardHome from './pages/intern/InternDashboardHome';
 import Attendance from './pages/intern/attendance/Attendance';
 import Logs from './pages/intern/logs/Logs';
 import Forms from './pages/intern/forms/Forms'; 
 import InternProfile from './pages/intern/internprofile/InternProfile';
+
+// ✨ NEW: Import the Global Profile Drawer Provider ✨
+import { ProfileDrawerProvider } from './context/ProfileDrawerContext';
 
 // ✨ NEW: Import the dedicated Read-Only Intern Calendar ✨
 import InternCalendar from './pages/intern/InternCalendar'; 
@@ -53,27 +56,33 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           
           {/* --- HR DASHBOARD ROUTES --- */}
-          <Route path="/dashboard" element={<DashboardLayout />}>
+          {/* ✨ Wrapped in ProfileDrawerProvider so the drawer works on all HR pages ✨ */}
+          <Route 
+            path="/dashboard" 
+            element={
+              <ProfileDrawerProvider>
+                <DashboardLayout />
+              </ProfileDrawerProvider>
+            }
+          >
             <Route index element={<DashboardHome />} />
             <Route path="interns" element={<InternsList />} />
             
-            {/* Intern Profile loads inside the HR layout */}
-            <Route path="interns/:id" element={<InternProfile />} />
+            {/* ✨ HR View: Secure detail page (Can also be accessed via Drawer) ✨ */}
+            <Route path="interns/:id" element={<InternProfile isHrView={true} />} />
             
             <Route path="time-tracker" element={<TimeTracker />} /> 
             <Route path="events" element={<HREventsPage />} />
             <Route path="role-management" element={<RoleManagement />} />
             <Route path="export" element={<ExportReports />} />
             <Route path="camera-verification" element={<CameraVerification />} />
-            
+                        
             {/* --- SETTINGS ROUTES --- */}
             <Route path="settings" element={<SettingsLayout />}>
               <Route index element={<Navigate to="curriculum" replace />} />
               <Route path="curriculum" element={<CurriculumSettings />} />
-              
               <Route path="departments" element={<DepartmentSetting />} />
               <Route path="branches" element={<BranchSetting />} />
-              
               <Route path="general" element={<PlaceholderPage title="General Setup" />} />
               <Route path="accounts" element={<PlaceholderPage title="Admin Accounts" />} />
               <Route path="security" element={<PlaceholderPage title="Security & Logs" />} />
@@ -85,11 +94,12 @@ export default function App() {
             <Route index element={<InternDashboardHome />} />
             <Route path="attendance" element={<Attendance />} />
             
-            {/* ✨ UPDATED: Now using the dedicated InternCalendar component ✨ */}
             <Route path="events" element={<InternCalendar />} />
             
             <Route path="logs" element={<Logs />} />
             <Route path="forms" element={<Forms />} />
+            
+            {/* ✨ Intern View: Standard full-page profile ✨ */}
             <Route path="profile" element={<InternProfile />} />
             
             <Route path="history" element={<PlaceholderPage title="History" />} />

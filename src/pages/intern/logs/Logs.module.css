@@ -1,0 +1,161 @@
+.pageWrapper {
+    padding: 24px;
+    background-color: #f1f5f9;
+    min-height: 100vh;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.pageTitle {
+    font-size: 28px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.5px;
+}
+
+.dtrBtn {
+    background: #FACC15; /* CLIMBS Yellow */
+    color: #000;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 10px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transition: 0.2s;
+}
+
+.dtrBtn:hover {
+    background: #eab308;
+    transform: translateY(-2px);
+}
+
+/* ─── TABLE STYLING ─── */
+.cardContainer {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+}
+
+.logTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.logTable thead tr {
+    background: #FACC15;
+}
+
+.logTable th {
+    padding: 18px 20px;
+    color: #fff;
+    text-align: left;
+    font-weight: 800;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.logTable td {
+    padding: 18px 20px;
+    color: #475569;
+    font-size: 15px;
+    font-weight: 500;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.logTable tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+.dateCell { font-weight: 600; color: #1e293b !important; }
+
+/* ─── STATUS BADGES ─── */
+.badge {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 800;
+    display: inline-block;
+    text-align: center;
+    min-width: 90px;
+}
+
+.statusPresent {
+    background: #DCFCE7;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+
+.statusLate {
+    background: #FEF3C7;
+    color: #92400E;
+    border: 1px solid #FCD34D;
+}
+
+.statusAbsent {
+    background: #FEE2E2;
+    color: #991B1B;
+    border: 1px solid #FCA5A5;
+}
+
+.statusDefault {
+    background: #F1F5F9;
+    color: #64748B;
+}
+
+.moreBtn {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    transition: 0.2s;
+}
+
+.moreBtn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+/* ─── LOADING ─── */
+.loadingContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    color: #64748b;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f1f5f9;
+    border-top: 4px solid #FACC15;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.emptyRow {
+    text-align: center;
+    padding: 60px !important;
+    color: #94a3b8;
+    font-style: italic;
+}

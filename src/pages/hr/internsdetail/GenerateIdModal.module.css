@@ -26,7 +26,7 @@
 /* ─── THE ID CARD BASE ─── */
 .idCard {
   width: 250px; 
-  height: 420px; /* Adjusted slightly to match the typical tall aspect ratio of the ALTHEA card */
+  height: 420px;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -42,11 +42,11 @@
 
 /* ─── FRONT CARD STYLES ─── */
 .photoWrapper {
-  height: 50%; /* This controls exactly where the text starts below it */
+  height: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-top: 15%; /* Pushes photo down away from the logo */
+  padding-top: 15%; 
 }
 
 .internPhoto {
@@ -55,36 +55,36 @@
   border-radius: 50%; 
   object-fit: cover;
   background: white;
-  border: 4px solid white; /* Adds the white ring around the photo seen in ALTHEA */
+  border: 4px solid white; 
 }
 
 .frontTextWrapper {
-  height: 48%; /* The remaining space */
+  height: 48%; 
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 10px; /* Space between photo and name */
+  padding-top: 10px; 
 }
 
 .frontName {
   font-size: 28px;
   font-weight: 900;
   color: #000;
-  margin: 0 0 45px 0; /* Creates the exact gap needed for the baked-in "INTERN" text */
-  letter-spacing: 8px; /* Spreads out "A L T H E A" */
-  text-indent: 8px; /* Visual fix to center letter-spaced text */
+  margin: 0 0 45px 0; 
+  letter-spacing: 8px; 
+  text-indent: 8px; 
 }
 
 .frontDetails {
   display: flex;
   flex-direction: column;
-  gap: 12px; /* Space between Course and School */
+  gap: 12px; 
 }
 
 .frontCourse, .frontSchool {
   font-size: 15px;
   font-weight: 900;
-  color: #605dec; /* The purple/blue from the design */
+  color: #605dec; 
   margin: 0;
   text-transform: uppercase;
   text-align: center;
@@ -93,21 +93,21 @@
 /* ─── BACK CARD STYLES ─── */
 .backTextWrapper {
   height: 100%;
-  padding-top: 53%; /* Pushes everything down below the blue/yellow top banner */
+  padding-top: 53%; 
   padding-left: 10%;
   display: flex;
   flex-direction: column;
 }
 
 .backContactBlock {
-  margin-top: 25px; /* Adjust this to push the data below the baked-in "EMERGENCY CONTACT:" */
+  margin-top: 25px; 
   display: flex;
   flex-direction: column;
   gap: 3px;
 }
 
 .backAddressBlock {
-  margin-top: 45px; /* Adjust this to push the data below the baked-in "ADDRESS:" */
+  margin-top: 45px; 
 }
 
 .backValue {

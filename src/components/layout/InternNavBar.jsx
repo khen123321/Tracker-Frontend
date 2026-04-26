@@ -5,7 +5,7 @@ import {
     FileText, Megaphone, UserCircle, MoreHorizontal,
     Menu, X, ChevronLeft, ChevronRight
 } from 'lucide-react';
-import styles from './InternLayout.module.css';
+import styles from "./InternNavBar.module.css";
 import logoImage from '../../assets/logo.png';
 import smallLogo from '../../assets/logo-s.png'; 
 

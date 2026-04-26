@@ -240,26 +240,38 @@
   text-align: left;
 }
 
+/* ✨ ADDED: Light grey background and borders to the header row */
+.dataTable thead {
+  background-color: #f8fafc; 
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+/* ✨ UPDATED: Matches the small, uppercase, bold text in the screenshot */
 .dataTable th {
-  padding: 10px 12px;
+  padding: 14px 16px;
   font-size: 11px;
   font-weight: 700;
   color: #64748b;
   text-transform: uppercase;
-  border-bottom: 1px solid #f1f5f9;
-  background: #fff;
+  letter-spacing: 0.05em;
+  background: transparent; /* Ensures the thead background shows through */
 }
 
+/* ✨ UPDATED: Clean spacing and subtle bottom borders for the rows */
 .dataTable td {
-  padding: 12px;
-  border-bottom: 1px solid #f8fafc;
+  padding: 16px;
+  border-bottom: 1px solid #f1f5f9;
   font-size: 13px;
   color: #475569;
   vertical-align: middle;
 }
 
 .dataTable tr { transition: background-color 0.15s ease; }
-.dataTable tr:hover { background-color: #f8fafc; }
+
+/* Ensure we only hover the body rows, not the header */
+.dataTable tbody tr:hover { background-color: #f8fafc; }
+
 .selectedRow { background-color: #eff6ff !important; }
 
 .emptyRow { text-align: center; color: #94a3b8; padding: 32px !important; font-style: italic; }

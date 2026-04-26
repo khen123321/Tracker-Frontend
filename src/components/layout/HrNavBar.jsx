@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Search, Clock, CalendarDays,
   FileUp, UserCog, Settings, MoreHorizontal, Camera
 } from 'lucide-react';
-import styles from './DashboardLayout.module.css';
+import styles from './HrNavBar.module.css';
 import logoImage from '../../assets/logo.png';
 
 const DashboardLayout = () => {

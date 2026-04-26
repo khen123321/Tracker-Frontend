@@ -1,15 +1,16 @@
-/* OVERLAY */
+/* ✨ BASE & MODAL LAYOUT */
 .overlay {
   position: fixed;
   top: 0; left: 0;
   width: 100vw; height: 100vh;
-  background: rgba(15, 23, 42, 0.7);
+  background: rgba(12, 17, 42, 0.7); /* Deep blue theme for overlay */
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 999999;
   padding: 20px;
+  font-family: 'Poppins', sans-serif;
 }
 
 .modalContainer {
@@ -38,7 +39,7 @@
   gap: 5px;
 }
 
-/* HEADER */
+/* ✨ HEADER */
 .header {
   background: white;
   padding: 10px 12px;
@@ -52,7 +53,7 @@
   border: 1px solid #e2e8f0;
 }
 
-.modalTitle { font-size: 17px; font-weight: 800; color: #0f172a; margin: 0; }
+.modalTitle { font-size: 17px; font-weight: 800; color: #0C112A; margin: 0; }
 
 .headerActions {
   display: flex;
@@ -71,12 +72,15 @@
   border-radius: 8px;
   font-size: 11px;
   font-weight: 700;
-  color: #334155;
+  color: #0C112A;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s;
+  transition: all 0.2s;
 }
-.actionBtn:hover { background: #f8fafc; }
+.actionBtn:hover { 
+  background: #f8fafc; 
+  border-color: #FFB900; 
+}
 
 .filterDropdown {
   display: inline-flex;
@@ -88,7 +92,7 @@
   border-radius: 8px;
   font-size: 11px;
   font-weight: 700;
-  color: #334155;
+  color: #0C112A;
   cursor: pointer;
   white-space: nowrap;
 }
@@ -104,11 +108,15 @@
   cursor: pointer;
   color: #64748b;
   flex-shrink: 0;
-  transition: background 0.15s;
+  transition: all 0.2s;
 }
-.closeBtn:hover { background: #e2e8f0; }
+.closeBtn:hover { 
+  background: #fee2e2; 
+  color: #ef4444; 
+  border-color: #fca5a5;
+}
 
-/* PROFILE */
+/* ✨ PROFILE SECTION */
 .profileSection {
   background: white;
   border-radius: 10px;
@@ -132,7 +140,7 @@
 }
 .avatarLarge img { width: 100%; height: 100%; object-fit: cover; }
 
-.internName { font-size: 16px; font-weight: 800; color: #0f172a; margin: 0 0 2px; }
+.internName { font-size: 16px; font-weight: 800; color: #0C112A; margin: 0 0 2px; }
 .internEmail { font-size: 12px; color: #64748b; font-weight: 500; margin: 0; }
 
 .infoBadges { display: flex; gap: 5px; flex-wrap: wrap; }
@@ -145,10 +153,10 @@
   text-align: center;
   min-width: 110px;
 }
-.badgeValue { display: block; font-weight: 700; font-size: 12px; color: #0f172a; }
+.badgeValue { display: block; font-weight: 700; font-size: 12px; color: #0C112A; }
 .badgeLabel { display: block; font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
 
-/* STATS */
+/* ✨ STATS GRID */
 .statsGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
 
 .statCard {
@@ -162,18 +170,18 @@
 }
 
 .statIconWrapper {
-  color: #0B1EAE;
+  color: #FFB900;
   padding: 9px;
-  background: #f1f5f9;
+  background: #0C112A;
   border-radius: 10px;
   flex-shrink: 0;
   display: flex;
 }
 
-.statNumber { margin: 0 0 3px; font-size: 20px; font-weight: 800; color: #0f172a; line-height: 1; }
+.statNumber { margin: 0 0 3px; font-size: 20px; font-weight: 800; color: #0C112A; line-height: 1; }
 .statLabel  { margin: 0; font-size: 11px; color: #64748b; font-weight: 500; }
 
-/* HISTORY */
+/* ✨ HISTORY & CONTROLS */
 .historySection {
   background: white;
   border-radius: 10px;
@@ -192,7 +200,7 @@
   border-bottom: 1px solid #f1f5f9;
 }
 
-.historyTitle { font-size: 14px; font-weight: 700; color: #0f172a; margin: 0; }
+.historyTitle { font-size: 14px; font-weight: 700; color: #0C112A; margin: 0; }
 
 .historyControls { display: flex; align-items: center; gap: 5px; }
 
@@ -213,26 +221,52 @@
   align-items: center;
   transition: background 0.15s, color 0.15s;
 }
-.toggleBtn:hover { background: #f8fafc; color: #334155; }
-.activeToggle { background: #f1f5f9; color: #0f172a; }
+.toggleBtn:hover { background: #f8fafc; color: #0C112A; }
+.activeToggle { background: #f1f5f9; color: #0C112A; }
 
-.sortBtn {
+/* ✨ CALENDAR VIEW TRICKS ✨ */
+.calendarContainer {
   display: flex;
-  align-items: center;
-  gap: 5px;
-  border: 1px solid #e2e8f0;
-  padding: 6px 11px;
-  border-radius: 8px;
-  font-size: 12px;
-  color: #4b5563;
-  background: transparent;
-  cursor: pointer;
-  font-weight: 500;
+  flex-direction: column;
+  gap: 20px; /* Space between different months */
 }
-.sortBtn:hover { background: #f8fafc; }
+
+.monthBlock {
+  background: #fff;
+  border-radius: 12px;
+  /* padding: 10px; */
+  /* border: 1px solid #e2e8f0; */
+}
+
+.monthTitle {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0C112A;
+  margin-top: 0;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+.daysHeaderRow {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5px;
+  margin-bottom: 8px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
 
 /* CARDS - GRID VIEW */
-.cardsGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+.calendarGrid, .cardsGrid { 
+  display: grid; 
+  grid-template-columns: repeat(5, 1fr); 
+  gap: 5px; 
+}
 
 /* CARDS - LIST VIEW */
 .cardsGridList { display: flex; flex-direction: column; gap: 5px; }
@@ -241,10 +275,22 @@
 .cardsGridList .cardBody { flex: 1; display: flex; gap: 16px; align-items: center; }
 .cardsGridList .cardFooter { border-top: none; border-left: 1px solid #e2e8f0; flex-direction: column; justify-content: center; align-items: flex-end; gap: 2px; min-width: 100px; }
 
-/* ATTENDANCE CARD */
-.attendanceCard { border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; }
+/* ✨ INDIVIDUAL ATTENDANCE CARDS ✨ */
+.attendanceCard { 
+  border-radius: 10px; 
+  overflow: hidden; 
+  border: 1px solid #e2e8f0; 
+  transition: all 0.2s;
+}
+
+.attendanceCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  border-color: #cbd5e1;
+}
 
 .cardHeader {
+  /* ✨ RESTORED YOUR VIBRANT BLUE GRADIENT ✨ */
   background: linear-gradient(270deg, #0B1EAE 0%, #152286 23.56%, #0D1767 63.46%, #050C48 100%);
   color: white;
   padding: 9px 11px;
@@ -253,7 +299,6 @@
   align-items: center;
   gap: 5px;
 }
-
 
 .cardDate { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; }
 
@@ -275,8 +320,8 @@
 .timeRow { display: flex; justify-content: space-between; gap: 6px; }
 .timeCol { display: flex; flex-direction: column; gap: 3px; }
 .timeColRight { display: flex; flex-direction: column; gap: 3px; text-align: right; }
-.timeLabel { font-size: 11px; color: #64748b; }
-.timeValue { font-size: 11px; color: #0f172a; font-weight: 600; }
+.timeLabel { font-size: 11px; color: #64748b; font-weight: 600; }
+.timeValue { font-size: 11px; color: #0C112A; font-weight: 700; }
 .divider { height: 1px; background: #e2e8f0; margin: 7px 0; }
 
 .cardFooter {
@@ -288,10 +333,14 @@
   background: white;
 }
 
-.totalLabel { font-size: 11px; color: #64748b; }
-.totalValue { font-size: 11px; font-weight: 700; color: #0B1EAE; }
+.totalLabel { font-size: 11px; color: #64748b; font-weight: 600; }
+.totalValue { 
+  font-size: 11px; 
+  font-weight: 800; 
+  color: #0B1EAE; /* Matches the vibrant gradient */ 
+}
 
-/* PAGINATION */
+/* PAGINATION (If needed) */
 .pagination { display: flex; justify-content: center; gap: 5px; padding-top: 4px; }
 
 .pageBtn {
@@ -300,35 +349,41 @@
   border-radius: 8px;
   background: white;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   color: #64748b;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: all 0.2s;
 }
-.pageBtn:hover { background: #f8fafc; }
+.pageBtn:hover { 
+  background: #f8fafc; 
+  color: #0C112A;
+  border-color: #cbd5e1;
+}
 
 .pageBtnActive {
   width: 32px; height: 32px;
   border: none;
   border-radius: 8px;
-  background: #0B1EAE;
+  background: #0B1EAE; /* Matches the vibrant gradient */
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 800;
   color: white;
-  cursor: pointer;
+  cursor: default;
 }
 
 /* RESPONSIVE */
 @media (max-width: 1024px) {
-  .cardsGrid { grid-template-columns: repeat(2, 1fr); }
+  .calendarGrid, .cardsGrid { grid-template-columns: repeat(3, 1fr); }
+  .daysHeaderRow { display: none; } /* Hide days header on smaller screens */
   .statsGrid { grid-template-columns: repeat(2, 1fr); }
   .infoBadges { flex-wrap: wrap; }
 }
 @media (max-width: 768px) {
   .profileSection { flex-direction: column; align-items: flex-start; }
   .headerActions { flex-wrap: wrap; }
+  .calendarGrid, .cardsGrid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 480px) {
-  .cardsGrid { grid-template-columns: 1fr; }
+  .calendarGrid, .cardsGrid { grid-template-columns: 1fr; }
   .statsGrid { grid-template-columns: 1fr 1fr; }
 }

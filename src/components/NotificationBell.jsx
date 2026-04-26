@@ -1,132 +1,100 @@
 import React, { useState, useEffect } from 'react';
-import api from '../api/axios'; // Ensure this path is correct for your project
-import { Bell, AlertTriangle, X } from 'lucide-react';
+import api from '../api/axios'; 
+import { Bell, AlertTriangle, X, CheckCircle, Info } from 'lucide-react';
 
-// We accept a 'role' prop that defaults to 'intern'. 
-// It can be passed as <NotificationBell role="hr" /> or <NotificationBell role="intern" />
-const NotificationBell = ({ role = 'intern' }) => {
+const NotificationBell = ({ role = 'intern', onNotificationClick }) => {
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [isOpen, setIsOpen] = useState(false);
-    const [internHasViewed, setInternHasViewed] = useState(false); 
 
     const isHR = role === 'hr';
-
-    // HR relies on the backend count, Intern relies on a local "has viewed" toggle
-    const displayCount = isHR ? unreadCount : (internHasViewed ? 0 : notifications.length);
 
     useEffect(() => {
         let isMounted = true;
 
         const fetchNotifications = async () => {
             try {
-                // 1. Pick the correct endpoint based on the role
-                const endpoint = isHR ? '/notifications' : '/intern/notifications';
-                const { data } = await api.get(endpoint);
+                const { data } = await api.get('/notifications');
 
                 if (!isMounted) return;
 
-                // 2. Handle the data differently based on the role's backend structure
-                if (isHR) {
-                    setNotifications(data.notifications || data || []);
-                    setUnreadCount(data.unread_count !== undefined ? data.unread_count : (data.length || 0));
-                } else {
-                    const notifs = data || [];
-                    setNotifications(notifs);
-                    // If an intern gets a new notification, reset the viewed status so the red dot reappears
-                    if (notifs.length > notifications.length) {
-                        setInternHasViewed(false);
-                    }
-                }
+                const notifs = isHR ? (data.notifications || data || []) : (typeof data === 'string' ? JSON.parse(data) : data);
+                setNotifications(notifs);
+                
+                // ✨ Persistent Count: Filter and count ONLY items that have no read_at timestamp
+                const unread = notifs.filter(n => n.read_at === null).length;
+                setUnreadCount(unread);
+
             } catch (err) {
-                console.error(`Error fetching ${role} notifications:`, err);
+                console.error(`❌ Error fetching ${role} notifications:`, err);
             }
         };
 
         fetchNotifications();
-        const interval = setInterval(fetchNotifications, 30000); // Poll every 30 seconds
+        const interval = setInterval(fetchNotifications, 8000); // Sync every 8 seconds
 
         return () => { 
             isMounted = false; 
             clearInterval(interval);
         };
-    
-    }, [isHR, role, notifications.length]);
+    }, [isHR, role]);
 
-    // Handle Escape key to close the drawer
-    useEffect(() => {
-        const handleKeyDown = (e) => {
-            if (e.key === 'Escape') setIsOpen(false);
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, []);
-
-    const handleToggle = async () => {
+    const handleToggle = () => {
         setIsOpen(!isOpen);
-        
-        // When opening the drawer, clear the red dot
-        if (!isOpen && displayCount > 0) {
-            if (isHR) {
-                try {
-                    await api.post('/notifications/mark-as-read');
-                    setUnreadCount(0);
-                } catch (err) {
-                    console.error("Failed to mark as read:", err);
-                }
-            } else {
-                setInternHasViewed(true);
+        // 🛑 BULK MARK AS READ REMOVED: Opening the bell no longer clears the badge.
+    };
+
+    // ✨ NEW: Mark only the clicked item as read
+    const handleItemClick = async (notification, payload) => {
+        // If it's already unread, tell the backend to mark THIS specific one as read
+        if (!notification.read_at) {
+            try {
+                // We assume your backend has a route to mark a specific ID as read
+                // If not, we can just update the local state for immediate feedback
+                await api.post(`/notifications/${notification.id}/read`); 
+                
+                // Update local state so the badge and highlight disappear instantly
+                setNotifications(prev => prev.map(n => 
+                    n.id === notification.id ? { ...n, read_at: new Date().toISOString() } : n
+                ));
+                setUnreadCount(prev => Math.max(0, prev - 1));
+            } catch (err) {
+                console.error("Failed to mark single notification as read", err);
             }
+        }
+
+        // Trigger the popup if it's a request
+        if (payload.request_id && onNotificationClick) {
+            onNotificationClick(payload.request_id);
+            setIsOpen(false); 
         }
     };
 
     return (
         <>
-            {/* --- BELL ICON BUTTON --- */}
-            <button 
-                onClick={handleToggle} 
-                className="relative p-2 rounded-full text-slate-500 hover:bg-slate-100 transition focus:outline-none z-30"
-            >
+            <button onClick={handleToggle} className="relative p-2 rounded-full text-slate-500 hover:bg-slate-100 transition focus:outline-none z-30">
                 <Bell size={24} />
-                {displayCount > 0 && (
+                {/* Badge stays until individual items are clicked */}
+                {unreadCount > 0 && (
                     <span className="absolute top-1 right-1 flex items-center justify-center w-5 h-5 text-[10px] font-bold text-white bg-red-500 border-2 border-white rounded-full">
-                        {displayCount > 9 ? '9+' : displayCount}
+                        {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                 )}
             </button>
 
-            {/* --- DARK OVERLAY BACKGROUND --- */}
             {isOpen && (
-                <div 
-                    className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
-                    style={{ zIndex: 9998 }}
-                    onClick={() => setIsOpen(false)}
-                />
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" style={{ zIndex: 9998 }} onClick={() => setIsOpen(false)} />
             )}
 
-            {/* --- SLIDE-OUT DRAWER PANEL --- */}
-            <div 
-                className={`fixed top-0 right-0 h-screen w-80 sm:w-96 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col ${
-                    isOpen ? 'translate-x-0' : 'translate-x-full'
-                }`}
-                style={{ zIndex: 9999 }}
-            >
-                
-                {/* Drawer Header */}
+            <div className={`fixed top-0 right-0 h-screen w-80 sm:w-96 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`} style={{ zIndex: 9999 }}>
                 <div className="flex items-center justify-between px-6 py-5 bg-slate-50 border-b border-slate-100 flex-shrink-0">
                     <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
                         <Bell size={18} className="text-slate-500" /> 
                         {isHR ? "HR Alerts" : "Notifications"}
                     </h3>
-                    <button 
-                        onClick={() => setIsOpen(false)}
-                        className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors focus:outline-none"
-                    >
-                        <X size={20} />
-                    </button>
+                    <button onClick={() => setIsOpen(false)} className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors focus:outline-none"><X size={20} /></button>
                 </div>
 
-                {/* Drawer Body */}
                 <div className="flex-1 overflow-y-auto">
                     {notifications.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full text-slate-400 p-8 text-center gap-3">
@@ -136,55 +104,44 @@ const NotificationBell = ({ role = 'intern' }) => {
                     ) : (
                         <div className="flex flex-col">
                             {notifications.map((n) => {
-                                // ✨ DYNAMIC DATA MAPPING ✨
-                                // We pull the right variables depending on if the HR or Intern is viewing it
-                                const title = isHR ? (n.data?.intern_name || 'System Notice') : n.title;
-                                const message = isHR ? (n.data?.message || 'New action recorded.') : n.message;
-                                const timeText = isHR 
-                                    ? new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
-                                    : n.created_at; // Intern uses diffForHumans() e.g. "2 hours ago"
-                                
+                                const payload = typeof n.data === 'string' ? JSON.parse(n.data) : (n.data || {});
+                                const isUnread = !n.read_at;
+                                const dateSubmitted = new Date(n.created_at).toLocaleString('en-US', { 
+                                    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true 
+                                });
+
                                 return (
                                     <div 
                                         key={n.id} 
-                                        className={`flex gap-4 p-5 border-b border-slate-50 transition cursor-default bg-white ${
-                                            isHR ? 'hover:bg-blue-50/50' : 'hover:bg-red-50/50'
-                                        }`}
+                                        onClick={() => handleItemClick(n, payload)}
+                                        className={`relative flex gap-4 p-5 border-b border-slate-50 transition cursor-pointer hover:bg-slate-50 ${isUnread ? 'bg-blue-50/40' : 'bg-white'}`}
                                     >
-                                        {/* Icon (Only show warning triangle for Intern rejections) */}
-                                        {!isHR && (
-                                            <div className="flex-shrink-0 mt-1">
-                                                <div className="p-2 bg-red-100 text-red-600 rounded-full shadow-sm">
-                                                    <AlertTriangle size={16} />
-                                                </div>
-                                            </div>
+                                        {isUnread && (
+                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 rounded-r-md"></div>
                                         )}
-                                        
-                                        {/* Content */}
-                                        <div className="flex-1">
-                                            <div className="flex justify-between items-start mb-1">
-                                                <p className={`text-sm font-bold leading-tight ${isHR ? 'text-blue-700' : 'text-slate-800'}`}>
-                                                    {title}
-                                                </p>
-                                                <span className="text-[10px] font-semibold text-slate-400 whitespace-nowrap ml-2 bg-slate-100 px-2 py-0.5 rounded-full">
-                                                    {timeText}
-                                                </span>
-                                            </div>
-                                            
-                                            {/* Interns get an extra date label */}
-                                            {!isHR && n.date && (
-                                                <p className="text-[11px] font-semibold text-slate-500 mb-2">
-                                                    For log on: {n.date}
-                                                </p>
+
+                                        <div className="flex-shrink-0 mt-1">
+                                            {n.title?.toLowerCase().includes('approved') ? (
+                                                <div className="p-2 bg-emerald-100 text-emerald-600 rounded-full shadow-sm"><CheckCircle size={16} /></div>
+                                            ) : n.title?.toLowerCase().includes('rejected') ? (
+                                                <div className="p-2 bg-red-100 text-red-600 rounded-full shadow-sm"><AlertTriangle size={16} /></div>
+                                            ) : (
+                                                <div className="p-2 bg-blue-100 text-blue-600 rounded-full shadow-sm"><Info size={16} /></div>
                                             )}
-                                            
-                                            <div className={`text-xs leading-relaxed p-3 rounded-lg border relative ${
-                                                isHR ? 'text-slate-600 bg-transparent border-transparent p-0' : 'text-slate-700 bg-red-50/50 border-red-100/50'
-                                            }`}>
-                                                {!isHR && <span className="absolute top-2 left-2 text-red-300">"</span>}
-                                                <span className={`${!isHR && 'pl-3 block italic'}`}>
-                                                    {message}
-                                                </span>
+                                        </div>
+
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <p className={`text-sm leading-tight text-slate-800 ${isUnread ? 'font-extrabold' : 'font-semibold'}`}>
+                                                    {payload.title || n.title || 'System Notice'}
+                                                </p>
+                                                {isUnread && (
+                                                    <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[9px] font-bold uppercase rounded-full">New</span>
+                                                )}
+                                            </div>
+                                            <p className="text-[10px] font-medium text-slate-500 mb-2">Submitted: {dateSubmitted}</p>
+                                            <div className="text-xs text-slate-600 bg-slate-50 p-2 rounded border border-slate-100">
+                                                {payload.message || n.message}
                                             </div>
                                         </div>
                                     </div>

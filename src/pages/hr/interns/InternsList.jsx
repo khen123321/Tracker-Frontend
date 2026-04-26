@@ -1,24 +1,17 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Calendar, Search, SlidersHorizontal, MoreHorizontal, 
-  UserMinus, Download, Clock, AlertCircle, X, FileText, Activity, File, CheckCircle2, Award 
+  UserMinus, Download, Clock, AlertCircle, X, FileText, Activity, File, CheckCircle2, Award, Loader2
 } from 'lucide-react';
 import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
+  AreaChart, Area, XAxis, Tooltip, ResponsiveContainer 
 } from 'recharts';
 import api from '../../../api/axios';
 import styles from './InternsList.module.css';
 import InternDetailsModal from '../internsdetail/InternDetailsModal';
-
-// ✨ IMPORT YOUR UNIFIED NOTIFICATION BELL ✨
-// ✅ CORRECT IMPORT (3 dots-and-slashes)
+import { useProfileDrawer } from '../../../context/ProfileDrawerContext';
 import NotificationBell from '../../../components/NotificationBell';
-// ✨ PDF SNAPSHOT TOOLS ✨
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
-import CertificateTemplate from './CertificateTemplate';
 
-// ─── SKELETON PRIMITIVE ───
 function Sk({ w = '100%', h = 16, r = 6, mb = 0 }) {
   return (
     <div
@@ -36,11 +29,8 @@ export default function InternsList() {
   const [selectedInternModal, setSelectedInternModal] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
 
-  // ✨ CERTIFICATE STATE & REF ✨
-  const certificateRef = useRef(null);
-  const [certData, setCertData] = useState({ 
-    name: '', course: '', school: '', hours: 0, department: '', dateStarted: '', dateCompleted: '' 
-  });
+  // ✨ This hooks into your new sliding Drawer!
+  const { openProfile } = useProfileDrawer();
 
   const showNotification = (message, type = 'success') => {
     setNotification({ show: true, message, type });
@@ -62,7 +52,6 @@ export default function InternsList() {
     date: '', timeIn: '', timeOut: '', reason: '', notes: ''
   });
 
-  // ✨ SEARCH & 4 DROPDOWN FILTERS STATES ✨
   const [searchTerm, setSearchTerm] = useState('');
   const [deptFilter, setDeptFilter] = useState('All');
   const [schoolFilter, setSchoolFilter] = useState('All');
@@ -85,12 +74,10 @@ export default function InternsList() {
 
   useEffect(() => { fetchInterns(); }, []);
 
-  // ✨ DYNAMIC FILTER OPTIONS ✨
   const uniqueDepartments = useMemo(() => ['All', ...new Set(interns.map(i => i.intern?.department?.name || i.department?.name || i.assigned_department || 'Not Assigned'))], [interns]);
   const uniqueSchools = useMemo(() => ['All', ...new Set(interns.map(i => i.intern?.school?.name || i.school?.name || i.school || 'Not Assigned'))], [interns]);
   const uniqueStatuses = useMemo(() => ['All', ...new Set(interns.map(i => i.status || 'Unknown'))], [interns]);
 
-  // ✨ COMBINED SEARCH & 4 FILTERS LOGIC ✨
   const processedInterns = useMemo(() => {
     return interns.filter(user => {
       const name = `${user.first_name} ${user.last_name}`.toLowerCase();
@@ -264,39 +251,6 @@ export default function InternsList() {
     }
   };
 
-  const handleGenerateCertificate = async (user) => {
-    try {
-      showNotification('Generating high-quality certificate...', 'success');
-      
-      setCertData({
-        name: `${user.last_name}, ${user.first_name}`.toUpperCase(),
-        course: user.intern?.course || user.course || 'Bachelor of Science in Business Administration Major in Financial Management',
-        school: user.intern?.school?.name || user.school?.name || user.school || 'PHINMA Cagayan de Oro College',
-        hours: Math.floor(user.attendance_logs_sum_hours_rendered || 0),
-        department: user.intern?.department?.name || user.assigned_department || 'business administration',
-        gender: user.gender || 'female', 
-        dateStarted: new Date(user.intern?.date_started || user.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-        dateCompleted: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-      });
-
-      setTimeout(async () => {
-        const element = certificateRef.current;
-        const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: null }); 
-        const dataImage = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('landscape', 'px', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-        pdf.addImage(dataImage, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`${user.last_name}_Certificate.pdf`);
-        showNotification('Certificate downloaded successfully!', 'success');
-      }, 500);
-
-    } catch (error) {
-      console.error("Error generating certificate:", error);
-      showNotification("Failed to generate certificate.", "error");
-    }
-  };
-
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -370,7 +324,6 @@ export default function InternsList() {
       <div className={styles.header}>
         <h1 className={styles.pageTitle}>Interns Overview</h1>
         
-        {/* ✨ REPLACED DUMMY BUTTON WITH REAL NOTIFICATION COMPONENT ✨ */}
         <div className={styles.flexRow}>
           <NotificationBell role="hr" />
           <div className={styles.dateBadge}>
@@ -380,7 +333,7 @@ export default function InternsList() {
         </div>
       </div>
 
-      <div className={styles.card}>
+      <div className={styles.card} style={{ maxHeight: '200px' }}>
         <div className={styles.sectionHeader} style={{ alignItems: 'flex-end' }}>
           <div className={styles.flexCol}>
             <h3 className={styles.sectionTitle}>Active Interns</h3>
@@ -421,7 +374,6 @@ export default function InternsList() {
         </div>
       </div>
 
-      {/* ✨ 4 DROPDOWN FILTERS ✨ */}
       <div className={styles.grid4}>
         <select className={styles.select} value={deptFilter} onChange={e => setDeptFilter(e.target.value)}>
           {uniqueDepartments.map(d => <option key={d} value={d}>{d === 'All' ? 'All Departments' : d}</option>)}
@@ -445,7 +397,6 @@ export default function InternsList() {
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>List Of Interns</h2>
           
-          {/* ✨ SEARCH BAR ✨ */}
           <div className={styles.flexRow}>
             <div style={{ position: 'relative' }}>
               <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
@@ -464,7 +415,6 @@ export default function InternsList() {
         <div className={styles.tableWrapper}>
           <table className={styles.dataTable}>
             <thead>
-              {/* ✨ NO MORE CLICKABLE ARROWS HERE ✨ */}
               <tr>
                 <th className={styles.checkboxCell}>
                   <input type="checkbox" className={styles.checkbox} checked={isAllSelected} onChange={toggleAllSelection}/>
@@ -474,13 +424,12 @@ export default function InternsList() {
                 <th>School</th>
                 <th>Date Started</th>
                 <th>Status</th>
-                <th>Certificate</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
               {processedInterns.length === 0 ? (
-                <tr><td colSpan="8" className={styles.emptyRow}>No interns found matching filters.</td></tr>
+                <tr><td colSpan="7" className={styles.emptyRow}>No interns found matching filters.</td></tr>
               ) : (
                 processedInterns.map((user) => {
                   const departmentName = user.intern?.department?.name || user.department?.name || user.assigned_department || 'Not Assigned';
@@ -491,13 +440,32 @@ export default function InternsList() {
                       <td className={styles.checkboxCell}>
                         <input type="checkbox" className={styles.checkbox} checked={isSelected(user.id)} onChange={() => toggleInternSelection(user)}/>
                       </td>
+                      
                       <td>
-                        <div className={styles.internProfile}>
+                        <div 
+                          className={styles.internProfile} 
+                          // ✨ Opens the Global Profile Drawer!
+                          onClick={() => {
+                              if (user.intern && user.intern.id) {
+                                  openProfile(user.intern.id);
+                              } else if (user.id) {
+                                  // Fallback if the user object itself is the intern ID
+                                  openProfile(user.id);
+                              } else {
+                                  alert(`Sync Error: ${user.first_name} does not have an active Intern Record yet.`);
+                              }
+                          }}
+                          style={{ cursor: 'pointer' }}
+                          title="View Full Profile"
+                        >
                           <div className={styles.avatar}>
-                            <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.first_name + user.id}`} alt="avatar" style={{ width: '100%', height: '100%' }} />
+                            <img 
+                              src={user.intern?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}`} 
+                              alt="avatar" 
+                            />
                           </div>
                           <div className={styles.flexCol} style={{ gap: '2px' }}>
-                            <p className={styles.internName}>{user.first_name} {user.last_name}</p>
+                            <p className={styles.internName} style={{ color: '#0B1EAE' }}>{user.first_name} {user.last_name}</p>
                             <p className={styles.internEmail}>{user.email}</p>
                           </div>
                         </div>
@@ -511,17 +479,6 @@ export default function InternsList() {
                         <span className={user.status?.toLowerCase() === 'active' ? styles.statusActive : styles.statusInactive}>
                           {user.status || 'Unknown'}
                         </span>
-                      </td>
-
-                      <td>
-                        <button 
-                          onClick={() => handleGenerateCertificate(user)}
-                          className={styles.btnPrimary}
-                          style={{ padding: '6px 10px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px', border: 'none', borderRadius: '4px', cursor: 'pointer', background: '#0B1EAE', color: 'white' }}
-                          title={`Generate Certificate for ${user.first_name}`}
-                        >
-                          <Award size={14} /> Get Certificate
-                        </button>
                       </td>
 
                       <td style={{ textAlign: 'right' }}>
@@ -538,6 +495,8 @@ export default function InternsList() {
                               emergency_name: user.intern?.emergency_name || 'NOT PROVIDED',
                               emergency_number: user.intern?.emergency_number || 'NOT PROVIDED',
                               emergency_address: user.intern?.emergency_address || 'NOT PROVIDED',
+                              avatar_url: user.intern?.avatar_url || null, 
+                              rawData: user 
                             });
                           }}
                         >
@@ -553,8 +512,15 @@ export default function InternsList() {
         </div>
       </div>
 
-      {selectedInternModal && <InternDetailsModal intern={selectedInternModal} onClose={() => setSelectedInternModal(null)} />}
+      {/* ✨ ONLY THE INTERN DETAILS MODAL (It handles ID and Cert Modals internally) ✨ */}
+      {selectedInternModal && (
+        <InternDetailsModal 
+          intern={selectedInternModal} 
+          onClose={() => setSelectedInternModal(null)} 
+        />
+      )}
 
+      {/* BULK ACTIONS FLOATING BAR */}
       {selectedInterns.length > 0 && (
         <div className={styles.floatingBar}>
           <div className={styles.flexRow}>
@@ -577,7 +543,7 @@ export default function InternsList() {
         </div>
       )}
 
-      {/* ─── MODALS ─── */}
+      {/* REMOVE MODAL */}
       {activeBulkModal === 'remove' && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
@@ -633,6 +599,7 @@ export default function InternsList() {
         </div>
       )}
 
+      {/* EXPORT MODAL */}
       {activeBulkModal === 'export' && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
@@ -699,6 +666,7 @@ export default function InternsList() {
         </div>
       )}
 
+      {/* ADD HOURS MODAL */}
       {activeBulkModal === 'addHours' && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
@@ -762,9 +730,6 @@ export default function InternsList() {
           </div>
         </div>
       )}
-
-      {/* ✨ HIDDEN TEMPLATE COMPONENT ✨ */}
-      <CertificateTemplate intern={certData} forwardRef={certificateRef} />
       
     </div>
   );

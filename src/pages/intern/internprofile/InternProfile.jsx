@@ -1,24 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
     ArrowLeft, Building2, GraduationCap, 
-    FileText, CheckCircle2, XCircle, Clock, Calendar, ShieldCheck 
+    FileText, CheckCircle2, XCircle, Clock, Calendar, ShieldCheck,
+    Camera, UploadCloud, Loader2
 } from 'lucide-react';
 import api from '../../../api/axios'; 
+import toast, { Toaster } from 'react-hot-toast';
 import styles from './InternProfile.module.css';
 
 const InternProfile = () => {
-    // 1. Get ID from URL (This exists when an HR Admin clicks a row in the table)
     const { id: paramId } = useParams(); 
     const navigate = useNavigate();
     
-    // 2. The Smart Fetch Logic
     const targetId = paramId || 'me';
     const isViewingOwnProfile = !paramId;
 
     const [intern, setIntern] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    // ✨ NEW: States for uploading files
+    const [uploadingAvatar, setUploadingAvatar] = useState(false);
+    const [uploadingDoc, setUploadingDoc] = useState(null); 
+    const avatarInputRef = useRef(null);
 
     useEffect(() => {
         const fetchInternDetails = async () => {
@@ -40,6 +45,73 @@ const InternProfile = () => {
 
         fetchInternDetails();
     }, [targetId]); 
+
+    // ─── ✨ NEW: AVATAR UPLOAD HANDLER ✨ ───
+    const handleAvatarUpload = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('avatar', file);
+
+        try {
+            setUploadingAvatar(true);
+            // UPDATE THIS URL TO MATCH YOUR LARAVEL BACKEND ROUTE
+            const response = await api.post('/intern/upload-avatar', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            
+            toast.success("Profile picture updated!");
+            
+            // Update local state so image changes instantly without refresh
+            setIntern(prev => ({
+                ...prev,
+                intern: {
+                    ...prev.intern,
+                    avatar_url: response.data.avatar_url // Assuming backend returns the new URL
+                }
+            }));
+        } catch (err) {
+            console.error("Avatar upload error:", err);
+            toast.error("Failed to upload profile picture.");
+        } finally {
+            setUploadingAvatar(false);
+        }
+    };
+
+    // ─── ✨ NEW: DOCUMENT UPLOAD HANDLER ✨ ───
+    const handleDocumentUpload = async (docKey, event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('document', file);
+        formData.append('document_type', docKey);
+
+        try {
+            setUploadingDoc(docKey);
+            // UPDATE THIS URL TO MATCH YOUR LARAVEL BACKEND ROUTE
+            await api.post('/intern/upload-document', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            
+            toast.success(`${docKey.replace('_', ' ').toUpperCase()} uploaded successfully!`);
+            
+            // Update local state to show 'Yes' immediately
+            setIntern(prev => ({
+                ...prev,
+                intern: {
+                    ...prev.intern,
+                    [`has_${docKey}`]: true
+                }
+            }));
+        } catch (err) {
+            console.error("Doc upload error:", err);
+            toast.error("Failed to upload document.");
+        } finally {
+            setUploadingDoc(null);
+        }
+    };
 
     // ─── LOADING STATE ───
     if (loading) {
@@ -76,35 +148,60 @@ const InternProfile = () => {
     
     const isActive = intern.status?.toLowerCase() === 'active';
 
-    // ✨ DYNAMIC DATA MAPPING (No more hardcoded IDs!) ✨
     const schoolName = profile.school?.name || intern.school?.name || intern.school || profile.school_id || 'Not Assigned by HR';
     const courseName = profile.course || intern.course || 'Not Assigned by HR';
     const batchName = profile.batch || intern.batch || 'Current';
-    
     const branchName = profile.branch?.name || intern.branch?.name || intern.assigned_branch || profile.branch_id || 'Not Assigned by HR';
     const departmentName = profile.department?.name || intern.department?.name || intern.assigned_department || profile.department_id || 'Not Assigned by HR';
 
-    // ─── HELPER COMPONENT ───
-    const DocCheck = ({ label, hasDoc }) => (
-        <div className={styles.docItem}>
-            <span className={styles.docLabel}>
-                <FileText size={15} className={styles.detailIcon} /> {label}
-            </span>
-            {hasDoc ? (
-                <span className={`${styles.docBadge} ${styles.docBadgeValid}`}>
-                    <CheckCircle2 size={12} /> Yes
+    // ─── ✨ UPDATED HELPER COMPONENT FOR FILE UPLOADS ✨ ───
+    const DocCheck = ({ label, docKey, hasDoc }) => {
+        const isUploading = uploadingDoc === docKey;
+
+        return (
+            <div className={styles.docItem}>
+                <span className={styles.docLabel}>
+                    <FileText size={15} className={styles.detailIcon} /> {label}
                 </span>
-            ) : (
-                <span className={`${styles.docBadge} ${styles.docBadgeMissing}`}>
-                    <XCircle size={12} /> Missing
-                </span>
-            )}
-        </div>
-    );
+                
+                <div className={styles.docActionArea}>
+                    {hasDoc ? (
+                        <span className={`${styles.docBadge} ${styles.docBadgeValid}`}>
+                            <CheckCircle2 size={12} /> Yes
+                        </span>
+                    ) : (
+                        <span className={`${styles.docBadge} ${styles.docBadgeMissing}`}>
+                            <XCircle size={12} /> Missing
+                        </span>
+                    )}
+
+                    {/* Show Upload Button ONLY if viewing own profile and doc is missing */}
+                    {isViewingOwnProfile && !hasDoc && (
+                        <label className={styles.uploadBtnLabel}>
+                            {isUploading ? (
+                                <Loader2 size={14} className={styles.spinIcon} />
+                            ) : (
+                                <><UploadCloud size={14} /> Upload</>
+                            )}
+                            <input 
+                                type="file" 
+                                className={styles.hiddenInput} 
+                                // ✨ UPDATED: Explicitly allow PDF, Images, and Word Docs
+                                accept=".pdf, .jpg, .jpeg, .png, .doc, .docx" 
+                                onChange={(e) => handleDocumentUpload(docKey, e)}
+                                disabled={isUploading}
+                            />
+                        </label>
+                    )}
+                </div>
+            </div>
+        );
+    };
 
     // ─── MAIN RENDER ───
     return (
         <div className={styles.pageWrapper}>
+            <Toaster position="top-right" />
             
             <div className={styles.headerContainer}>
                 <button onClick={() => navigate(-1)} className={styles.backButton}>
@@ -127,11 +224,37 @@ const InternProfile = () => {
                     <div className={`${styles.card} ${styles.identityCard}`}>
                         <div className={styles.identityBg}></div>
                         
+                        {/* ✨ UPDATED AVATAR WRAPPER ✨ */}
                         <div className={styles.avatarWrapper}>
+                            {uploadingAvatar && (
+                                <div className={styles.avatarLoadingOverlay}>
+                                    <Loader2 className={styles.spinIcon} size={24} color="white" />
+                                </div>
+                            )}
                             <img 
-                                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${intern.first_name + intern.id}`} 
+                                // Uses uploaded avatar if available, otherwise uses DiceBear fallback
+                                src={profile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${intern.first_name + intern.id}`} 
                                 alt="avatar" 
                                 className={styles.avatarImg}
+                            />
+                            
+                            {/* Overlay trigger ONLY for the intern */}
+                            {isViewingOwnProfile && (
+                                <div 
+                                    className={styles.avatarHoverOverlay}
+                                    onClick={() => avatarInputRef.current.click()}
+                                >
+                                    <Camera size={20} color="white" />
+                                </div>
+                            )}
+                            
+                            {/* Hidden file input for avatar */}
+                            <input 
+                                type="file" 
+                                accept="image/*" 
+                                className={styles.hiddenInput}
+                                ref={avatarInputRef}
+                                onChange={handleAvatarUpload}
                             />
                         </div>
                         
@@ -244,10 +367,12 @@ const InternProfile = () => {
                                 <FileText size={18} color="#10b981" /> Onboarding Documents
                             </h3>
                             <div className={styles.docsList}>
-                                <DocCheck label="Memorandum of Agreement (MOA)" hasDoc={profile.has_moa} />
-                                <DocCheck label="School Endorsement Letter" hasDoc={profile.has_endorsement} />
-                                <DocCheck label="Non-Disclosure Agreement (NDA)" hasDoc={profile.has_nda} />
-                                <DocCheck label="Intern Pledge" hasDoc={profile.has_pledge} />
+                                {/* ✨ Added Resume/CV as requested ✨ */}
+                                <DocCheck label="Resume / CV" docKey="resume" hasDoc={profile.has_resume} />
+                                <DocCheck label="Memorandum of Agreement (MOA)" docKey="moa" hasDoc={profile.has_moa} />
+                                <DocCheck label="School Endorsement Letter" docKey="endorsement" hasDoc={profile.has_endorsement} />
+                                <DocCheck label="Non-Disclosure Agreement (NDA)" docKey="nda" hasDoc={profile.has_nda} />
+                                <DocCheck label="Intern Pledge" docKey="pledge" hasDoc={profile.has_pledge} />
                             </div>
                         </div>
                     </div>
@@ -258,4 +383,4 @@ const InternProfile = () => {
     );
 };
 
-export default InternProfile;
+export default InternProfile; 

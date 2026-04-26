@@ -109,21 +109,58 @@
     border-bottom: 1px solid #f1f5f9;
 }
 
-/* ─── IDENTITY CARD ─── */
+/* ─── IDENTITY CARD & AVATAR UPLOAD ─── */
 .identityCard { padding: 0; text-align: center; padding-bottom: 24px; }
 .identityBg { height: 100px; background: linear-gradient(135deg, #0B1EAE 0%, #2563eb 100%); }
 
 .avatarWrapper {
-    width: 90px;
-    height: 90px;
+    width: 100px;
+    height: 100px;
     border-radius: 50%;
     border: 4px solid white;
-    margin: -45px auto 16px;
+    margin: -50px auto 16px;
     background: white;
     overflow: hidden;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    position: relative;
 }
-.avatarImg { width: 100%; height: 100%; object-fit: cover; }
+
+.avatarImg { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover; 
+}
+
+/* ✨ NEW: Avatar Hover Edit Effect ✨ */
+.avatarHoverOverlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.avatarWrapper:hover .avatarHoverOverlay {
+    opacity: 1;
+}
+
+.avatarLoadingOverlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.hiddenInput {
+    display: none;
+}
 
 .profileName { font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
 .profileEmail { font-size: 14px; color: #64748b; margin-bottom: 16px; }
@@ -169,12 +206,37 @@
 
 .emergencyList { display: flex; flex-direction: column; gap: 16px; }
 
+/* ─── DOCUMENT UPLOADS ─── */
 .docsList { display: flex; flex-direction: column; gap: 12px; }
 .docItem { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8fafc; border-radius: 10px; border: 1px solid #f1f5f9; }
-.docLabel { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: #334155; }
+.docLabel { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: #334155; flex: 1; }
+
+.docActionArea { display: flex; align-items: center; gap: 10px; }
+
 .docBadge { display: flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; }
 .docBadgeValid { background: #dcfce7; color: #166534; }
 .docBadgeMissing { background: #fef2f2; color: #991b1b; }
+
+/* ✨ NEW: Document Upload Button ✨ */
+.uploadBtnLabel {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #0B1EAE;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.uploadBtnLabel:hover { background: #081685; }
+
+/* Spin Animation for Loaders */
+@keyframes spin { 100% { transform: rotate(360deg); } }
+.spinIcon { animation: spin 1s linear infinite; }
 
 /* ─── SKELETON LOADER ─── */
 @keyframes shimmer {
@@ -203,4 +265,6 @@
     .detailsGrid { grid-template-columns: 1fr; gap: 16px; }
     .headerContainer { flex-direction: column; align-items: flex-start; gap: 16px; }
     .pageWrapper { padding: 16px; }
+    .docItem { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .docActionArea { width: 100%; justify-content: space-between; }
 }
