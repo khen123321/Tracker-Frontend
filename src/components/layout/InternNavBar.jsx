@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard, Clock, ScrollText,
     FileText, Megaphone, UserCircle, MoreHorizontal,
-    Menu, X, ChevronLeft, ChevronRight
+    Menu, X, ChevronLeft, ChevronRight, LogOut // ✨ Added LogOut icon
 } from 'lucide-react';
 import styles from "./InternNavBar.module.css";
 import logoImage from '../../assets/logo.png';
@@ -17,12 +17,23 @@ const InternLayout = () => {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-    const handleLogout = () => {
-        if (window.confirm('Are you sure you want to log out?')) {
-            localStorage.removeItem('cims_token');
-            localStorage.removeItem('user');
-            navigate('/login');
-        }
+    // ✨ NEW: State to control the visibility of the logout modal
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+    // ✨ UPDATED: Modal Handlers replace window.confirm
+    const handleLogoutClick = () => {
+        setShowLogoutModal(true); 
+    };
+
+    const confirmLogout = () => {
+        setShowLogoutModal(false);
+        localStorage.removeItem('cims_token');
+        localStorage.removeItem('user');
+        navigate('/login');
+    };
+
+    const cancelLogout = () => {
+        setShowLogoutModal(false);
     };
 
     const navCls = ({ isActive }) =>
@@ -74,11 +85,11 @@ const InternLayout = () => {
                     </NavLink>
                     <NavLink to="/intern-dashboard/logs" className={navCls} onClick={() => setIsMobileOpen(false)}>
                         <ScrollText size={20} strokeWidth={1.5} />
-                        <span className={styles.navText}>My Logs</span>
+                        <span className={styles.navText}>My Time Logs</span>
                     </NavLink>
                     <NavLink to="/intern-dashboard/forms" className={navCls} onClick={() => setIsMobileOpen(false)}>
                         <FileText size={20} strokeWidth={1.5} />
-                        <span className={styles.navText}>Forms</span>
+                        <span className={styles.navText}>Forms and Requests</span>
                     </NavLink>
                     <NavLink to="/intern-dashboard/announcements" className={navCls} onClick={() => setIsMobileOpen(false)}>
                         <Megaphone size={20} strokeWidth={1.5} />
@@ -90,7 +101,8 @@ const InternLayout = () => {
                     </NavLink>
                 </nav>
 
-                <div className={styles.bottomProfile} onClick={handleLogout} title="Click to Logout">
+                {/* ✨ CHANGED onClick to handleLogoutClick ✨ */}
+                <div className={styles.bottomProfile} onClick={handleLogoutClick} title="Click to Logout">
                     <div className={styles.profileInfo}>
                         <div className={styles.profileAvatar}>
                             {user.first_name?.[0]?.toUpperCase() || 'I'}
@@ -119,6 +131,29 @@ const InternLayout = () => {
                     <Outlet />
                 </div>
             </div>
+
+            {/* ─── CUSTOM LOGOUT MODAL ─── */}
+            {showLogoutModal && (
+                <div className={styles.modalOverlay} onClick={cancelLogout}>
+                    <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+                        <div className={styles.modalIconBox}>
+                            <LogOut size={24} className={styles.modalIcon} />
+                        </div>
+                        <h3 className={styles.modalTitle}>Log Out</h3>
+                        <p className={styles.modalText}>
+                            Are you sure you want to log out of your account? You will need to sign back in to access the dashboard.
+                        </p>
+                        <div className={styles.modalActions}>
+                            <button className={styles.btnCancel} onClick={cancelLogout}>
+                                Cancel
+                            </button>
+                            <button className={styles.btnLogoutConfirm} onClick={confirmLogout}>
+                                Log Out
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
         </div>
     );

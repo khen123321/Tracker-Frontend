@@ -1,161 +1,393 @@
+/* ─── PAGE WRAPPER ─── */
 .pageWrapper {
-    padding: 24px;
+
     background-color: #f1f5f9;
     min-height: 100vh;
-}
-
-.header {
+    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
+    flex-direction: column;
+    gap: 5px; /* 👈 Forces exactly 5px between all major containers */
 }
 
-.pageTitle {
-    font-size: 28px;
-    font-weight: 800;
-    color: #0f172a;
-    letter-spacing: -0.5px;
+/* ─── STATS CARDS ROW ─── */
+.statsRow {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px;
+    /* margin-bottom removed so the pageWrapper gap takes over! */
 }
 
-.dtrBtn {
-    background: #FACC15; /* CLIMBS Yellow */
-    color: #000;
-    border: none;
-    padding: 10px 22px;
-    border-radius: 10px;
-    font-weight: 800;
+.statCard {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 20px 24px;
     display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    transition: 0.2s;
+    flex-direction: column;
+    gap: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.dtrBtn:hover {
-    background: #eab308;
-    transform: translateY(-2px);
-}
-
-/* ─── TABLE STYLING ─── */
-.cardContainer {
-    background: white;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
-}
-
-.logTable {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.logTable thead tr {
-    background: #FACC15;
-}
-
-.logTable th {
-    padding: 18px 20px;
-    color: #fff;
-    text-align: left;
-    font-weight: 800;
-    font-size: 14px;
+.statLabel {
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
     text-transform: uppercase;
     letter-spacing: 0.8px;
 }
 
+.statValue {
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1;
+    color: #0f172a;
+}
+
+.statValue.green  { color: #16a34a; }
+.statValue.blue   { color: #2563eb; }
+.statValue.red    { color: #dc2626; }
+.statValue.orange { color: #d97706; }
+
+.statSub {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+/* ─── FILTER + SEARCH BAR CONTAINER ─── */
+.filterBar {
+    /* 👇 Added card styling to put them in 1 big container */
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 16px 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    /* margin-bottom removed! */
+}
+
+.filterGroup {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.filterBtn {
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 7px 16px;
+    cursor: pointer;
+    transition: all 0.18s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.filterBtn:hover {
+    border-color: #cbd5e1;
+    color: #0f172a;
+    background-color: #f8fafc;
+}
+
+.filterBtn.active {
+    background-color: #0f172a;
+    border-color: #0f172a;
+    color: #ffffff;
+}
+
+/* Dot inside filter button */
+.dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.dot.green  { background-color: #16a34a; }
+.dot.red    { background-color: #dc2626; }
+.dot.orange { background-color: #d97706; }
+
+/* ─── SEARCH INPUT ─── */
+.searchWrapper {
+    margin-left: auto;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.searchIcon {
+    position: absolute;
+    left: 12px;
+    color: #94a3b8;
+    pointer-events: none;
+}
+
+.searchInput {
+    background-color: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    color: #334155;
+    font-size: 13px;
+    padding: 8px 14px 8px 36px;
+    width: 200px;
+    outline: none;
+    transition: border-color 0.2s;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.searchInput::placeholder {
+    color: #cbd5e1;
+}
+
+.searchInput:focus {
+    border-color: #94a3b8;
+    color: #0f172a;
+}
+
+/* ─── TABLE CONTAINER ─── */
+.cardContainer {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    overflow: hidden;
+    flex: 1;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+/* ─── TABLE ─── */
+.logTable {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+/* ─── TABLE HEADER ─── */
+.logTable thead tr {
+    background-color: #FACC15; /* Yellow header */
+    border-bottom: 2px solid #eab308;
+}
+
+.logTable th {
+    padding: 14px 20px;
+    color: #0f172a; /* Dark text for readability */
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.9px;
+    text-transform: uppercase;
+}
+
+/* ─── TABLE BODY ─── */
 .logTable td {
-    padding: 18px 20px;
-    color: #475569;
-    font-size: 15px;
-    font-weight: 500;
+    padding: 16px 20px;
+    color: #64748b;
+    font-size: 13.5px;
     border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+
+.logTable tbody tr:last-child td {
+    border-bottom: none;
 }
 
 .logTable tbody tr:hover {
     background-color: #f8fafc;
 }
 
-.dateCell { font-weight: 600; color: #1e293b !important; }
+/* Date cell */
+.dateCell {
+    color: #0f172a !important;
+    font-weight: 600 !important;
+}
 
-/* ─── STATUS BADGES ─── */
+.dateSub {
+    display: block;
+    font-size: 11px;
+    color: #94a3b8;
+    font-weight: 400;
+    margin-top: 2px;
+}
+
+/* Hours cell */
+.hoursCell {
+    font-weight: 700 !important;
+    font-size: 14px !important;
+}
+
+.hours0     { color: #dc2626 !important; }
+.hoursNorm  { color: #16a34a !important; }
+.hoursLow   { color: #d97706 !important; }
+.hoursLeave { color: #2563eb !important; }
+
+/* ─── STATUS BADGES (FILLED DOT STYLE) ─── */
 .badge {
-    padding: 6px 16px;
+    padding: 5px 12px;
     border-radius: 20px;
     font-size: 12px;
-    font-weight: 800;
-    display: inline-block;
-    text-align: center;
-    min-width: 90px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
 }
 
 .statusPresent {
-    background: #DCFCE7;
-    color: #166534;
-    border: 1px solid #86efac;
+    background-color: rgba(22, 163, 74, 0.10);
+    color: #16a34a;
 }
+.statusPresent::before { background-color: #16a34a; }
 
 .statusLate {
-    background: #FEF3C7;
-    color: #92400E;
-    border: 1px solid #FCD34D;
+    background-color: rgba(217, 119, 6, 0.10);
+    color: #d97706;
 }
+.statusLate::before { background-color: #d97706; }
 
 .statusAbsent {
-    background: #FEE2E2;
-    color: #991B1B;
-    border: 1px solid #FCA5A5;
+    background-color: rgba(220, 38, 38, 0.10);
+    color: #dc2626;
 }
+.statusAbsent::before { background-color: #dc2626; }
+
+.statusLeave {
+    background-color: rgba(37, 99, 235, 0.10);
+    color: #2563eb;
+}
+.statusLeave::before { background-color: #2563eb; }
 
 .statusDefault {
-    background: #F1F5F9;
-    color: #64748B;
+    background-color: rgba(100, 116, 139, 0.10);
+    color: #64748b;
+}
+.statusDefault::before { background-color: #64748b; }
+
+/* ─── ACTION BUTTON ─── */
+.actionCell {
+    text-align: right;
 }
 
 .moreBtn {
     background: none;
     border: none;
-    color: #94a3b8;
+    color: #cbd5e1;
     cursor: pointer;
-    padding: 6px;
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+    padding: 4px;
     border-radius: 6px;
-    transition: 0.2s;
+    transition: color 0.2s, background-color 0.2s;
 }
 
 .moreBtn:hover {
-    background: #f1f5f9;
+    color: #64748b;
+    background-color: #f1f5f9;
+}
+
+/* ─── TABLE FOOTER (record count + pagination) ─── */
+.tableFooter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    border-top: 1px solid #f1f5f9;
+    background-color: #f8fafc;
+}
+
+.recordCount {
+    font-size: 13px;
+    color: #94a3b8;
+}
+
+/* ─── PAGINATION ─── */
+.paginationContainer {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pageNavBtn {
+    background: transparent;
+    border: none;
+    font-size: 13px;
+    font-weight: 500;
+    color: #64748b;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 7px;
+    transition: color 0.2s, background-color 0.2s;
+}
+
+.pageNavBtn:hover:not(:disabled) {
+    color: #0f172a;
+    background-color: #e2e8f0;
+}
+
+.pageNavBtn:disabled {
+    color: #cbd5e1;
+    cursor: not-allowed;
+}
+
+.pageNumbers {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.pageNumBtn {
+    background: transparent;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    font-weight: 600;
+    font-size: 13px;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.pageNumBtn:hover:not(.activePage) {
+    background-color: #f1f5f9;
+    border-color: #cbd5e1;
     color: #0f172a;
 }
 
-/* ─── LOADING ─── */
-.loadingContainer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    color: #64748b;
+.activePage {
+    background-color: #0f172a;
+    border-color: #0f172a;
+    color: #ffffff;
 }
 
-.spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid #f1f5f9;
-    border-top: 4px solid #FACC15;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 15px;
+.pageEllipsis {
+    color: #cbd5e1;
+    font-size: 14px;
+    padding: 0 4px;
+    letter-spacing: 2px;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
+/* ─── LOADING & EMPTY STATES ─── */
 .emptyRow {
-    text-align: center;
+    text-align: center !important;
     padding: 60px !important;
-    color: #94a3b8;
+    color: #cbd5e1 !important;
     font-style: italic;
 }

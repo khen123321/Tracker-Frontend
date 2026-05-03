@@ -1,0 +1,65 @@
+/* src/components/PageHeader.module.css */
+
+.headerContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  padding: 16px 24px; /* ✨ Chubby padding for the whole header box */
+  border-radius: 10px; /* ✨ Softer, rounder corners */
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  margin-bottom: px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.titleArea {
+  display: flex;
+  flex-direction: column;
+}
+
+.pageTitle {
+  margin: 0;
+  font-size: 24px; /* ✨ Big Size */
+  font-weight: 900; /* ✨ Ultra Bold */
+  font-family: 'Poppins', sans-serif;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.pageSubtitle {
+  margin: 4px 0 0 0;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.actionsArea {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.calendarBtn {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Space between icon and text */
+  background: #ffffff;
+  padding: 8px 12px; /* ✨ Chubby padding for the button */
+  border-radius: 10px; /* Nice rounded box, not a capsule */
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* ✨ Smooth hover effect for the calendar button */
+.calendarBtn:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
+}

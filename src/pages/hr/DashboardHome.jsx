@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Calendar, UserCheck, UserX, UserMinus, Clock, 
+  Calendar,
+  UserCheck, UserX, UserMinus, Clock, 
   PieChart as PieIcon, BarChart2 as BarIcon, 
   School, Loader2, Check, X, Paperclip 
 } from 'lucide-react';
@@ -13,11 +14,43 @@ import {
 } from 'recharts';
 import api from '../../api/axios';
 import styles from './DashboardHome.module.css';
-import NotificationBell from '../../components/NotificationBell';
 import toast, { Toaster } from 'react-hot-toast';
+
+// ✨ IMPORT YOUR NEW UNIFORM HEADER
+import PageHeader from '../../components/PageHeader'; 
 
 // Colors for the bottom Bar Charts
 const COLORS = ['#0B1EAE', '#4F63F1', '#8A98E8', '#C2CBF5', '#64748B', '#94A3B8'];
+
+// ✨ 1️⃣ ABBREVIATION HELPER FUNCTION DROPPED HERE
+const getSchoolAbbreviation = (schoolName) => {
+  if (!schoolName) return '';
+
+  const overrides = {
+    "University of Science and Technology of Southern Philippines": "USTP",
+    "Xavier University": "XU",
+    "Xavier University - Ateneo de Cagayan": "XU",
+    "Capitol University": "CU",
+    "Liceo de Cagayan University": "LDCU",
+    "Mindanao State University": "MSU"
+  };
+
+  if (overrides[schoolName]) {
+    return overrides[schoolName];
+  }
+
+  const stopWords = ['of', 'and', 'the', 'in', 'at', 'de'];
+  const words = schoolName.split(/[\s-]+/); 
+  
+  let acronym = '';
+  words.forEach(word => {
+    if (!stopWords.includes(word.toLowerCase()) && word.length > 0) {
+      acronym += word[0].toUpperCase();
+    }
+  });
+
+  return acronym.length >= 2 ? acronym : schoolName;
+};
 
 // ─── SKELETON PRIMITIVES ───
 function Sk({ w = '100%', h = 16, r = 6, mb = 0 }) {
@@ -28,11 +61,12 @@ function Sk({ w = '100%', h = 16, r = 6, mb = 0 }) {
 function DashboardSkeleton() {
   return (
     <div className={styles.pageWrapper}>
-      <div className={styles.header}>
+      {/* Skeleton for the new PageHeader layout */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '14px 20px', background: '#fff', borderRadius: '10px', border: '1px solid #e8eaf0', marginBottom: '5px' }}>
         <Sk w={140} h={26} r={6} />
-        <div style={{ display: 'flex', gap: 5 }}>
+        <div style={{ display: 'flex', gap: '12px' }}>
           <Sk w={36} h={36} r={8} />
-          <Sk w={210} h={36} r={8} />
+          <Sk w={210} h={36} r={999} />
         </div>
       </div>
 
@@ -68,7 +102,6 @@ function DashboardSkeleton() {
 }
 
 // ─── CSS angle → SVG linearGradient coords ───
-// Formula: x1=0.5-sin(a)/2, y1=0.5+cos(a)/2, x2=0.5+sin(a)/2, y2=0.5-cos(a)/2
 function angleToSVGCoords(deg) {
   const rad = (deg * Math.PI) / 180;
   return {
@@ -86,7 +119,6 @@ export default function DashboardHome() {
   const [loading, setLoading] = useState(true);
   const [chartView, setChartView] = useState('pie');
   const [isHovered, setIsHovered] = useState(false);
-
   const [activeTab, setActiveTab] = useState('absent');
 
   const initialCourseData = [
@@ -110,7 +142,6 @@ export default function DashboardHome() {
 
   const [schoolData, setSchoolData] = useState([]);
   const [loadingSchools, setLoadingSchools] = useState(true);
-
   const [activePopup, setActivePopup] = useState(null);
 
   useEffect(() => {
@@ -186,7 +217,6 @@ export default function DashboardHome() {
 
   const openRequestPopup = async (requestId) => {
     setActivePopup({ id: requestId, loading: true }); 
-
     try {
       const res = await api.get(`/hr/requests/${requestId}`); 
       setActivePopup(res.data);
@@ -196,10 +226,6 @@ export default function DashboardHome() {
       setActivePopup(null); 
     }
   };
-
-  const todayStr = new Date().toLocaleDateString('en-US', {
-    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
-  });
 
   const deptAttendanceData = stats.departments?.length > 0 
     ? stats.departments.map(d => ({
@@ -211,11 +237,10 @@ export default function DashboardHome() {
 
   const activeRequestsList = stats.pending_requests[activeTab] || [];
 
-  // Pre-compute SVG gradient coordinates from exact CSS angles
-  const g1 = angleToSVGCoords(120); // Silver:   143deg
-  const g2 = angleToSVGCoords(265); // Lavender: 224deg
-  const g3 = angleToSVGCoords(230); // Blue:     271deg
-  const g4 = angleToSVGCoords(143); // 4th slice reuses silver angle, lighter stops
+  const g1 = angleToSVGCoords(120); 
+  const g2 = angleToSVGCoords(265); 
+  const g3 = angleToSVGCoords(230); 
+  const g4 = angleToSVGCoords(143); 
 
   if (loading) return <DashboardSkeleton />;
 
@@ -223,24 +248,11 @@ export default function DashboardHome() {
     <div className={styles.pageWrapper}>
       <Toaster position="top-right" />
 
-      {/* HEADER */}
-      <div className={styles.header}>
-        <h1 className={styles.pageTitle}>Dashboard</h1>
-        <div className={styles.headerActions}>
-          <NotificationBell role="hr" onNotificationClick={openRequestPopup} />
-          <div 
-            className={styles.dateBadge}
-            onClick={() => navigate('/dashboard/events')}
-            style={{ cursor: 'pointer', transition: 'all 0.2s ease' }}
-            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.7'}
-            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-            title="Go to Events Calendar"
-          >
-            <Calendar size={15} strokeWidth={1.5} />
-            <span>{todayStr}</span>
-          </div>
-        </div>
-      </div>
+      {/* ✨ 1. THE NEW UNIFORM HEADER IS INJECTED HERE! ✨ */}
+      <PageHeader 
+        title="Dashboard" 
+        onNotificationClick={openRequestPopup} 
+      />
 
       {/* TOP METRIC CARDS */}
       <div className={styles.topGrid}>
@@ -295,45 +307,30 @@ export default function DashboardHome() {
           <div className={styles.chartWrapper} style={{ marginTop: '10px' }}>
             {chartView === 'pie' && (
               <>
-                <ResponsiveContainer width="100%" height={440}>
-                  <PieChart>
+                <ResponsiveContainer width="100%" height={340}> 
+                  <PieChart margin={{ top: 20, right: 0, bottom: 0, left: 0 }}>
                     <defs>
-                      {/* ✨ SHINY SILVER */}
                       <linearGradient id="gradSilverShiny" x1={g1.x1} y1={g1.y1} x2={g1.x2} y2={g1.y2} gradientUnits="objectBoundingBox">
                         <stop offset="18.03%" stopColor="#8C8C8C" />
-                        <stop offset="51.68%" stopColor="#FFFFFF" />
-                        <stop offset="95.34%" stopColor="#8C8C8C" />
                       </linearGradient>
-
-                      {/* ✨ SHINY LAVENDER */}
                       <linearGradient id="gradLavenderShiny" x1={g2.x1} y1={g2.y1} x2={g2.x2} y2={g2.y2} gradientUnits="objectBoundingBox">
-                        <stop offset="18.93%" stopColor="#5B65B2" />
-                        <stop offset="56.72%" stopColor="#FFFFFF" />
-                        <stop offset="90.52%" stopColor="#5B65B2" />
+                        <stop offset="18.93%" stopColor="#8188B9" />
                       </linearGradient>
-
-                      {/* ✨ SHINY BLUE */}
                       <linearGradient id="gradBlueShiny" x1={g3.x1} y1={g3.y1} x2={g3.x2} y2={g3.y2} gradientUnits="objectBoundingBox">
-                        <stop offset="16.53%" stopColor="#0B1EAE" />
-                        <stop offset="56.42%" stopColor="#FFFFFF" />
-                        <stop offset="90.60%" stopColor="#0B1EAE" />
+                        <stop offset="16.53%" stopColor="#2238DF" />
                       </linearGradient>
-
-                      {/* ✨ SHINY LIGHT SILVER (4th segment) */}
                       <linearGradient id="gradSilverLightShiny" x1={g4.x1} y1={g4.y1} x2={g4.x2} y2={g4.y2} gradientUnits="objectBoundingBox">
                         <stop offset="38.03%" stopColor="#B0B0B0" />
-                        <stop offset="51.68%" stopColor="#FFFFFF" />
-                        <stop offset="65.34%" stopColor="#B0B0B0" />
                       </linearGradient>
                     </defs>
-
                     <Pie
                       data={stats.course_distribution}
-                      innerRadius={90}
-                      outerRadius={170}
+                      innerRadius={60}
+                      outerRadius={120}
                       paddingAngle={0}
                       dataKey="value"
                       stroke="none"
+                      cy="35%"
                     >
                       {stats.course_distribution.map((entry, index) => {
                         const gradients = [
@@ -350,35 +347,27 @@ export default function DashboardHome() {
                         );
                       })}
                     </Pie>
-
                     <Tooltip
                       contentStyle={{
-                        borderRadius: '8px',
-                        border: 'none',
-                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                        borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                       }}
                       itemStyle={{ color: '#0f172a', fontWeight: 600 }}
                     />
                     <Legend
-                      verticalAlign="bottom"
-                      height={24}
-                      iconType="circle"
-                      wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
+                      verticalAlign="bottom" height={24} iconType="circle"
+                      wrapperStyle={{ fontSize: '12px', paddingTop: '10px', position: 'relative', top: '280px'}}
                     />
                   </PieChart>
                 </ResponsiveContainer>
-
                 <div className={styles.donutCenter}>
-                  <span className={styles.donutTotal} style={{ color: '#0f172a' }}>
-                    {stats.total_interns}
-                  </span>
+                  <span className={styles.donutTotal} style={{ color: '#0f172a' }}>{stats.total_interns}</span>
                   <span className={styles.donutLabel} style={{ color: '#94a3b8' }}>Total</span>
                 </div>
               </>
             )}
 
             {chartView === 'bar' && (
-              <ResponsiveContainer width="100%" height={440}> 
+              <ResponsiveContainer width="100%" height={340}> 
                 <BarChart data={deptAttendanceData} margin={{ top: 20, right: 20, left: -20, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dy={10} />
@@ -396,20 +385,20 @@ export default function DashboardHome() {
         {/* Attendance Cards */}
         <div className={styles.attGrid}>
           <div className={styles.attCard}>
-            <div className={`${styles.attLabel} ${styles.present}`}><UserCheck size={16} /> Present</div>
+            <div className={`${styles.attLabel} ${styles.present}`}><UserCheck size={18} strokeWidth={1.5} /> Present Today</div>
             <span className={`${styles.attValue} ${styles.present}`}>{stats.today.present}</span>
           </div>
           <div className={styles.attCard}>
-            <div className={`${styles.attLabel} ${styles.absent}`}><UserX size={16} /> Absent</div>
+            <div className={`${styles.attLabel} ${styles.absent}`}><UserX size={18} strokeWidth={1.5} /> Absent Today</div>
             <span className={`${styles.attValue} ${styles.absent}`}>{stats.today.absent}</span>
           </div>
           <div className={styles.attCard}>
-            <div className={`${styles.attLabel} ${styles.late}`}><Clock size={16} /> Late</div>
-            <span className={`${styles.attValue} ${styles.late}`}>{stats.today.late}</span>
+            <div className={`${styles.attLabel} ${styles.excused}`}><UserMinus size={18} strokeWidth={1.5} /> Excused Today</div>
+            <span className={`${styles.attValue} ${styles.excused}`}>{stats.today.excused}</span>
           </div>
           <div className={styles.attCard}>
-            <div className={`${styles.attLabel} ${styles.excused}`}><UserMinus size={16} /> Excused</div>
-            <span className={`${styles.attValue} ${styles.excused}`}>{stats.today.excused}</span>
+            <div className={`${styles.attLabel} ${styles.late}`}><Clock size={18} strokeWidth={1.5} /> Late Today</div>
+            <span className={`${styles.attValue} ${styles.late}`}>{stats.today.late}</span>
           </div>
         </div>
       </div>
@@ -469,7 +458,7 @@ export default function DashboardHome() {
         <div className={styles.card}>
           <div className={styles.sectionHeader}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <School size={16} color="#0B1EAE" />
+              
               <h3 className={styles.sectionTitle}>Interns by School</h3>
             </div>
           </div>
@@ -484,11 +473,41 @@ export default function DashboardHome() {
           ) : (
             <div style={{ height: '220px', marginTop: '10px', width: '100%' }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={schoolData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
+                
+                {/* ✨ 2️⃣ UPDATED THIS DATA PROP TO MAP THE SHORTNAME ✨ */}
+                <BarChart 
+                  data={schoolData.map(school => ({
+                    ...school,
+                    shortName: getSchoolAbbreviation(school.name)
+                  }))} 
+                  margin={{ top: 10, right: 10, left: -20, bottom: 20 }}
+                >
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#475569', fontWeight: 500 }} interval={0} angle={-15} textAnchor="end" />
+                  
+                  {/* ✨ 3️⃣ X-AXIS NOW USES SHORTNAME AND IS FLAT (NO ANGLE) ✨ */}
+                  <XAxis 
+                    dataKey="shortName" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fontSize: 11, fill: '#475569', fontWeight: 600 }} 
+                    interval={0} 
+                  />
+                  
                   <YAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} />
-                  <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} itemStyle={{ color: '#0f172a', fontWeight: 'bold' }} />
+                  
+                  {/* ✨ 4️⃣ TOOLTIP NOW SHOWS FULL NAME ON HOVER ✨ */}
+                  <Tooltip 
+                    cursor={{ fill: '#f8fafc' }} 
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} 
+                    itemStyle={{ color: '#0f172a', fontWeight: 'bold' }} 
+                    labelFormatter={(label, payload) => {
+                      if (payload && payload.length > 0) {
+                        return payload[0].payload.name; 
+                      }
+                      return label;
+                    }}
+                  />
+                  
                   <Bar dataKey="value" name="Interns" radius={[4, 4, 0, 0]} barSize={20}>
                     {schoolData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

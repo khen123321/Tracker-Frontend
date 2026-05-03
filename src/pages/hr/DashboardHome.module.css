@@ -1,3 +1,4 @@
+
 /* ══════════════════════════════════════════════════════════════
    SKELETON SHIMMER
 ══════════════════════════════════════════════════════════════ */
@@ -10,17 +11,14 @@
   display: block;
   background: linear-gradient(90deg, #e8ecf2 25%, #f4f6fa 50%, #e8ecf2 75%);
   background-size: 700px 100%;
-  animation: shimmer 1.4s ease-in-out infinite;
 }
 
 .skelDonut {
-  width: 150px;
+  width: 50px;
   height: 150px;
   border-radius: 50%;
   background: linear-gradient(90deg, #e8ecf2 25%, #f4f6fa 50%, #e8ecf2 75%);
   background-size: 700px 100%;
-  animation: shimmer 1.4s ease-in-out infinite;
-  /* ring effect */
   -webkit-mask: radial-gradient(transparent 45px, black 46px);
   mask: radial-gradient(transparent 45px, black 46px);
 }
@@ -29,24 +27,14 @@
    PAGE & HEADER
 ══════════════════════════════════════════════════════════════ */
 .pageWrapper {
-  padding: 12px; /* ✨ Reset to tighter 12px padding */
+  padding: 12px;
   background-color: #f8fafc;
   min-height: 100vh;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   color: #0f172a;
   display: flex;
   flex-direction: column;
-  gap: 5px; /* ✨ Reset to tighter 5px gap between sections */
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #fff;
-  border-radius: 10px;
-  border: 1px solid #e8eaf0;
-  padding: 14px 20px;
+  gap: 5px;
 }
 
 .pageTitle {
@@ -95,21 +83,6 @@
   border: 2px solid white;
 }
 
-.dateBadge {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: white;
-  height: 36px;
-  padding: 0 12px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  font-size: 13px;
-  color: #475569;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
 .notifDropdown {
   position: absolute;
   top: calc(100% + 8px);
@@ -121,32 +94,6 @@
   box-shadow: 0 10px 25px -5px rgba(0,0,0,.12), 0 4px 6px -2px rgba(0,0,0,.06);
   z-index: 50;
   overflow: hidden;
-}
-
-.notifDropdownHeader {
-  padding: 12px 16px;
-  border-bottom: 1px solid #f1f5f9;
-  background: #f8fafc;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.notifCount {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
-  background: #ef4444;
-  color: #fff;
-  font-size: 0.7rem;
-  font-weight: 700;
-  border-radius: 9999px;
 }
 
 .notifList { max-height: 360px; overflow-y: auto; }
@@ -167,8 +114,8 @@
 ══════════════════════════════════════════════════════════════ */
 .card {
   background: white;
-  border-radius: 12px;
-  padding: 12px; /* ✨ Reset to tighter 12px card padding */
+  border-radius: 10px;
+  padding: 16px 24px;
   border: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
@@ -179,7 +126,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 1px;
   padding-bottom: 12px;
   border-bottom: 1px solid #f1f5f9;
 }
@@ -195,7 +142,7 @@
 .topGrid {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr;
-  gap: 5px; /* ✨ Reset to tighter 5px top grid gap */
+  gap: 5px;
 }
 
 .cardTitle { font-size: 14px; color: #64748b; font-weight: 600; margin: 0 0 12px; }
@@ -211,7 +158,7 @@
   border-radius: 6px; 
   transition: width 0.5s ease; 
 }
-.progressPercent { display: none; } /* Hidden if you put the % in the label row like the image */
+.progressPercent { display: none; }
 
 /* ══════════════════════════════════════════════════════════════
    MIDDLE & BOTTOM GRIDS
@@ -224,7 +171,7 @@
 
 .bottomGrid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr); /* ✨ CHANGED: Now exactly 2 columns wide */
+  grid-template-columns: repeat(2, 1fr);
   gap: 5px;
 }
 
@@ -234,7 +181,6 @@
 .chartCard { 
   position: relative; 
   grid-column: span 2; 
-  min-height: 500px; /* ✨ Significantly increased minimum height for larger card/chart */
 }
 
 .chartWrapper {
@@ -242,24 +188,25 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 440px; /* ✨ SIGNIFICANTLY LARGER height for massively expanded pie chart area */
+
+  /* ✅ KEY FIX: reduced from 340px to match the att cards height
+     2 rows × 180px cards + 12px gap = 372px total att grid
+     Subtract sectionHeader (~50px) and card padding (32px) = ~290px */
+  height: 270px;
   z-index: 1;
 }
 
-/* 🛑 pieGradientBg class removed 🛑 */
-
 .donutCenter {
   position: absolute;
-  top: 50%;
+  top: 42%;                /* ✅ adjusted from 40% to match new cy="40%" */
   left: 50%;
   transform: translate(-50%, -50%);
   text-align: center;
   pointer-events: none;
 }
 
-/* ✨ Text colors reset to dark/grey for clean look against white/subtle gradients ✨ */
-.donutTotal { display: block; font-size: 36px; font-weight: 800; color: #0f172a; line-height: 1; margin-bottom: 4px; }
-.donutLabel { font-size: 14px; color: #64748b; font-weight: 500;}
+.donutTotal { display: block; font-size: 36px; font-weight: 800; color: #0f172a; line-height: 1; margin-bottom: 5px; }
+.donutLabel { font-size: 14px; color: #64748b; font-weight: 500; }
 
 /* ══════════════════════════════════════════════════════════════
    ATTENDANCE GRID
@@ -267,28 +214,36 @@
 .attGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 5px; /* ✨ Reset to tighter 5px attendance grid gap */
-  height: 100%; 
+  gap: 5px;
+  align-content: flex-start; 
 }
 
 .attCard {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 20px;
   display: flex;
+  padding: 16px;
   flex-direction: column;
-  justify-content: space-between;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  align-items: flex-start;
+  border-radius: 10px;
+  background: #FFF;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  height: 180px;
 }
 
-.attLabel { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9; }
-.attValue { font-size: 48px; font-weight: 800; text-align: center; margin: auto 0; }
+.attLabel { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; padding-bottom: 1px; border-bottom: 1px solid #f1f5f9; }
+.attValue { 
+  font-size: 42px; 
+  font-weight: 700; 
+  text-align: center; 
+  line-height: 1;
+  width: 100%; 
+  margin: auto 0;
+}
 
-.present { color: #10b981; }
-.absent  { color: #ef4444; }
-.late    { color: #f59e0b; }
-.excused { color: #64748b; }
+.present { color: #5AC374; }
+.absent  { color: #757575; }
+.late    { color: #C76A00; }
+.excused { color: #C76A00; }
 
 /* ══════════════════════════════════════════════════════════════
    DEPARTMENTS
@@ -308,10 +263,10 @@
    BRANCHES
 ══════════════════════════════════════════════════════════════ */
 .branchItem { display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9; }
-.branchItem:last-child { border-bottom: none; padding-bottom: 0; }
+.branchItem:last-child { border-bottom: none; padding-bottom: 1px; }
 .branchInfo { display: flex; flex-direction: column; }
 .branchName { font-size: 14px; font-weight: 600; color: #0f172a; display: flex; align-items: center; gap: 6px; }
-.hqBadge { background: #dbeafe; color: #1e3a8a; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 700; }
+.hqBadge { background: #dbeafe; color: #1e3a8a; font-size: 11px; padding: 8px 8px; border-radius: 4px; font-weight: 700; }
 .branchSub { font-size: 12px; color: #64748b; margin-top: 4px; }
 .branchValue { font-size: 16px; font-weight: 700; color: #0f172a; background: #f8fafc; padding: 4px 12px; border-radius: 6px; border: 1px solid #e2e8f0; }
 

@@ -11,7 +11,7 @@
   background: linear-gradient(90deg, #e8ecf2 25%, #f4f6fa 50%, #e8ecf2 75%);
   background-size: 700px 100%;
   animation: shimmer 1.4s ease-in-out infinite;
-  border-radius: 6px;
+  border-radius: 10px;
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -55,7 +55,7 @@
 .iconButton {
   background: white;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 10px;
   width: 36px;
   height: 36px;
   cursor: pointer;
@@ -78,7 +78,7 @@
   background: white;
   height: 36px;
   padding: 0 12px;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid #e2e8f0;
   font-size: 13px;
   color: #475569;
@@ -100,7 +100,7 @@
 
 .nestedCard {
   background: #f8fafc;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 12px;
   border: 1px solid #e2e8f0;
   display: flex;
@@ -150,7 +150,7 @@
   width: 100%;
   padding: 8px 12px;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 13px;
   color: #0f172a;
   outline: none;
@@ -163,7 +163,7 @@
 
 .btn {
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 7px 12px;
   font-size: 13px;
   font-weight: 600;
@@ -190,7 +190,7 @@
   background: transparent;
   border: none;
   padding: 4px;
-  border-radius: 6px;
+  border-radius: 10px;
   color: #94a3b8;
   cursor: pointer;
   display: flex;
@@ -204,7 +204,7 @@
   color: #fff;
   min-width: 20px;
   height: 20px;
-  border-radius: 999px;
+  border-radius: 10px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -216,7 +216,7 @@
 .chip {
   background: #fff;
   border: 1px solid #e2e8f0;
-  border-radius: 6px;
+  border-radius: 10px;
   padding: 4px 8px;
   font-size: 12px;
   color: #475569;
@@ -284,8 +284,8 @@
 .internName { font-size: 13px; font-weight: 600; color: #0f172a; margin: 0 0 2px 0; }
 .internEmail { font-size: 11px; color: #64748b; margin: 0; }
 
-.statusActive { background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
-.statusInactive { background: #f1f5f9; color: #475569; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+.statusActive { background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }
+.statusInactive { background: #f1f5f9; color: #475569; padding: 4px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }
 
 /* ══════════════════════════════════════════════════════════════
    MODALS & OVERLAYS
@@ -349,7 +349,7 @@
 }
 .toastSuccess { border-color: #bbf7d0; background: #f0fdf4; color: #166534; }
 .toastError { border-color: #fecaca; background: #fef2f2; color: #991b1b; }
-.errorBanner { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 10px; border-radius: 8px; font-size: 13px; }
+.errorBanner { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 10px; border-radius: 10px; font-size: 13px; }
 
 /* ══════════════════════════════════════════════════════════════
    CHART
@@ -362,7 +362,7 @@
 
 .exportOption {
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 10px;
   cursor: pointer;
   display: flex;

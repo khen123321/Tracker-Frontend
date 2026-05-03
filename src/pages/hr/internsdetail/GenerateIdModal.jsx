@@ -8,40 +8,46 @@ import idFrontTemplate from '../../../assets/id-front.png';
 import idBackTemplate from '../../../assets/id-back.png';
 
 export default function GenerateIdModal({ intern, onClose }) {
-  // We use this ref to point to the invisible, 100% scale version of the ID card
   const captureRef = useRef(null); 
   const [isProcessing, setIsProcessing] = useState(false);
   
-  // ✨ Store the image as raw Base64 data to bypass browser security blocks
-  const [base64Photo, setBase64Photo] = useState(null);
+  // ✨ The ultimate safe image state
+  const [safeImage, setSafeImage] = useState(null);
 
-  const profilePhotoUrl = intern?.avatar_url || intern?.rawData?.intern?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${intern?.name || 'default'}`;
-
-  // ✨ Pre-fetch the image the second the modal opens
   useEffect(() => {
     let isMounted = true;
     
-    const fetchImageAsBase64 = async () => {
-      try {
-        const response = await fetch(profilePhotoUrl);
-        const blob = await response.blob();
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          if (isMounted) setBase64Photo(reader.result);
-        };
-        reader.readAsDataURL(blob);
-      } catch  {
-        console.error("CORS blocked the image fetch. Falling back to URL.");
-        if (isMounted) setBase64Photo(profilePhotoUrl); 
+    // 1. Get the image URL (from parent's Base64, or database, or DiceBear PNG)
+    const url = intern?.avatar_url || intern?.rawData?.intern?.avatar_url || `https://api.dicebear.com/7.x/avataaars/png?seed=${intern?.name || 'default'}`;
+
+    // 2. If it's already a safe Base64 string from the parent, use it immediately!
+    if (url.startsWith('data:')) {
+      setSafeImage(url);
+      return;
+    }
+
+    // 3. The "Bulletproof Canvas Trick": Forces the image to become a secure Base64 string
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0);
+      if (isMounted) {
+        setSafeImage(canvas.toDataURL("image/png"));
       }
     };
-    
-    if (profilePhotoUrl) {
-      fetchImageAsBase64();
-    }
-    
+    img.onerror = () => {
+      console.warn("Backend CORS blocked the secure conversion. Falling back to raw URL.");
+      // If XAMPP blocks it, fallback so it at least displays in the preview
+      if (isMounted) setSafeImage(url);
+    };
+    img.src = url;
+
     return () => { isMounted = false; };
-  }, [profilePhotoUrl]);
+  }, [intern]);
 
   if (!intern) return null;
 
@@ -50,20 +56,17 @@ export default function GenerateIdModal({ intern, onClose }) {
   const emergencyNumber = intern.emergency_number || "NOT PROVIDED";
   const emergencyAddress = intern.emergency_address || "NOT PROVIDED";
 
-  // ✨ Universal Download Handler for both PNG and PDF
   const handleDownload = async (type) => {
     try {
       setIsProcessing(true);
       
-      // Give React 300ms to ensure the Base64 image is fully rendered in the hidden div
+      // Give React 300ms to ensure the Base64 image is fully painted
       await new Promise(resolve => setTimeout(resolve, 300)); 
 
-      // Take a picture of the HIDDEN ref, which is sitting at 100% pristine scale
       const element = captureRef.current;
       const canvas = await html2canvas(element, { 
         scale: 2, 
         useCORS: true, 
-        allowTaint: true,
         backgroundColor: null 
       });
       
@@ -75,7 +78,6 @@ export default function GenerateIdModal({ intern, onClose }) {
         link.download = `${intern.name.replace(/ /g, '_')}_ID_Card.png`;
         link.click();
       } else if (type === 'pdf') {
-        // Dimensions perfectly match the two 600x1024 cards side-by-side with gaps
         const pdf = new jsPDF('landscape', 'px', [1240, 1044]);
         pdf.addImage(dataImage, 'PNG', 0, 0, 1240, 1044);
         pdf.save(`${intern.name.replace(/ /g, '_')}_ID_Card.pdf`);
@@ -89,7 +91,6 @@ export default function GenerateIdModal({ intern, onClose }) {
     }
   };
 
-  // 📦 Reusable component that renders both the Front and Back cards
   const renderIdCards = (refTarget) => (
     <div ref={refTarget || undefined} style={{ 
       display: 'flex', 
@@ -108,30 +109,34 @@ export default function GenerateIdModal({ intern, onClose }) {
         boxShadow: '0 4px 15px rgba(0,0,0,0.15)', borderRadius: '16px', overflow: 'hidden', backgroundColor: '#fff'
       }}>
         
-        {/* Profile Picture rendered via CSS Background to appease html2canvas */}
-        <div 
-          style={{
-            position: 'absolute',
-            top: '210px',   
-            left: '141px',  
-            width: '318px',
-            height: '318px',
-            borderRadius: '50%',
-            backgroundColor: '#f8fafc',
-            backgroundImage: `url('${base64Photo || profilePhotoUrl}')`, 
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat'
-          }}
-        />
+        {/* ✨ THE FIX: Explicit Image Tag sitting cleanly on top of the background */}
+        {safeImage && (
+          <img 
+            src={safeImage}
+            alt="Intern Profile"
+            // If it's Base64, we drop the crossOrigin rule so the browser doesn't hide it!
+            crossOrigin={safeImage.startsWith('data:') ? undefined : "anonymous"}
+            style={{
+              position: 'absolute',
+              top: '210px',   
+              left: '141px',  
+              width: '318px',
+              height: '318px',
+              borderRadius: '50%',
+              backgroundColor: '#f8fafc',
+              objectFit: 'cover',
+              zIndex: 10 // Forces it to stay above the template
+            }}
+          />
+        )}
 
-        <h2 style={{ position: 'absolute', top: '585px', left: '0', width: '100%', textAlign: 'center', fontSize: '34px', fontWeight: '900', margin: 0, letterSpacing: '-0.5px', color: '#000000', padding: '0 20px', boxSizing: 'border-box' }}>
+        <h2 style={{ position: 'absolute', top: '585px', left: '0', width: '100%', textAlign: 'center', fontSize: '34px', fontWeight: '900', margin: 0, letterSpacing: '-0.5px', color: '#000000', padding: '0 20px', boxSizing: 'border-box', zIndex: 20 }}>
           {fullName}
         </h2>
-        <p style={{ position: 'absolute', top: '725px', left: '230px', width: '330px', fontSize: '24px', fontWeight: '500', margin: 0, color: '#000000' }}>
+        <p style={{ position: 'absolute', top: '725px', left: '230px', width: '330px', fontSize: '24px', fontWeight: '500', margin: 0, color: '#000000', zIndex: 20 }}>
           {intern.course || 'Information Technology'}
         </p>
-        <p style={{ position: 'absolute', top: '775px', left: '230px', width: '330px', fontSize: '24px', fontWeight: '500', margin: 0, lineHeight: '1.3', color: '#000000' }}>
+        <p style={{ position: 'absolute', top: '775px', left: '230px', width: '330px', fontSize: '24px', fontWeight: '500', margin: 0, lineHeight: '1.3', color: '#000000', zIndex: 20 }}>
           {intern.school || 'University of Science and Technology of Southern Philippines'}
         </p>
       </div>
@@ -168,19 +173,16 @@ export default function GenerateIdModal({ intern, onClose }) {
           overflow: 'hidden' 
         }}>
           
-          {/* ✨ 1. THE HIDDEN CAPTURE TARGET (100% scale, off-screen, perfect quality) ✨ */}
           <div style={{ position: 'absolute', top: '-9999px', left: '-9999px', zIndex: -1 }}>
             {renderIdCards(captureRef)}
           </div>
 
-          {/* ✨ 2. THE VISIBLE PREVIEW (Scaled down to fit screen) ✨ */}
           <div style={{ transform: 'scale(0.45)', transformOrigin: 'top center', marginBottom: '-550px' }}>
             {renderIdCards(null)}
           </div>
 
         </div>
 
-        {/* ════ FOOTER BUTTONS ════ */}
         <div className={styles.modalFooter} style={{ display: 'flex', justifyContent: 'space-between' }}>
           <button className={styles.secondaryBtn} onClick={onClose} disabled={isProcessing}>Cancel</button>
           

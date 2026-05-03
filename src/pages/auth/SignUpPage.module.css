@@ -1,192 +1,240 @@
 /* =========================================
-   LAYOUTS (Mirrors Login Page)
+   SPLIT SCREEN SIGN UP — CLIMBS INTERN TRACKER
    ========================================= */
+
 .pageWrapper {
-  min-height: 100vh;
   display: flex;
-  flex-direction: row; /* Enforces the side-by-side split */
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  min-height: 100vh;
+  width: 100%;
+  font-family: 'Inter', sans-serif;
   overflow-x: hidden;
+  opacity: 0;
+  transition: opacity 0.4s ease-in-out;
 }
 
-/* ─── LEFT SIDE (Deep Blue / Mascot Area) ─── */
+.pageWrapper.loaded {
+  opacity: 1;
+}
+
+/* ─── LEFT PANE (Deep Blue Gradient) ─── */
 .leftPane {
   flex: 1;
   background: linear-gradient(270deg, #0B1EAE 0%, #152286 23.56%, #0D1767 63.46%, #050C48 100%);
-  padding: 3rem;
+  padding: 2.5rem 2rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   position: relative;
 }
 
-/* Yellow Greeting Text */
-.mascotGreeting {
-  color: #FFD700;
-  font-size: 1.75rem;
-  font-weight: 700;
-  margin-top: 0;
-  margin-bottom: 1.5rem;
-  text-align: center;
-  letter-spacing: 0.5px;
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-5px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Mascot Image */
-.mascotImgSignUp {
-  height: 400px;
-  object-fit: contain;
-  margin-bottom: 2rem;
-  filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.15));
-}
-
-/* Grouping Logo and Text */
+/* ── Top Logo Row ── */
 .leftHeader {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 1.25rem;
+  gap: 0.75rem;
   width: 100%;
-  white-space: nowrap;
+  margin-bottom: 0.15rem;
 }
 
-/* Enlarged Logo matching login */
 .leftLogo {
-  height: 85px;
+  height: 70px;
   width: auto;
 }
 
+.leftTitleGroup {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
 .leftTitle {
-  color: white;
-  font-weight: 700;
+  color: #FFD700;
+  font-weight: 900;
+  font-size: 1.6rem;
+  letter-spacing: 1px;
   text-transform: uppercase;
-  font-size: clamp(0.9rem, 2.5vw, 1.4rem);
+}
+
+.leftSubTitle {
+  color: white;
+  font-weight: 500;
+  font-size: 0.95rem;
   letter-spacing: 0.5px;
 }
 
-/* ─── RIGHT SIDE (Form Area) ─── */
-.rightPane {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  overflow-y: auto;
-}
-
-.bgImage {
-  position: absolute;
-  inset: 0;
-  background-size: cover;
-  background-position: center;
-  background-image: url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1400&q=80');
-  opacity: 0.2;
-}
-
-.bgOverlay {
-  position: absolute;
-  inset: 0;
-  background-color: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(2px);
-}
-
-.contentWrapper {
-  position: relative;
-  z-index: 10;
-  display: flex;
-  justify-content: center;
-  padding: 1rem 1rem 2.5rem 1rem;
-}
-
-.welcomeHeader {
-  position: relative;
-  z-index: 10;
+.systemLabel {
+  color: rgb(255, 255, 255);
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  margin: 0.6rem 0 1.5rem 0; 
   text-align: center;
-  padding-top: 2.5rem;
+}
+
+/* ── Yellow Greeting ── */
+.mascotGreeting {
+  color: #FFD700;
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-style: italic;
+  margin: 0 0 0.75rem 0;
+  text-align: center;
+  letter-spacing: 0.3px;
+}
+
+/* ── Mascot Video ── */
+.mascotImgSignUp {
+  height: 340px; 
+  width: auto;
+  object-fit: contain;
+  flex: 1;
+  filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.15));
+}
+
+/* ── Bottom Tagline ── */
+.tagline {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.9rem;
+  font-weight: 400;
+  text-align: center;
+  line-height: 1.6;
+  margin-top: auto;
+  padding-top: 0.75rem;
   padding-bottom: 0.5rem;
 }
 
-.welcomeTitle {
-  font-size: 3rem;
-  font-weight: 900;
-  color: #0B1EAE;
-  letter-spacing: -0.025em;
-}
-
-.formCard {
-  width: 100%;
-  max-width: 32rem;
-  background-color: white;
-  border-radius: 1rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  padding: 2rem;
-  border: 1px solid #f1f5f9;
-}
-
-/* =========================================
-   FORM CONTROLS (Untouched)
-   ========================================= */
-.label {
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #334155;
-  margin-bottom: 0.375rem;
-}
-
-.input, .select {
-  width: 100%;
-  border: 1px solid #cbd5e1;
-  border-radius: 0.5rem;
-  padding: 0.75rem 1rem;
-  font-size: 0.875rem;
-  color: #334155;
-  background-color: white;
-  transition: all 0.2s ease;
-  outline: none;
-}
-
-.input::placeholder {
-  color: #94a3b8;
-}
-
-.input:focus, .select:focus {
-  border-color: transparent;
-  box-shadow: 0 0 0 2px #0B1EAE;
-}
-
-.select {
-  appearance: none;
-  cursor: pointer;
-}
-
-.selectWrapper {
+/* ─── RIGHT PANE (BG Photo + Blue Overlay) ─── */
+.rightPane {
+  flex: 1;
   position: relative;
-}
-
-.selectIcon {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  right: 0.75rem;
+  background-image: url('../../assets/Bg\ image.jpg'); 
+  background-size: cover;
+  background-position: center;
   display: flex;
   align-items: center;
-  pointer-events: none;
+  justify-content: center;
+  overflow-y: hidden; 
+}
+
+.rightOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(1px);
+  z-index: 0;
+}
+
+.rightContent {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem;
+  width: 100%;
+  max-width: 560px;
+}
+
+/* ── Page Heading ── */
+.formHeader {
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+
+.welcomeText {
+  font-size: 3rem;
+  font-weight: 900;
+  color: #ffffff;
+  margin: 0 0 0.25rem 0;
+  letter-spacing: 2px;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+.subText {
+  color: rgba(0, 2, 112, 0.9);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+/* ─── WHITE FORM CARD (PINNED LAYOUT) ─── */
+.formCard {
+  background: rgba(255, 255, 255, 0.95); 
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  max-width: 500px;
+  
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh; 
+  overflow: hidden; 
+}
+
+/* ── Pinned Top (Stepper) ── */
+.cardHeaderPinned {
+  padding: 2rem 2.25rem 1rem 2.25rem;
+  background: transparent;
+  flex-shrink: 0; 
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+  z-index: 2;
+}
+
+/* ── Scrolling Middle (Form Inputs) ── */
+.cardBodyScrollable {
+  padding: 1.5rem 2.25rem;
+  flex: 1; 
+  overflow-y: auto; 
+  
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+  
+  animation: slideFadeIn 0.3s ease-out forwards;
+}
+
+.cardBodyScrollable::-webkit-scrollbar {
+  width: 6px;
+}
+
+.cardBodyScrollable::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cardBodyScrollable::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 20px;
+}
+
+@keyframes slideFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ── Pinned Bottom (Buttons) ── */
+.cardFooterPinned {
+  padding: 1rem 2.25rem 1.5rem 2.25rem;
+  background: white; 
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
+  flex-shrink: 0;
+  z-index: 2;
+  box-shadow: 0 -4px 10px rgba(0,0,0,0.02);
 }
 
 /* =========================================
-   STEPPER
+   STEPPER & FILL ANIMATION
    ========================================= */
 .stepperContainer {
   display: flex;
   align-items: flex-start;
-  margin-bottom: 2rem;
+  margin-bottom: 0; 
 }
 
 .stepWrapper {
@@ -215,12 +263,17 @@
   font-size: 0.875rem;
   font-weight: 700;
   z-index: 10;
+  /* ✨ Base transition: deactivates immediately when clicking Back */
+  transition: all 0.4s ease-in-out 0s;
 }
 
 .stepCircleActive {
   background-color: #0B1EAE;
   border-color: #0B1EAE;
   color: white;
+  transform: scale(1.05);
+  /* ✨ Waits for the line to finish filling (0.85s delay) when clicking Continue */
+  transition: all 0.4s ease-in-out 0.85s;
 }
 
 .stepCircleInactive {
@@ -230,42 +283,223 @@
 }
 
 .stepLabel {
-  font-size: 0.6875rem;
+  font-size: 0.65rem;
   margin-top: 0.375rem;
   font-weight: 500;
   text-align: center;
-  max-width: 70px;
+  max-width: 68px;
+  line-height: 1.3;
+  /* ✨ Base transition: deactivates immediately when clicking Back */
+  transition: color 0.4s ease-in-out 0s;
 }
 
 .stepLabelActive {
   color: #0B1EAE;
+  /* ✨ Waits for the line to finish filling (0.85s delay) */
+  transition: color 0.4s ease-in-out 0.85s;
 }
 
 .stepLabelInactive {
   color: #94a3b8;
 }
 
+/* ✨ THE MAGIC FILLING LINE ✨ */
 .stepLine {
   flex: 1;
-  height: 2px;
-  margin-top: 1rem;
-  margin-left: 0.25rem;
-  margin-right: 0.25rem;
+  height: 4px;
+  margin-top: 1.05rem; 
+  margin-left: 0.4rem;
+  margin-right: 0.4rem;
+  background-color: #e2e8f0; 
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
 }
 
-.stepLineActive {
-  background-color: #0B1EAE;
+.stepLine::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #0B1EAE 0%, #4F63F1 100%); 
+  border-radius: 4px;
+  /* ✨ When clicking Back, wait for the circle to deactivate (0.4s) before draining the line */
+  transition: width 0.85s ease-in-out 0.4s; 
+}
+
+.stepLineActive::after {
+  width: 100%;
+  /* ✨ When clicking Continue, fill the line immediately (0s delay) */
+  transition: width 0.85s ease-in-out 0s; 
 }
 
 .stepLineInactive {
+  /* Handled by default .stepLine::after */
+}
+
+/* =========================================
+   FORM CONTROLS
+   ========================================= */
+.inputGroup {
+  margin-bottom: 0.5rem;
+}
+
+.label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 0.4rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #0f172a;
+  background-color: #f8fafc;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.input::placeholder {
+  color: #b0bec5;
+}
+
+.input:focus {
+  border-color: #0B1EAE;
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(11, 30, 174, 0.1);
+}
+
+.select {
+  width: 100%;
+  padding: 0.75rem 2.25rem 0.75rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #0f172a;
+  background-color: #f8fafc;
+  appearance: none;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.select:focus {
+  border-color: #0B1EAE;
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(11, 30, 174, 0.1);
+}
+
+.select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.selectWrapper {
+  position: relative;
+}
+
+.selectIcon {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0.75rem;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+/* =========================================
+   SECTION LABELS & DIVIDERS
+   ========================================= */
+.sectionTitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+}
+
+.subTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 0.75rem;
+}
+
+.divider {
+  height: 1px;
   background-color: #e2e8f0;
+  margin: 1.5rem 0;
+}
+
+/* =========================================
+   LAYOUT HELPERS
+   ========================================= */
+.grid2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.spaceY3 > * + * { margin-top: 0.75rem; }
+.spaceY4 > * + * { margin-top: 1rem; }
+
+/* =========================================
+   CHECKBOXES
+   ========================================= */
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.checkboxRow:hover {
+  background-color: #f8fafc;
+}
+
+.checkboxInput {
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: #0B1EAE;
+  cursor: pointer;
+}
+
+.checkboxLabel {
+  font-size: 0.875rem;
+  color: #334155;
+  font-weight: 600;
+}
+
+.termsContainer {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-top: 1rem;
 }
 
 /* =========================================
    BUTTONS
    ========================================= */
+.navButtonsWrapper {
+  margin-top: 0; 
+}
+
 .btnContainer {
-  margin-top: 1.75rem;
   display: flex;
   gap: 0.75rem;
 }
@@ -279,131 +513,170 @@
 }
 
 .btnPrimary {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1.75rem;
   background-color: #0B1EAE;
   color: white;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  font-size: 0.875rem;
-  cursor: pointer;
   border: none;
-  transition: opacity 0.2s;
+  padding: 0.7rem 2.5rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  letter-spacing: 0.5px;
 }
 
-.btnPrimary:hover {
-  opacity: 0.9;
+.btnPrimary:hover:not(:disabled) {
+  background-color: #050C48;
+  transform: translateY(-1px);
 }
 
 .btnPrimary:disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
+}
+
+.btnSecondary {
+  background: transparent;
+  color: #475569;
+  border: 1.5px solid #cbd5e1;
+  padding: 0.7rem 2rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btnSecondary:hover {
+  border-color: #0B1EAE;
+  color: #0B1EAE;
+  background: rgba(11, 30, 174, 0.04);
 }
 
 .btnAutoLeft {
   margin-left: auto;
 }
 
-/* =========================================
-   SUB-SECTIONS & CHECKBOXES
-   ========================================= */
-.sectionTitle {
-  font-size: 0.75rem;
+.loginRedirectRow {
+  margin-top: 1.25rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: #475569;
+}
+
+.inlineLink {
+  background: none;
+  border: none;
+  color: #0B1EAE;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: #64748b;
-  margin-bottom: 0.25rem;
-}
-
-.subTitle {
   font-size: 0.875rem;
-  font-weight: 600;
-  color: #334155;
-  margin-bottom: 0.75rem;
-}
-
-.grid2 {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-}
-
-.spaceY3 > * + * { margin-top: 0.75rem; }
-.spaceY4 > * + * { margin-top: 1rem; }
-
-.checkboxRow {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.875rem 1rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
   cursor: pointer;
-  transition: background-color 0.2s;
+  padding: 0;
+  text-decoration: none;
+  transition: text-decoration 0.2s;
 }
 
-.checkboxRow:hover {
-  background-color: #f8fafc;
-}
-
-.checkboxInput {
-  width: 1rem;
-  height: 1rem;
-  accent-color: #0B1EAE;
-}
-
-.checkboxLabel {
-  font-size: 0.875rem;
-  color: #334155;
-}
-
-.termsContainer {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
+.inlineLink:hover {
+  text-decoration: underline;
 }
 
 /* =========================================
-   📱 RESPONSIVE MOBILE STYLES (Matches Login)
+   SUCCESS SCREEN STYLES
+   ========================================= */
+.successScreenCard {
+  background-color: rgba(255, 255, 255, 0.95);
+  padding: 3rem 2.5rem;
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  max-width: 480px;
+  text-align: center;
+  animation: slideFadeIn 0.4s ease-out;
+}
+
+.successIconWrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  background-color: #eff6ff;
+  border-radius: 50%;
+  margin-bottom: 1.5rem;
+}
+
+.spamNotice {
+  background-color: #fffbeb;
+  border: 1px solid #fef3c7;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+/* =========================================
+   📱 RESPONSIVE
    ========================================= */
 @media (max-width: 900px) {
   .pageWrapper {
     flex-direction: column;
-  }
-  
-  .leftPane {
-    flex: 0 0 auto;
-    padding: 2rem 1rem;
-  }
-  
-  /* Hide mascot and greeting on mobile */
-  .mascotImgSignUp, .mascotGreeting {
-    display: none;
-  }
-  
-  .leftHeader {
-    gap: 0.75rem;
-  }
-  
-  .leftLogo {
-    height: 50px;
-  }
-  
-  .contentWrapper {
-    padding: 1rem;
+    height: auto;
   }
 
-  .welcomeTitle {
+  .leftPane {
+    flex: 0 0 auto;
+    padding: 1.5rem 1rem;
+  }
+
+  .mascotImgSignUp,
+  .mascotGreeting,
+  .tagline {
+    display: none;
+  }
+
+  .systemLabel {
+    margin-bottom: 0;
+  }
+
+  .rightPane {
+    padding: 0;
+    overflow-y: visible; 
+  }
+
+  .rightContent {
+    padding: 2rem 1rem;
+  }
+
+  .welcomeText {
     font-size: 2.25rem;
+  }
+
+  .formCard {
+    max-height: none;
+    padding: 0; 
+    overflow: visible;
+  }
+
+  .cardHeaderPinned {
+    padding: 1.5rem;
+  }
+
+  .cardBodyScrollable {
+    padding: 1.5rem;
+    overflow-y: visible; 
+  }
+
+  .cardFooterPinned {
+    padding: 1.5rem;
+  }
+  
+  .successScreenCard {
+    padding: 2rem 1.5rem;
   }
 }
 
-/* Extra small devices */
 @media (max-width: 380px) {
-  .leftLogo { width: 70px; height: auto; }
-  .leftTitle { font-size: 0.9rem; }
-  .welcomeTitle { font-size: 1.8rem; }
+  .leftLogo { height: 50px; }
+  .leftTitle { font-size: 1.2rem; }
+  .welcomeText { font-size: 1.8rem; }
 }

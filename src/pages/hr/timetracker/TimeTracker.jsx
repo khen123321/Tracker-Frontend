@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import api from '../../../api/axios'; 
 import styles from './TimeTracker.module.css';
-import { CalendarDays, Search, AlertCircle, ChevronDown } from 'lucide-react';
+import { Search, AlertCircle, ChevronDown } from 'lucide-react';
 
-// ✨ IMPORT YOUR UNIFIED NOTIFICATION BELL ✨
-import NotificationBell from '../../../components/NotificationBell';
+// ✨ IMPORT YOUR UNIFIED PAGE HEADER ✨
+import PageHeader from '../../../components/PageHeader';
 
 // ─── SKELETON PRIMITIVE ───
 function Sk({ w = '100%', h = 16, r = 6, mb = 0 }) {
@@ -28,10 +28,6 @@ const TimeTracker = () => {
     const [deptFilter, setDeptFilter] = useState('All');
     const [schoolFilter, setSchoolFilter] = useState('All');
     const [statusFilter, setStatusFilter] = useState('All');
-
-    const todayLabel = new Date().toLocaleDateString('en-US', {
-        weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
-    });
 
     const formatTime = (timeString) => {
         if (!timeString) return '-----';
@@ -81,12 +77,20 @@ const TimeTracker = () => {
     // ✨ DYNAMIC FILTER OPTIONS ✨
     const uniqueDepartments = useMemo(() => ['All', ...new Set(interns.map(i => i.intern?.department?.name || i.department?.name || i.assigned_department || 'Not Assigned'))], [interns]);
     const uniqueSchools = useMemo(() => ['All', ...new Set(interns.map(i => i.intern?.school?.name || i.school?.name || i.school || 'Not Assigned'))], [interns]);
+    
+    // ✨ FIXED: ALWAYS SHOW CORE STATUSES IN DROPDOWN ✨
     const uniqueStatuses = useMemo(() => {
-        const statuses = interns.map(i => {
+        // 1. Define the base statuses that should ALWAYS be visible
+        const baseStatuses = ['All', 'Present', 'Absent', 'Late'];
+        
+        // 2. Map through current interns to see if there are any *extra* custom statuses (like Excused)
+        const dynamicStatuses = interns.map(i => {
             const st = i.attendance_logs?.[0]?.status || 'absent';
             return st.charAt(0).toUpperCase() + st.slice(1).toLowerCase();
         });
-        return ['All', ...new Set(statuses)];
+
+        // 3. Combine them, and use a Set to automatically remove any duplicates!
+        return [...new Set([...baseStatuses, ...dynamicStatuses])];
     }, [interns]);
 
     // ✨ COMBINED SEARCH & FILTER LOGIC ✨
@@ -123,11 +127,13 @@ const TimeTracker = () => {
     if (loading) {
         return (
             <div className={styles.pageWrapper}>
-                <div className={styles.pageHeader}>
-                    <div className={`${styles.skel} ${styles.skelTitle}`} />
-                    <div className={styles.headerRight}>
-                        <div className={`${styles.skel} ${styles.skelIconBtn}`} />
-                        <div className={`${styles.skel} ${styles.skelDatePill}`} />
+                
+                {/* ✨ UPDATED SKELETON HEADER TO MATCH PAGEHEADER ✨ */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '14px 20px', background: '#fff', borderRadius: '10px', border: '1px solid #e8eaf0', marginBottom: '24px' }}>
+                    <Sk w={160} h={26} r={6} />
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                        <Sk w={36} h={36} r={8} />
+                        <Sk w={210} h={36} r={999} />
                     </div>
                 </div>
 
@@ -186,19 +192,8 @@ const TimeTracker = () => {
     return (
         <div className={styles.pageWrapper}>
 
-            <div className={styles.pageHeader}>
-                <h1 className={styles.pageTitle}>Time Tracker</h1>
-                <div className={styles.headerRight}>
-                    
-                    {/* ✨ UNIFIED NOTIFICATION COMPONENT ✨ */}
-                    <NotificationBell role="hr" />
-                    
-                    <div className={styles.datePill}>
-                        <CalendarDays size={14} />
-                        <span>{todayLabel}</span>
-                    </div>
-                </div>
-            </div>
+            {/* ✨ REPLACED HEADER WITH YOUR NEW PAGEHEADER COMPONENT ✨ */}
+            <PageHeader title="Time Tracker" />
 
             {error && (
                 <div className={styles.errorBanner}>
@@ -234,7 +229,6 @@ const TimeTracker = () => {
                         onChange={e => setSelectedDate(e.target.value)}
                         style={{ width: '100%' }}
                     />
-                    {/* The duplicate custom Calendar icon was removed from here! */}
                 </div>
                 <div className={styles.selectWrap}>
                     <select value={deptFilter} onChange={e => setDeptFilter(e.target.value)} style={{ width: '100%' }}>

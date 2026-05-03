@@ -1,7 +1,13 @@
+/* =========================================
+   GLOBAL LAYOUT & CARDS
+   ========================================= */
 .pageContainer {
-    padding: 24px;
+    padding: px; /* 👈 Changed outside space to 12px */
     background: #f1f5f9;
     min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 5px; /* 👈 Forces exactly 5px between the header and the below card */
 }
 
 .mainCard {
@@ -11,11 +17,107 @@
     overflow: hidden;
 }
 
-.cardHeader { padding: 20px 30px; border-bottom: 1px solid #edf2f7; }
-.mainTitle { font-size: 26px; font-weight: 800; color: #1a202c; margin: 0; }
+/* =========================================
+   WARNING BANNER
+   ========================================= */
+.warningBanner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background-color: #fff1f2;
+    border: 2px solid #fecdd3;
+    padding: 16px 20px;
+    border-radius: 12px;
+    margin-bottom: 0; /* Let the pageContainer gap handle the spacing */
+    animation: slideIn 0.4s ease-out;
+}
 
+.warningIcon {
+    color: #e11d48;
+    flex-shrink: 0;
+}
+
+.warningContent strong {
+    display: block;
+    color: #9f1239;
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.warningContent p {
+    margin: 0;
+    color: #be123c;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================
+   BUTTON WRAPPER & STATUS LABELS
+   ========================================= */
+.btnWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+}
+
+/* ⚠️ Needs Re-take — shown below rejected button */
+.statusLabelRed {
+    display: block;
+    text-align: center;
+    color: #e11d48;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* 🔒 Locked (3 Strikes) — shown when failed */
+.statusLabelLocked {
+    display: block;
+    text-align: center;
+    color: #7f1d1d;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* =========================================
+   PULSE ANIMATION FOR REJECTED BUTTONS
+   ========================================= */
+.pulseWarning {
+    border: 2px solid #e11d48 !important;
+    animation: pulseRed 1.5s ease-in-out infinite;
+}
+
+@keyframes pulseRed {
+    0% {
+        box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.7);
+        transform: scale(1);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(225, 29, 72, 0);
+        transform: scale(1.02);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(225, 29, 72, 0);
+        transform: scale(1);
+    }
+}
+
+/* =========================================
+   CLOCK & SHIFT UI
+   ========================================= */
 .clockBanner {
-    background: #0B1EAE;
+    background: var(--a, linear-gradient(270deg, #0B1EAE 0%, #152286 23.56%, #0D1767 63.46%, #050C48 100%));
     margin: 20px;
     padding: 45px;
     border-radius: 14px;
@@ -23,140 +125,365 @@
     color: white;
 }
 
-.dateDisplay { font-size: 18px; margin-bottom: 8px; font-weight: 500; opacity: 0.9; }
-.digitalClock { font-size: 82px; font-weight: 900; color: #FACC15; letter-spacing: 2px; margin: 0; }
+.dateDisplay {
+    font-size: 18px;
+    margin-bottom: 8px;
+    font-weight: 500;
+    opacity: 0.9;
+    margin-top: 0;
+}
 
+.digitalClock {
+    font-size: 82px;
+    font-weight: 900;
+    color: #FACC15;
+    letter-spacing: 2px;
+    margin: 0;
+}
+
+.branchLabel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 10px;
+    color: rgba(255,255,255,0.8);
+    font-size: 14px;
+}
+
+.branchName {
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+/* =========================================
+   VERIFICATION NOTICE CARD
+   ========================================= */
 .verificationNotice {
-    display: flex; gap: 16px; align-items: center;
-    background: #eff6ff; border: 1px solid #bfdbfe;
-    margin: 0 20px 20px 20px; padding: 18px; border-radius: 12px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    margin: 0 20px 20px 20px;
+    padding: 18px;
+    border-radius: 12px;
 }
+
 .noticeIcon { color: #1d4ed8; flex-shrink: 0; }
-.noticeText h3 { font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 2px; margin-top: 0; }
-.noticeText p { font-size: 13px; color: #64748b; margin: 0; }
 
-.shiftWrapper { padding: 0 20px 20px 20px; display: flex; flex-direction: column; gap: 20px; }
-.shiftGroup { background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0; }
-.shiftLabel { display: flex; align-items: center; gap: 8px; font-weight: 700; color: #475569; margin-bottom: 12px; font-size: 14px; text-transform: uppercase; }
-
-.actionGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-.timeInBtn, .timeOutBtn {
-    height: 65px; border-radius: 10px; border: none; font-size: 20px;
-    font-weight: 800; color: white; cursor: pointer; display: flex;
-    align-items: center; justify-content: center; gap: 10px; transition: 0.2s;
+.noticeText h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 4px 0;
 }
 
-.timeInBtn { background: #EAB308; }
+.noticeText p {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0;
+}
+
+/* =========================================
+   SHIFT GROUPS & ACTION GRID
+   ========================================= */
+.shiftWrapper {
+    padding: 0 20px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.shiftGroup {
+    background: #f8fafc;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.shiftLabel {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    color: #475569;
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    text-transform: uppercase;
+}
+
+.actionGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+}
+
+/* =========================================
+   CLOCK BUTTONS
+   ========================================= */
+.timeInBtn,
+.timeOutBtn {
+    width: 100%;
+    height: 65px;
+    border-radius: 10px;
+    border: none;
+    font-size: 20px;
+    font-weight: 800;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+
+.timeInBtn  { background: #EAB308; }
 .timeOutBtn { background: #F87171; }
-.timeInBtn:hover:not(.locked) { background: #ca8a04; transform: translateY(-2px); }
+
+.timeInBtn:hover:not(.locked)  { background: #ca8a04; transform: translateY(-2px); }
 .timeOutBtn:hover:not(.locked) { background: #ef4444; transform: translateY(-2px); }
 
-.locked { background: #94a3b8 !important; opacity: 0.6; cursor: not-allowed !important; transform: none !important; }
-
-/* MODAL STYLES */
-.modalOverlay {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(15, 23, 42, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1000;
-    padding: 20px; /* Crucial for mobile so it doesn't touch the edge */
+.locked {
+    background: #94a3b8 !important;
+    opacity: 0.6;
+    cursor: not-allowed !important;
+    transform: none !important;
+    animation: none !important; 
 }
-.modalContent { background: white; width: 100%; max-width: 480px; padding: 35px; border-radius: 24px; position: relative; text-align: center; }
-.closeBtn { position: absolute; top: 20px; right: 20px; border: none; background: none; color: #94a3b8; cursor: pointer; }
-.modalTitle { font-size: 20px; font-weight: 800; text-decoration: underline; margin-bottom: 30px; color: #0f172a; margin-top: 0; }
 
-.stepper { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 30px; }
-.step { width: 36px; height: 36px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #64748b; }
+/* =========================================
+   MODAL STYLES
+   ========================================= */
+.modalOverlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(15, 23, 42, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modalContent {
+    background: white;
+    width: 100%;
+    max-width: 480px;
+    padding: 35px;
+    border-radius: 24px;
+    position: relative;
+    text-align: center;
+}
+
+.closeBtn {
+    position: absolute;
+    top: 20px; right: 20px;
+    border: none;
+    background: none;
+    color: #94a3b8;
+    cursor: pointer;
+}
+
+.modalTitle {
+    font-size: 20px;
+    font-weight: 800;
+    text-decoration: underline;
+    margin: 0 0 30px 0;
+    color: #0f172a;
+}
+
+.stepper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+.step {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    color: #64748b;
+}
+
 .activeStep { background: #0B1EAE; color: white; }
 .line { width: 40px; height: 2px; background: #e2e8f0; }
 
-.stepBody { display: flex; flex-direction: column; align-items: center; width: 100%; }
-.locCircle { width: 80px; height: 80px; background: #dcfce7; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; }
-.coordsText { color: #4f46e5; font-weight: 600; font-size: 18px; margin-bottom: 10px; }
-.premisesBadge { border: 2px solid #22c55e; color: #15803d; padding: 6px 20px; border-radius: 20px; font-weight: 700; font-size: 14px; margin-bottom: 25px; }
+.stepBody {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
 
-.modalPrimaryBtn { width: 100%; background: #0B1EAE; color: white; border: none; padding: 14px 20px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; }
-.modalPrimaryBtn:hover { background: #081685; }
+.locCircle {
+    width: 80px; height: 80px;
+    background: #dcfce7;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+}
 
-.webcamBox { width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 20px; border: 2px solid #e2e8f0; }
-.webcam { width: 100%; transform: scaleX(-1); display: block; }
+.coordsText {
+    color: #4f46e5;
+    font-weight: 600;
+    font-size: 18px;
+    margin-bottom: 10px;
+}
 
-.previewBox { width: 100%; position: relative; border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+.syncText {
+    color: #94a3b8;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+.premisesBadge {
+    border: 2px solid #22c55e;
+    color: #15803d;
+    padding: 6px 20px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 25px;
+}
+
+.locationError {
+    background: #fef2f2;
+    color: #dc2626;
+    padding: 6px 20px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid #fecaca;
+    margin-bottom: 20px;
+}
+
+.modalPrimaryBtn {
+    width: 100%;
+    background: var(--a, linear-gradient(270deg, #0B1EAE 0%, #152286 23.56%, #0D1767 63.46%, #050C48 100%));
+    color: white;
+    border: none;
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 8px;
+}
+
+.modalPrimaryBtn:hover:not(:disabled) { background: #081685; }
+.modalPrimaryBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.webcamBox {
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    border: 2px solid #e2e8f0;
+}
+
+.webcam {
+    width: 100%;
+    transform: scaleX(-1);
+    display: block;
+}
+
+.previewBox {
+    width: 100%;
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
 .imgPreview { width: 100%; display: block; }
-.checkOverlay { position: absolute; inset: 0; background: rgba(34, 197, 94, 0.4); display: flex; align-items: center; justify-content: center; }
 
-.modalFooter { display: flex; gap: 12px; width: 100%; }
-.retakeBtn { flex: 1; padding: 14px; border-radius: 10px; border: 1px solid #d1d5db; background: #f9fafb; font-weight: 600; cursor: pointer; }
-.confirmBtn { flex: 2; padding: 14px; border-radius: 10px; border: none; background: #0B1EAE; color: white; font-weight: 700; cursor: pointer; }
+.checkOverlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(34, 197, 94, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modalFooter {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+}
+
+.retakeBtn {
+    flex: 1;
+    padding: 14px;
+    border-radius: 10px;
+    border: 1px solid #d1d5db;
+    background: #f9fafb;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.confirmBtn {
+    flex: 2;
+    padding: 14px;
+    border-radius: 10px;
+    border: none;
+    background: var(--a, linear-gradient(270deg, #0B1EAE 0%, #152286 23.56%, #0D1767 63.46%, #050C48 100%));
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.confirmBtn:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* =========================================
-   📱 RESPONSIVE MOBILE STYLES (NEW!)
+   📱 RESPONSIVE MOBILE STYLES
    ========================================= */
-
 @media (max-width: 768px) {
-    .pageContainer {
-        padding: 12px;
-    }
-    
-    .cardHeader {
-        padding: 16px 20px;
-    }
-    
-    .mainTitle {
-        font-size: 22px;
-    }
+    .pageContainer { padding: 12px; }
 
     .clockBanner {
         padding: 30px 20px;
         margin: 16px;
     }
 
-    .dateDisplay {
-        font-size: 16px;
-    }
-
-    .digitalClock {
-        font-size: 48px; /* Significantly reduce font size to fit screens */
-    }
+    .dateDisplay   { font-size: 16px; }
+    .digitalClock  { font-size: 48px; }
 
     .verificationNotice {
         margin: 0 16px 16px 16px;
         padding: 14px;
-        align-items: flex-start; /* Better alignment if text wraps */
+        align-items: flex-start;
     }
 
-    .shiftWrapper {
-        padding: 0 16px 16px 16px;
-    }
+    .shiftWrapper { padding: 0 16px 16px 16px; }
 }
 
 @media (max-width: 480px) {
-    .digitalClock {
-        font-size: 38px; /* Even smaller for tiny phones */
-    }
+    .digitalClock { font-size: 38px; }
 
     .actionGrid {
-        grid-template-columns: 1fr; /* Stack buttons vertically on small phones */
+        grid-template-columns: 1fr;
     }
 
-    .timeInBtn, .timeOutBtn {
+    .timeInBtn,
+    .timeOutBtn {
         height: 55px;
         font-size: 18px;
     }
 
-    .modalContent {
-        padding: 24px 20px;
-    }
-    
-    .modalTitle {
-        font-size: 18px;
-        margin-bottom: 20px;
-    }
+    .modalContent  { padding: 24px 20px; }
+    .modalTitle    { font-size: 18px; margin-bottom: 20px; }
+    .stepper       { margin-bottom: 20px; }
 
-    .stepper {
-        margin-bottom: 20px;
-    }
-
-    .modalFooter {
-        flex-direction: column; /* Stack Retake and Confirm buttons */
-    }
+    .modalFooter { flex-direction: column; }
 }

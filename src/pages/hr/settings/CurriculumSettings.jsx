@@ -3,6 +3,39 @@ import { Trash2, Plus } from 'lucide-react';
 import api from '../../../api/axios';
 import toast, { Toaster } from 'react-hot-toast';
 
+// ✨ ABBREVIATION HELPER FUNCTION ✨
+// Placed outside the component so it doesn't recreate on every render
+const getSchoolAbbreviation = (schoolName) => {
+  if (!schoolName) return '';
+
+  // 1. Manual Overrides for specific schools
+  const overrides = {
+    "University of Science and Technology of Southern Philippines": "USTP",
+    "Xavier University": "XU",
+    "Xavier University - Ateneo de Cagayan": "XU",
+    "Capitol University": "CU",
+    "Liceo de Cagayan University": "LDCU",
+    "Mindanao State University": "MSU"
+  };
+
+  if (overrides[schoolName]) {
+    return overrides[schoolName];
+  }
+
+  // 2. Automatic Acronym Generator
+  const stopWords = ['of', 'and', 'the', 'in', 'at', 'de'];
+  const words = schoolName.split(/[\s-]+/); 
+  
+  let acronym = '';
+  words.forEach(word => {
+    if (!stopWords.includes(word.toLowerCase()) && word.length > 0) {
+      acronym += word[0].toUpperCase();
+    }
+  });
+
+  return acronym.length >= 2 ? acronym : schoolName;
+};
+
 export default function SettingsPage() {
   const [requirements, setRequirements] = useState([]);
   const [schools, setSchools] = useState([]); 
@@ -53,7 +86,6 @@ export default function SettingsPage() {
     }
   };
 
-  // 👇 THE MISSING FUNCTION IS BACK! 👇
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this rule?")) return;
     try {
@@ -69,7 +101,7 @@ export default function SettingsPage() {
     <div style={{ fontFamily: 'Inter, sans-serif' }}>
       <Toaster position="top-right" />
 
-      <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
         
         {/* ADD NEW RULE FORM */}
         <div style={{ flex: '1', minWidth: '300px', background: 'white', padding: '24px', borderRadius: '10px', border: '1px solid #e2e8f0', height: 'fit-content' }}>
@@ -174,9 +206,18 @@ export default function SettingsPage() {
                   )}
                   {requirements.map(rule => (
                     <tr key={rule.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                      <td style={{ padding: '16px', fontSize: '14px', color: '#0f172a' }}>
-                        {rule.school ? rule.school.name : `School ID: ${rule.school_id}`}
+                      
+                      {/* ✨ UPDATED CELL WITH ABBREVIATION ✨ */}
+                      <td 
+                        style={{ padding: '16px', fontSize: '14px', color: '#0f172a', fontWeight: '500' }}
+                        title={rule.school ? rule.school.name : ''} 
+                      >
+                        {rule.school 
+                          ? getSchoolAbbreviation(rule.school.name) 
+                          : `School ID: ${rule.school_id}`
+                        }
                       </td>
+
                       <td style={{ padding: '16px', fontSize: '14px', color: '#0f172a' }}>{rule.course_name}</td>
                       <td style={{ padding: '16px', fontSize: '14px', fontWeight: '600', color: '#0B1EAE' }}>{rule.required_hours} hrs</td>
                       <td style={{ padding: '16px' }}>

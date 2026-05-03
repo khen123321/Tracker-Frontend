@@ -1,147 +1,134 @@
-/* ─── BASE LAYOUT ─── */
+/* =========================================
+   PAGE LAYOUT & CONTAINERS
+   ========================================= */
 .pageWrapper {
-    padding: 24px;
-    background-color: #f8f9fc;
+    display: flex;
+    flex-direction: column;
+    gap: 5px; /* ✨ Forces exactly 5px between Header and Main Content ✨ */
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #0f172a;
+    padding: 0;
     min-height: 100vh;
-    font-family: system-ui, -apple-system, sans-serif;
+    background-color: #f1f5f9;
 }
 
-.headerContainer {
+.profileLayout {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
+    flex-direction: column;
+    gap: 5px;
 }
 
-.backButton {
+.hrActionsRow {
     display: flex;
-    align-items: center;
-    gap: 8px;
-    background: white;
-    border: 1px solid #e2e8f0;
+    justify-content: flex-end;
+}
+
+.exportBtn {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #475569;
     padding: 8px 16px;
     border-radius: 8px;
-    color: #475569;
+    font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
 
-.backButton:hover {
-    background: #f1f5f9;
+.exportBtn:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
     color: #0f172a;
 }
 
-.headerActions {
-    display: flex;
-    gap: 12px;
-}
-
-.editBtn, .exportBtn {
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.editBtn {
-    background: white;
-    border: 1px solid #cbd5e1;
-    color: #475569;
-}
-.editBtn:hover { background: #f8fafc; }
-
-.exportBtn {
-    background: #0B1EAE;
-    border: none;
-    color: white;
-    box-shadow: 0 4px 12px rgba(11, 30, 174, 0.2);
-}
-.exportBtn:hover { background: #081685; }
-
-.errorBanner {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    color: #991b1b;
-    padding: 16px;
-    border-radius: 12px;
-    margin-top: 20px;
-    font-weight: 500;
-}
-
-/* ─── GRID LAYOUT ─── */
-.mainGrid {
-    display: grid;
-    grid-template-columns: 320px 1fr;
-    gap: 24px;
-    align-items: start;
-}
-
-.leftColumn { display: flex; flex-direction: column; gap: 24px; }
-.rightColumn { display: flex; flex-direction: column; gap: 24px; }
-.bottomGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-
+/* =========================================
+   GLOBAL CARD STYLES
+   ========================================= */
 .card {
-    background: white;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
     border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
-    border: 1px solid #f1f5f9;
     padding: 24px;
-    overflow: hidden;
-    position: relative;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+    display: flex;
+    flex-direction: column;
 }
 
 .cardHeader {
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-size: 16px;
-    font-weight: 700;
-    color: #1e293b;
-    margin-bottom: 20px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #f1f5f9;
+    gap: 8px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: #64748b;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 24px;
 }
 
-/* ─── IDENTITY CARD & AVATAR UPLOAD ─── */
-.identityCard { padding: 0; text-align: center; padding-bottom: 24px; }
-.identityBg { height: 100px; background: linear-gradient(135deg, #0B1EAE 0%, #2563eb 100%); }
+.headerIcon {
+    color: #94a3b8;
+}
+
+.headerIconAlert {
+    color: #ef4444; /* Red accent for emergency */
+}
+
+/* =========================================
+   TOP BANNER (IDENTITY)
+   ========================================= */
+.identityBanner {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+}
+
+.bannerBackground {
+    height: 80px;
+    /* Soft brand blue gradient mimicking the dark banner shape */
+    background: linear-gradient(135deg, #0B1EAE 0%, #3b82f6 100%); 
+}
+
+.bannerContent {
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+    padding: 0 32px 32px 32px;
+    margin-top: -36px;
+}
 
 .avatarWrapper {
+    position: relative;
     width: 100px;
     height: 100px;
     border-radius: 50%;
-    border: 4px solid white;
-    margin: -50px auto 16px;
-    background: white;
-    overflow: hidden;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    position: relative;
+    border: 4px solid #ffffff;
+    background: #ffffff;
+    flex-shrink: 0;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
 }
 
-.avatarImg { 
-    width: 100%; 
-    height: 100%; 
-    object-fit: cover; 
+.avatarImg {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
 }
 
-/* ✨ NEW: Avatar Hover Edit Effect ✨ */
 .avatarHoverOverlay {
     position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     opacity: 0;
     cursor: pointer;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.2s;
 }
 
 .avatarWrapper:hover .avatarHoverOverlay {
@@ -150,121 +137,495 @@
 
 .avatarLoadingOverlay {
     position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.6);
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(15, 23, 42, 0.4);
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 10;
 }
 
+.identityInfo {
+    margin-top: 44px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.profileName {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.profileRole {
+    font-size: 0.95rem;
+    color: #64748b;
+    margin: 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dot {
+    color: #cbd5e1;
+}
+
+.identityBadges {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.statusBadge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.statusDot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.statusActive {
+    background: #dcfce7;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+}
+
+.statusActive .statusDot {
+    background: #16a34a;
+}
+
+.statusInactive {
+    background: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+}
+
+.statusInactive .statusDot {
+    background: #64748b;
+}
+
+.courseBadge {
+    background: #eff6ff;
+    color: #2563eb;
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    border: 1px solid #bfdbfe;
+    letter-spacing: 0.5px;
+}
+
+/* =========================================
+   MIDDLE GRID (Progress & Academics)
+   ========================================= */
+.middleGrid {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 5px;
+}
+
+/* 1. Progress Card */
+.progressMain {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 12px;
+}
+
+.hoursDisplay {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.hoursRendered {
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: #10b981; /* Green mimicking the dark mode accent */
+    line-height: 1;
+}
+
+.hoursRequired {
+    font-size: 1rem;
+    color: #94a3b8;
+    font-weight: 700;
+}
+
+.percentText {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #10b981;
+}
+
+.progressTrack {
+    height: 8px;
+    background: #f1f5f9;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.progressFill {
+    height: 100%;
+    background: #10b981;
+    border-radius: 4px;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.completionText {
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.highlightDate {
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.weeklyChart {
+    display: flex;
+    gap: 8px;
+    margin-top: auto; /* Pushes to bottom */
+    padding-top: 32px;
+    height: 80px;
+    align-items: flex-end;
+    justify-content: space-between;
+}
+
+.dayColumn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    height: 100%;
+    justify-content: flex-end;
+}
+
+.dayBar {
+    width: 100%;
+    max-width: 24px;
+    border-radius: 4px 4px 0 0;
+    transition: height 0.5s ease;
+}
+
+.dayActive { background: #10b981; opacity: 0.85; }
+.dayInactive { background: #f1f5f9; }
+
+.dayLabel {
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: #94a3b8;
+}
+
+/* 2. Academic Card */
+.academicGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px 24px;
+}
+
+.detailItemFull {
+    grid-column: 1 / -1; /* Spans full width */
+}
+
+.academicGrid label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.academicGrid p {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+}
+
+.subtext {
+    font-size: 0.85rem;
+    color: #64748b;
+    display: block;
+    margin-top: 4px;
+    font-weight: 500;
+}
+
+.flexVal {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* =========================================
+   BOTTOM GRID (Emergency & Documents)
+   ========================================= */
+.bottomGrid {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 5px;
+}
+
+/* 1. Emergency Card */
+.emergencyGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.emergencyGrid label {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.emergencyGrid p {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+    word-break: break-word;
+}
+
+.contactMainBlock {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    background: #fafaf9;
+}
+
+.contactSubBlocks {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.contactBlock {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.contactIcon {
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+/* 2. Documents Card */
+.documentsList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.docRow {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    transition: all 0.2s ease;
+}
+
+.docRowSuccess {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+.docRowPending {
+    background: #ffffff;
+    border-color: #f1f5f9;
+}
+
+.docRowPending:hover {
+    border-color: #cbd5e1;
+}
+
+.docIconBox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    flex-shrink: 0;
+}
+
+.docRowSuccess .docIconBox {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.docRowPending .docIconBox {
+    background: #fee2e2;
+    color: #ef4444;
+}
+
+.docInfo {
+    flex-grow: 1;
+}
+
+.docTitle {
+    margin: 0 0 4px 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.docSubtext {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.docActions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.missingBadge {
+    background: #fef2f2;
+    color: #ef4444;
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 4px 8px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+    border: 1px solid #fecaca;
+}
+
+.uploadBtnLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.uploadBtnLabel:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+    color: #0f172a;
+}
+
 .hiddenInput {
     display: none;
 }
 
-.profileName { font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
-.profileEmail { font-size: 14px; color: #64748b; margin-bottom: 16px; }
-
-.statusBadge {
-    display: inline-block;
-    padding: 6px 16px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+/* =========================================
+   UTILITIES & LOADERS
+   ========================================= */
+.loaderContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 50vh;
+    color: #64748b;
+    gap: 16px;
 }
-.statusActive { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-.statusInactive { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
 
-/* ─── OJT PROGRESS ─── */
-.progressTitleWrap { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; }
-.progressTitle { font-size: 16px; font-weight: 700; color: #1e293b; margin: 0; }
+.spinIcon {
+    animation: spin 1s linear infinite;
+}
 
-.progressStatsWrap { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px; }
-.renderedHours { font-size: 32px; font-weight: 800; color: #0B1EAE; line-height: 1; }
-.requiredHours { font-size: 14px; color: #64748b; font-weight: 600; margin-left: 4px; }
-.percentText { font-size: 16px; font-weight: 800; color: #10b981; }
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
 
-.progressTrack { height: 10px; background: #f1f5f9; border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
-.progressFill { height: 100%; background: linear-gradient(90deg, #3b82f6 0%, #0B1EAE 100%); border-radius: 10px; transition: width 1s ease-in-out; }
-
-.completionBox { background: #f8fafc; padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
-.completionLabel { font-size: 13px; color: #64748b; font-weight: 500; }
-.completionDate { font-size: 13px; color: #0f172a; font-weight: 700; }
-
-/* ─── DETAILS & LISTS ─── */
-.detailsGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-
-.detailItem { display: flex; flex-direction: column; gap: 6px; }
-.detailLabel { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; font-weight: 700; }
-.detailValue { font-size: 15px; color: #1e293b; font-weight: 600; margin: 0; }
-.detailValueLight { color: #64748b; font-weight: 400; }
-.detailValueFlex { display: flex; align-items: center; gap: 8px; font-size: 15px; color: #1e293b; font-weight: 600; }
-.detailIcon { color: #94a3b8; }
-.emergencyValue { font-size: 14px; color: #475569; margin: 0; line-height: 1.5; }
-
-.emergencyList { display: flex; flex-direction: column; gap: 16px; }
-
-/* ─── DOCUMENT UPLOADS ─── */
-.docsList { display: flex; flex-direction: column; gap: 12px; }
-.docItem { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8fafc; border-radius: 10px; border: 1px solid #f1f5f9; }
-.docLabel { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: #334155; flex: 1; }
-
-.docActionArea { display: flex; align-items: center; gap: 10px; }
-
-.docBadge { display: flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; }
-.docBadgeValid { background: #dcfce7; color: #166534; }
-.docBadgeMissing { background: #fef2f2; color: #991b1b; }
-
-/* ✨ NEW: Document Upload Button ✨ */
-.uploadBtnLabel {
+.errorBanner {
     display: flex;
     align-items: center;
-    gap: 6px;
-    background: #0B1EAE;
-    color: white;
-    padding: 4px 12px;
-    border-radius: 6px;
-    font-size: 12px;
+    gap: 8px;
+    background: #fef2f2;
+    color: #ef4444;
+    padding: 16px;
+    border-radius: 12px;
     font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
+    border: 1px solid #fecaca;
+    margin-top: 20px;
 }
 
-.uploadBtnLabel:hover { background: #081685; }
+/* =========================================
+   RESPONSIVE LAYOUT
+   ========================================= */
+@media (max-width: 1100px) {
+    .middleGrid, .bottomGrid {
+        grid-template-columns: 1fr;
+    }
+    
+    .academicGrid {
+        grid-template-columns: 1fr;
+    }
 
-/* Spin Animation for Loaders */
-@keyframes spin { 100% { transform: rotate(360deg); } }
-.spinIcon { animation: spin 1s linear infinite; }
-
-/* ─── SKELETON LOADER ─── */
-@keyframes shimmer {
-    0% { background-position: -400px 0; }
-    100% { background-position: 400px 0; }
-}
-.loaderContainer { padding: 40px; display: flex; justify-content: center; }
-.skeletonGroup { display: flex; flex-direction: column; align-items: center; gap: 16px; }
-.skelAvatar, .skelTitle, .skelSub {
-    background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
-    background-size: 400px 100%;
-    animation: shimmer 1.5s infinite;
-    border-radius: 8px;
-}
-.skelAvatar { width: 100px; height: 100px; border-radius: 50%; }
-.skelTitle { width: 200px; height: 24px; }
-.skelSub { width: 150px; height: 16px; }
-
-/* ─── RESPONSIVE ─── */
-@media (max-width: 1024px) {
-    .mainGrid { grid-template-columns: 1fr; }
-    .bottomGrid { grid-template-columns: 1fr; }
+    .weeklyChart {
+        max-width: 360px; /* Constrain on full width */
+    }
 }
 
-@media (max-width: 640px) {
-    .detailsGrid { grid-template-columns: 1fr; gap: 16px; }
-    .headerContainer { flex-direction: column; align-items: flex-start; gap: 16px; }
-    .pageWrapper { padding: 16px; }
-    .docItem { flex-direction: column; align-items: flex-start; gap: 12px; }
-    .docActionArea { width: 100%; justify-content: space-between; }
+@media (max-width: 768px) {
+    .bannerContent {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 0 20px 20px 20px;
+        margin-top: -50px;
+    }
+
+    .identityInfo {
+        margin-top: 16px;
+        align-items: center;
+    }
+
+    .docRow {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+    }
+
+    .docActions {
+        width: 100%;
+        justify-content: space-between;
+        margin-top: 8px;
+    }
 }

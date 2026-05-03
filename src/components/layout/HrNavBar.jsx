@@ -1,31 +1,41 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Search, Clock, CalendarDays,
-  FileUp, UserCog, Settings, MoreHorizontal, Camera
-} from 'lucide-react';
+  FileUp, UserCog, Settings, MoreHorizontal, Camera, ClipboardList, LogOut
+} from 'lucide-react'; // ✨ Added LogOut icon
 import styles from './HrNavBar.module.css';
 import logoImage from '../../assets/logo.png';
 
 const DashboardLayout = () => {
   const navigate = useNavigate();
 
-  // ✨ THE FIX: Changed 'cims_user' to 'user' to match the Login page ✨
-  const user         = JSON.parse(localStorage.getItem('user')) || {};
-  const permissions  = user.permissions || [];
-  const isSuperAdmin = user.role === 'superadmin' || user.role === 'hr'; // Added 'hr' fallback just in case!
+  // ✨ NEW: State to control the visibility of the logout modal
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  const user        = JSON.parse(localStorage.getItem('user')) || {};
+  const permissions = user.permissions || [];
+  const isSuperAdmin = user.role?.toLowerCase() === 'superadmin';
 
   console.log("=== SIDEBAR DEBUG ===");
   console.log("1. The User Object:", user);
   console.log("2. The Permissions Array:", permissions);
-  console.log("3. Is Superadmin or HR?:", isSuperAdmin);
+  console.log("3. Is True Superadmin?:", isSuperAdmin);
 
-  const handleLogout = () => {
-    if (window.confirm('Are you sure you want to log out?')) {
-      localStorage.removeItem('cims_token');
-      localStorage.removeItem('user'); // Also updated this to 'user'
-      navigate('/login');
-    }
+  // ✨ NEW: Modal Handlers
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true); 
+  };
+
+  const confirmLogout = () => {
+    setShowLogoutModal(false);
+    localStorage.removeItem('cims_token');
+    localStorage.removeItem('user');
+    navigate('/login');
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
   };
 
   const navCls = ({ isActive }) =>
@@ -42,7 +52,6 @@ const DashboardLayout = () => {
 
         <nav className={styles.navMenu}>
           
-          {/* Dashboard Check */}
           {(isSuperAdmin || permissions.includes('Dashboard')) && (
             <NavLink to="/dashboard" end className={navCls}>
               <LayoutDashboard size={20} strokeWidth={1.5} />
@@ -50,15 +59,13 @@ const DashboardLayout = () => {
             </NavLink>
           )}
 
-          {/* Intern Management Check */}
-          {(isSuperAdmin || permissions.includes('Intern Management')) && (
+          {(isSuperAdmin || permissions.includes('Intern')) && (
             <NavLink to="/dashboard/interns" className={navCls}>
               <Search size={20} strokeWidth={1.5} />
               <span>Intern</span>
             </NavLink>
           )}
 
-          {/* Time Tracker Check */}
           {(isSuperAdmin || permissions.includes('Time Tracker')) && (
             <NavLink to="/dashboard/time-tracker" className={navCls}>
               <Clock size={20} strokeWidth={1.5} />
@@ -66,7 +73,6 @@ const DashboardLayout = () => {
             </NavLink>
           )}
 
-          {/* Camera Verification Check */}
           {(isSuperAdmin || permissions.includes('Camera Verification')) && (
             <NavLink to="/dashboard/camera-verification" className={navCls}>
               <Camera size={20} strokeWidth={1.5} />
@@ -74,7 +80,13 @@ const DashboardLayout = () => {
             </NavLink>
           )}
 
-          {/* Events Check */}
+          {(isSuperAdmin || permissions.includes('Forms & Requests')) && (
+            <NavLink to="/dashboard/forms-requests" className={navCls}>
+              <ClipboardList size={20} strokeWidth={1.5} />
+              <span>Forms & Requests</span>
+            </NavLink>
+          )}
+
           {(isSuperAdmin || permissions.includes('Events')) && (
             <NavLink to="/dashboard/events" className={navCls}>
               <CalendarDays size={20} strokeWidth={1.5} />
@@ -82,15 +94,13 @@ const DashboardLayout = () => {
             </NavLink>
           )}
 
-          {/* Reports Check */}
-          {(isSuperAdmin || permissions.includes('Reports & Analytics')) && (
+          {(isSuperAdmin || permissions.includes('Reports')) && (
             <NavLink to="/dashboard/export" className={navCls}>
               <FileUp size={20} strokeWidth={1.5} />
               <span>Reports</span>
             </NavLink>
           )}
 
-          {/* Role Management Check */}
           {(isSuperAdmin || permissions.includes('Role Management')) && (
             <NavLink to="/dashboard/role-management" className={navCls}>
               <UserCog size={20} strokeWidth={1.5} />
@@ -98,7 +108,6 @@ const DashboardLayout = () => {
             </NavLink>
           )}
 
-          {/* Settings Check */}
           {(isSuperAdmin || permissions.includes('Settings')) && (
             <NavLink to="/dashboard/settings" className={navCls}>
               <Settings size={20} strokeWidth={1.5} />
@@ -108,13 +117,14 @@ const DashboardLayout = () => {
           
         </nav>
 
-        <div className={styles.bottomProfile} onClick={handleLogout} title="Click to Logout">
+        {/* Changed onClick to handleLogoutClick */}
+        <div className={styles.bottomProfile} onClick={handleLogoutClick} title="Click to Logout">
           <div className={styles.profileInfo}>
             <div className={styles.profileAvatar}>
               {user.first_name?.[0]?.toUpperCase() || 'A'}
             </div>
             <span className={styles.profileName}>
-              {isSuperAdmin ? 'CLIMBS Admin' : `${user.first_name || 'Admin'} ${user.last_name || ''}`}
+              {isSuperAdmin ? 'CLIMBS Admin' : `${user.first_name || 'HR'} ${user.last_name || ''}`}
             </span>
           </div>
           <MoreHorizontal size={18} color="#94a3b8" />
@@ -125,6 +135,29 @@ const DashboardLayout = () => {
       <div className={styles.mainWrapper}>
         <Outlet />
       </div>
+
+      {/* ─── CUSTOM LOGOUT MODAL ─── */}
+      {showLogoutModal && (
+        <div className={styles.modalOverlay} onClick={cancelLogout}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalIconBox}>
+              <LogOut size={24} className={styles.modalIcon} />
+            </div>
+            <h3 className={styles.modalTitle}>Log Out</h3>
+            <p className={styles.modalText}>
+              Are you sure you want to log out of your account? You will need to sign back in to access the dashboard.
+            </p>
+            <div className={styles.modalActions}>
+              <button className={styles.btnCancel} onClick={cancelLogout}>
+                Cancel
+              </button>
+              <button className={styles.btnLogoutConfirm} onClick={confirmLogout}>
+                Log Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

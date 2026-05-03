@@ -1,269 +1,279 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import interactionPlugin from '@fullcalendar/interaction';
 import api from '../../../api/axios';
 import toast, { Toaster } from 'react-hot-toast';
-import { Calendar as CalendarIcon, X, MapPin, Trash2, Clock, Users, GraduationCap, BookOpen, Bell, Plus } from 'lucide-react';
-import styles from './EventsPage.module.css';
+import { 
+    Calendar as CalendarIcon, X, MapPin, Clock, 
+    GraduationCap, BookOpen, Bell, Pin, ChevronRight, 
+    AlertCircle, Info, CalendarDays
+} from 'lucide-react';
+import PageHeader from '../../../components/PageHeader';
 
+// ─── SKELETON LOADER FOR FEED LAYOUT ───
+function EventsSkeleton() {
+    return (
+        <div className="p-4 md:p-6 bg-[#f1f5f9] min-h-screen font-sans flex flex-col gap-5">
+            {/* Header Skeleton */}
+            <div className="flex justify-between p-4 bg-white rounded-xl border border-slate-200 mb-4">
+                <div className="w-60 h-8 bg-slate-200 rounded animate-pulse" />
+                <div className="w-32 h-8 bg-slate-200 rounded-full animate-pulse" />
+            </div>
+
+            {/* Pinned Skeleton */}
+            <div className="w-32 h-4 bg-slate-200 rounded mb-2 animate-pulse" />
+            <div className="w-full h-32 bg-white border border-slate-200 rounded-xl mb-8 animate-pulse" />
+
+            {/* Recent Skeleton */}
+            <div className="w-32 h-4 bg-slate-200 rounded mb-2 animate-pulse" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="h-48 bg-white border border-slate-200 rounded-xl animate-pulse" />
+                <div className="h-48 bg-white border border-slate-200 rounded-xl animate-pulse" />
+                <div className="h-48 bg-white border border-slate-200 rounded-xl animate-pulse" />
+                <div className="h-48 bg-white border border-slate-200 rounded-xl animate-pulse" />
+            </div>
+        </div>
+    );
+}
+
+// ─── MAIN COMPONENT ───
 const EventsPage = () => {
     const [events, setEvents] = useState([]);
-    const [isLoading, setIsLoading] = useState(true); // Controls the Skeleton UI
+    const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState(null);
-    const [schools, setSchools] = useState([]);
-    const [courses, setCourses] = useState([]);
-
-    const [formData, setFormData] = useState({
-        title: '', type: 'event', startDate: '', startTime: '09:00',
-        location: '', audience: 'all', school: '', course: '', description: ''
-    });
 
     const loadData = useCallback(async () => {
         try {
-            const [eventsRes, filtersRes] = await Promise.all([
-                api.get('/events'),
-                api.get('/event-filters')
-            ]);
+            // The backend automatically filters these based on the logged-in Intern's school/course
+            const response = await api.get('/events');
             
-            // Map backend types to UI colors
-            const formattedEvents = eventsRes.data.map(ev => {
-                let color = '#eab308'; // Default Yellow (Event)
-                if (ev.extendedProps?.type === 'holiday') color = '#152286'; // Blue
-                if (ev.extendedProps?.type === 'reminder') color = '#22c55e'; // Green
-                return { ...ev, backgroundColor: color, borderColor: color };
-            });
-
-            return {
-                events: formattedEvents,
-                schools: filtersRes.data.schools || [],
-                courses: filtersRes.data.courses || []
-            };
+            // Sort by date descending
+            const sortedEvents = response.data.sort((a, b) => new Date(b.start) - new Date(a.start));
+            return sortedEvents;
         } catch (err) {
             console.error("Fetch error:", err);
-            return null;
+            toast.error("Failed to load your events.");
+            return [];
         }
     }, []);
 
     useEffect(() => {
         let isMounted = true;
-
         loadData().then(data => {
-            if (isMounted && data) {
-                setEvents(data.events);
-                setSchools(data.schools);
-                setCourses(data.courses);
-                setIsLoading(false); // Turn off skeleton when data arrives
+            if (isMounted) {
+                setEvents(data);
+                setIsLoading(false);
             }
         });
         return () => { isMounted = false; };
     }, [loadData]);
 
-    const handleInputChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
-
-    const handleAddEventClick = () => {
-        setSelectedEvent(null);
-        setFormData({ 
-            title: '', type: 'event', startDate: new Date().toISOString().split('T')[0], 
-            startTime: '09:00', location: '', audience: 'all', school: '', course: '', description: '' 
+    const handleEventClick = (ev) => {
+        setSelectedEvent({ 
+            id: ev.id, 
+            title: ev.title, 
+            start: ev.start, 
+            ...ev.extendedProps 
         });
         setIsModalOpen(true);
     };
 
-    const handleDateClick = (arg) => {
-        setSelectedEvent(null);
-        setFormData({ ...formData, startDate: arg.dateStr, title: '', description: '', location: '', audience: 'all', school: '', course: '' });
-        setIsModalOpen(true);
+    // ─── DATA SPLITTING & HELPERS ───
+    const pinnedEvents = events.filter(ev => ev.extendedProps?.is_pinned === true || ev.extendedProps?.is_pinned === 1);
+    const recentEvents = events.filter(ev => !ev.extendedProps?.is_pinned);
+
+    const formatDate = (dateString) => {
+        return new Date(dateString).toLocaleDateString('en-US', { 
+            month: 'short', day: 'numeric', year: 'numeric' 
+        });
     };
 
-    const handleEventClick = (info) => {
-        setSelectedEvent({ id: info.event.id, title: info.event.title, start: info.event.startStr, ...info.event.extendedProps });
-        setIsModalOpen(true);
+    // Dynamic Color Mapping based on Event Type
+    const getTypeStyles = (type) => {
+        switch(type?.toLowerCase()) {
+            case 'holiday':
+                return { border: 'border-l-blue-500', badge: 'bg-blue-100 text-blue-700', iconBg: 'bg-blue-50 text-blue-500' };
+            case 'reminder':
+                return { border: 'border-l-green-500', badge: 'bg-green-100 text-green-700', iconBg: 'bg-green-50 text-green-500' };
+            case 'event':
+            default:
+                return { border: 'border-l-yellow-500', badge: 'bg-yellow-100 text-yellow-700', iconBg: 'bg-yellow-50 text-yellow-500' };
+        }
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            await api.post('/events', { ...formData, date: formData.startDate, time: formData.startTime });
-            toast.success("Event Published!");
-            setIsModalOpen(false);
-            const ref = await loadData();
-            if (ref) setEvents(ref.events);
-        } catch { toast.error("Validation error."); }
-    };
-
-    const handleDelete = async (id) => {
-        if (!window.confirm("Delete this event?")) return;
-        await api.delete(`/events/${id}`);
-        toast.success("Event deleted");
-        setIsModalOpen(false);
-        const ref = await loadData();
-        if (ref) setEvents(ref.events);
-    };
-
-    const todayFormatted = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    if (isLoading) return <EventsSkeleton />;
 
     return (
-        <div className={styles.pageContainer}>
+        <div className="p-4 md:p-6 bg-[#f1f5f9] min-h-screen font-sans flex flex-col gap-5">
             <Toaster position="top-right" />
             
-            <header className={styles.header}>
-                <h1 className={styles.pageTitle}>Events</h1>
-                <div className={styles.headerActions}>
-                    <button className={styles.iconBtn}><Bell size={20} /></button>
-                    <div className={styles.dateBadge}>
-                        <CalendarIcon size={18} className="text-slate-400"/> {todayFormatted}
-                    </div>
-                </div>
-            </header>
+            {/* ✨ PAGE HEADER ✨ */}
+            <PageHeader title="Events Feed" subtitle="Your schedule and company activities" />
 
-            <div className={styles.mainGrid}>
+            <div className="flex flex-col gap-8 max-w-6xl mx-auto w-full">
                 
-                {/* --- SIDEBAR --- */}
-                <aside>
-                    <div className={styles.sidebarBlock}>
-                        <h2 className={styles.blockTitle}>Create Event</h2>
-                        <button onClick={handleAddEventClick} className={styles.addEventBtn}>
-                            <Plus size={18} /> Add Event
-                        </button>
-                    </div>
-
-                    <div className={styles.sidebarBlock}>
-                        <h2 className={styles.blockTitle}>Category</h2>
-                        <div className={styles.legendList}>
-                            <div className={styles.legendItem}><span className={`${styles.dot} ${styles.dotYellow}`}></span> Event (with work)</div>
-                            <div className={styles.legendItem}><span className={`${styles.dot} ${styles.dotBlue}`}></span> Holiday (no work)</div>
-                            <div className={styles.legendItem}><span className={`${styles.dot} ${styles.dotGreen}`}></span> Reminder</div>
-                        </div>
-                        <button className={styles.addCategoryBtn}><Plus size={14} /> Add New Category</button>
-                    </div>
-
-                    <div className={styles.sidebarBlock}>
-                        <h2 className={styles.blockTitle}>Upcoming Event</h2>
-                        <div className={styles.eventList}>
-                            {isLoading ? (
-                                <>
-                                    <div className={`${styles.skeleton} ${styles.skeletonCard}`}></div>
-                                    <div className={`${styles.skeleton} ${styles.skeletonCard}`}></div>
-                                    <div className={`${styles.skeleton} ${styles.skeletonCard}`}></div>
-                                </>
-                            ) : events.length === 0 ? (
-                                <p className="text-sm text-slate-500 italic">No upcoming events.</p>
-                            ) : (
-                                events.slice(0, 5).map(ev => (
-                                    <div key={ev.id} className={styles.eventCard} onClick={() => handleEventClick({event: ev})}>
-                                        <div className={styles.cardHeader}>
-                                            <span>{ev.extendedProps?.time || 'All Day'}</span>
-                                            <span>{ev.start.split('T')[0]}</span>
-                                        </div>
-                                        <h4 className={styles.cardTitle}>{ev.title}</h4>
-                                        {ev.extendedProps?.location && (
-                                            <div className={styles.cardLocation}>
-                                                <MapPin size={14} /> {ev.extendedProps.location}
-                                            </div>
-                                        )}
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </div>
-                </aside>
-
-                {/* --- CALENDAR MAIN --- */}
-                <main className={styles.calendarWrapper}>
-                    {isLoading ? (
-                        <div className={`${styles.skeleton} ${styles.skeletonCalendar}`}></div>
-                    ) : (
-                        <FullCalendar 
-                            plugins={[dayGridPlugin, interactionPlugin]} 
-                            initialView="dayGridMonth" 
-                            events={events} 
-                            dateClick={handleDateClick} 
-                            eventClick={handleEventClick} 
-                            height="78vh" 
-                            headerToolbar={{
-                                left: 'title',
-                                center: 'today prev,next',
-                                right: 'dayGridMonth'
-                            }}
-                        />
-                    )}
-                </main>
-            </div>
-
-            {/* --- MODAL --- */}
-            {isModalOpen && (
-                <div className={styles.modalOverlay}>
-                    <div className={styles.modalContainer}>
-                        <div className={styles.modalHeader}>
-                            <h2 className="font-bold">{selectedEvent ? 'Event Details' : 'New Event'}</h2>
-                            <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
+                {/* ─── PINNED SECTION (FULL WIDTH CARDS) ─── */}
+                {pinnedEvents.length > 0 && (
+                    <section>
+                        <div className="flex items-center gap-2 text-slate-500 text-xs font-bold uppercase tracking-wider mb-4 px-2">
+                            <Pin size={14} /> <span>Pinned</span>
                         </div>
                         
-                        {selectedEvent ? (
-                            <div className={styles.viewContent}>
-                                <h1 className="text-2xl font-black mb-4">{selectedEvent.title}</h1>
-                                <div className="grid grid-cols-2 gap-4 mb-6 text-sm text-slate-600">
-                                    <div className="flex items-center gap-2"><Clock size={16}/> {selectedEvent.time}</div>
-                                    <div className="flex items-center gap-2"><MapPin size={16}/> {selectedEvent.location}</div>
-                                    <div className="flex items-center gap-2 text-[#0B1EAE] font-bold"><GraduationCap size={16}/> {selectedEvent.school || 'All'}</div>
-                                    <div className="flex items-center gap-2 text-[#0B1EAE] font-bold"><BookOpen size={16}/> {selectedEvent.course || 'All'}</div>
-                                </div>
-                                <p className="p-4 bg-slate-50 border rounded-xl italic mb-6">"{selectedEvent.description}"</p>
-                                <button onClick={() => handleDelete(selectedEvent.id)} className={styles.deleteBtn}><Trash2 size={18}/> Delete Event</button>
-                            </div>
-                        ) : (
-                            <form onSubmit={handleSubmit} className={styles.modalForm}>
-                                <div className={styles.formGrid}>
-                                    <div className={styles.formColumn}>
-                                        <label className={styles.label}>Title</label>
-                                        <input name="title" value={formData.title} onChange={handleInputChange} className={styles.input} required />
-                                        
-                                        <label className={styles.label}>Category</label>
-                                        <select name="type" value={formData.type} onChange={handleInputChange} className={styles.input}>
-                                            <option value="event">Event (with work)</option>
-                                            <option value="holiday">Holiday (no work)</option>
-                                            <option value="reminder">Reminder</option>
-                                        </select>
-
-                                        <label className={styles.label}>Target Audience</label>
-                                        <select name="audience" value={formData.audience} onChange={handleInputChange} className={styles.input}>
-                                            <option value="all">Everyone</option>
-                                            <option value="school">By University</option>
-                                            <option value="course">By Course</option>
-                                            <option value="both">Both</option>
-                                        </select>
-
-                                        {(formData.audience === 'school' || formData.audience === 'both') && (
-                                            <select name="school" value={formData.school} onChange={handleInputChange} className={styles.input} required>
-                                                <option value="">-- Select School --</option>
-                                                {schools.map(s => <option key={s.school} value={s.school}>{s.school} ({s.total})</option>)}
-                                            </select>
-                                        )}
-
-                                        {(formData.audience === 'course' || formData.audience === 'both') && (
-                                            <select name="course" value={formData.course} onChange={handleInputChange} className={styles.input} required>
-                                                <option value="">-- Select Course --</option>
-                                                {courses.map(c => <option key={c.course} value={c.course}>{c.course} ({c.total})</option>)}
-                                            </select>
-                                        )}
-                                    </div>
-                                    <div className={styles.formColumn}>
-                                        <label className={styles.label}>Date & Time</label>
-                                        <div className={styles.inputGroup}>
-                                            <input type="date" name="startDate" value={formData.startDate} onChange={handleInputChange} className={styles.inputGroupItemPrimary} />
-                                            <input type="time" name="startTime" value={formData.startTime} onChange={handleInputChange} className={styles.inputGroupItem} />
+                        <div className="flex flex-col gap-4">
+                            {pinnedEvents.map(ev => {
+                                const styles = getTypeStyles(ev.extendedProps?.type);
+                                
+                                return (
+                                    <div 
+                                        key={ev.id} 
+                                        onClick={() => handleEventClick(ev)}
+                                        className={`bg-white border-l-4 ${styles.border} border-y border-r border-slate-200 rounded-xl p-5 flex items-center gap-5 cursor-pointer hover:shadow-lg hover:border-slate-300 transition-all duration-200 group`}
+                                    >
+                                        <div className={`p-3 rounded-xl shrink-0 ${styles.iconBg}`}>
+                                            <AlertCircle size={24} />
                                         </div>
-                                        <label className={styles.label}>Location</label>
-                                        <input name="location" value={formData.location} onChange={handleInputChange} className={styles.input} placeholder="Office/Remote" />
-                                        <label className={styles.label}>Description</label>
-                                        <textarea name="description" value={formData.description} onChange={handleInputChange} className={styles.textarea} rows="2" />
+                                        
+                                        <div className="flex-grow">
+                                            <div className="flex items-center gap-3 mb-1.5">
+                                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${styles.badge}`}>
+                                                    {ev.extendedProps?.type || 'EVENT'}
+                                                </span>
+                                                <span className="text-xs text-slate-400 font-medium font-mono">
+                                                    {formatDate(ev.start)}
+                                                </span>
+                                                {/* Optional "New" tag if created recently */}
+                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 flex items-center gap-1">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Pinned
+                                                </span>
+                                            </div>
+                                            <h3 className="text-lg font-bold text-slate-800 mb-1 leading-tight group-hover:text-blue-700 transition-colors">
+                                                {ev.title}
+                                            </h3>
+                                            <p className="text-sm text-slate-500 line-clamp-2">
+                                                {ev.extendedProps?.description || 'No additional details provided.'}
+                                            </p>
+                                        </div>
+                                        
+                                        <ChevronRight className="text-slate-300 group-hover:text-slate-600 transition-transform group-hover:translate-x-1 shrink-0" />
                                     </div>
+                                );
+                            })}
+                        </div>
+                    </section>
+                )}
+
+                {/* ─── RECENT SECTION (GRID CARDS) ─── */}
+                <section>
+                    <div className="flex items-center gap-2 text-slate-500 text-xs font-bold uppercase tracking-wider mb-4 px-2">
+                        <CalendarDays size={14} /> <span>Recent & Upcoming</span>
+                    </div>
+
+                    {recentEvents.length === 0 ? (
+                        <div className="text-center py-20 bg-white border border-slate-200 rounded-2xl text-slate-400">
+                            <CalendarIcon size={48} className="mx-auto mb-3 opacity-50" />
+                            <p>No events found.</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {recentEvents.map(ev => {
+                                const styles = getTypeStyles(ev.extendedProps?.type);
+
+                                return (
+                                    <div 
+                                        key={ev.id} 
+                                        onClick={() => handleEventClick(ev)}
+                                        className={`bg-white border-l-4 ${styles.border} border-y border-r border-slate-200 rounded-xl p-6 flex flex-col cursor-pointer hover:shadow-lg hover:border-slate-300 transition-all duration-200 group`}
+                                    >
+                                        <div className="flex justify-between items-center mb-3">
+                                            <span className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${styles.badge}`}>
+                                                {ev.extendedProps?.type || 'EVENT'}
+                                            </span>
+                                            <span className="text-xs text-slate-400 font-medium font-mono">
+                                                {formatDate(ev.start)}
+                                            </span>
+                                        </div>
+                                        
+                                        <h3 className="text-base font-bold text-slate-800 mb-2 leading-tight group-hover:text-blue-700 transition-colors">
+                                            {ev.title}
+                                        </h3>
+                                        
+                                        <p className="text-sm text-slate-500 line-clamp-3 mb-6 flex-grow">
+                                            {ev.extendedProps?.description || 'No additional details provided.'}
+                                        </p>
+                                        
+                                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 group-hover:text-slate-700 transition-colors mt-auto pt-4 border-t border-slate-100">
+                                            READ MORE <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </section>
+            </div>
+
+            {/* ─── VIEW DETAILS MODAL ─── */}
+            {isModalOpen && selectedEvent && (
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex justify-center items-center z-50 p-4" onClick={() => setIsModalOpen(false)}>
+                    <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                        
+                        <div className="flex justify-between items-start p-6 border-b border-slate-100">
+                            <h2 className="font-bold text-lg text-slate-800">Event Details</h2>
+                            <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-colors">
+                                <X size={18} />
+                            </button>
+                        </div>
+                        
+                        <div className="p-8">
+                            <div className="mb-4">
+                                <span className={`px-3 py-1.5 rounded-md text-xs font-bold uppercase text-white ${
+                                    selectedEvent.type === 'holiday' ? 'bg-[#152286]' : 
+                                    selectedEvent.type === 'reminder' ? 'bg-green-500' : 'bg-yellow-500'
+                                }`}>
+                                    {selectedEvent.type || 'EVENT'}
+                                </span>
+                            </div>
+                            
+                            <h1 className="text-3xl font-black mb-6 text-slate-900 leading-tight">
+                                {selectedEvent.title}
+                            </h1>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 mb-8 p-6 bg-slate-50 border border-slate-100 rounded-xl text-sm text-slate-600">
+                                <div className="flex items-center gap-3">
+                                    <Clock size={18} className="text-slate-400"/> 
+                                    <span className="font-medium">{selectedEvent.time || 'All Day'} • {formatDate(selectedEvent.start)}</span>
                                 </div>
-                                <button type="submit" className={styles.submitButton}>Publish Event</button>
-                            </form>
-                        )}
+                                <div className="flex items-center gap-3">
+                                    <MapPin size={18} className="text-slate-400"/> 
+                                    <span className="font-medium">{selectedEvent.location || 'No Location Set'}</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <GraduationCap size={18} className="text-blue-500"/> 
+                                    <span className="font-semibold text-slate-700">{selectedEvent.school || 'All Universities'}</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <BookOpen size={18} className="text-blue-500"/> 
+                                    <span className="font-semibold text-slate-700">{selectedEvent.course || 'All Courses'}</span>
+                                </div>
+                            </div>
+
+                            <div className="mb-6">
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Description</h4>
+                                <div className="p-5 bg-white border border-slate-200 rounded-xl shadow-sm">
+                                    <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">
+                                        {selectedEvent.description || "No description provided for this event."}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-6 border-t border-slate-100 bg-slate-50 rounded-b-2xl flex justify-end">
+                            <button 
+                                onClick={() => setIsModalOpen(false)} 
+                                className="px-8 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg transition-colors"
+                            >
+                                Close
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

@@ -1,18 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { 
-    ArrowLeft, Building2, GraduationCap, 
+    Building2, GraduationCap, 
     FileText, CheckCircle2, XCircle, Clock, Calendar, ShieldCheck,
-    Camera, UploadCloud, Loader2
+    Camera, UploadCloud, Loader2, User, Phone, MapPin, AlertCircle, Check, Eye, RefreshCw
 } from 'lucide-react';
 import api from '../../../api/axios'; 
 import toast, { Toaster } from 'react-hot-toast';
+
+import PageHeader from "../../../components/PageHeader";
 import styles from './InternProfile.module.css';
 
 const InternProfile = () => {
     const { id: paramId } = useParams(); 
-    const navigate = useNavigate();
-    
+
     const targetId = paramId || 'me';
     const isViewingOwnProfile = !paramId;
 
@@ -20,33 +21,101 @@ const InternProfile = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // ✨ NEW: States for uploading files
+    const [progressStats, setProgressStats] = useState({
+        renderedHours: 0,
+        requiredHours: 486,
+        percent: 0,
+        completionDate: 'Calculating...'
+    });
+
+    const [weeklyStats, setWeeklyStats] = useState([
+        { label: 'M', status: 'present', hours: 8 },
+        { label: 'T', status: 'absent', hours: 0 },
+        { label: 'W', status: 'present', hours: 7.5 },
+        { label: 'T', status: 'present', hours: 8 },
+        { label: 'F', status: 'future', hours: 0 } 
+    ]);
+
+    const [isPresentToday, setIsPresentToday] = useState(true); 
+
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
     const [uploadingDoc, setUploadingDoc] = useState(null); 
     const avatarInputRef = useRef(null);
 
     useEffect(() => {
+        let isMounted = true; 
+
         const fetchInternDetails = async () => {
             try {
                 const response = await api.get(`/hr/interns/${targetId}`);
-                setIntern(response.data);
-                setError(null);
+                const profileData = response.data;
+                
+                if (isMounted) setIntern(profileData);
+
+                let rendered = 0;
+                let required = profileData.intern?.required_hours || 486;
+                let completion = 'TBD';
+
+                if (isViewingOwnProfile) {
+                    const statsRes = await api.get('/intern/dashboard-stats');
+                    rendered = statsRes.data.hoursRendered;
+                    required = statsRes.data.totalHoursRequired;
+                    completion = statsRes.data.completionDate;
+                    
+                    if (isMounted) {
+                        if (statsRes.data.weeklyStats) setWeeklyStats(statsRes.data.weeklyStats);
+                        if (statsRes.data.isPresentToday !== undefined) setIsPresentToday(statsRes.data.isPresentToday);
+                    }
+
+                } else {
+                    const hrStatsRes = await api.get(`/hr/interns/${targetId}/attendance`);
+                    rendered = hrStatsRes.data.stats?.hours || 0;
+                    
+                    const dateStarted = profileData.intern?.date_started;
+                    if (dateStarted) {
+                        const start = new Date(dateStarted);
+                        start.setDate(start.getDate() + 90); 
+                        completion = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    }
+
+                    if (isMounted) {
+                        if (hrStatsRes.data.weeklyStats) setWeeklyStats(hrStatsRes.data.weeklyStats);
+                        if (hrStatsRes.data.isPresentToday !== undefined) setIsPresentToday(hrStatsRes.data.isPresentToday);
+                    }
+                }
+
+                const pct = required > 0 ? Math.min(Math.round((rendered / required) * 100), 100) : 0;
+                
+                if (isMounted) {
+                    setProgressStats({
+                        renderedHours: rendered,
+                        requiredHours: required,
+                        percent: pct,
+                        completionDate: completion
+                    });
+                    setError(null);
+                }
             } catch (err) {
                 console.error("Failed to fetch intern profile:", err);
-                if (err.response && err.response.status === 403) {
-                    setError("You do not have permission to view this profile.");
-                } else {
-                    setError("Unable to load profile data.");
+                if (isMounted) {
+                    if (err.response && err.response.status === 403) {
+                        setError("You do not have permission to view this profile.");
+                    } else {
+                        setError("Unable to load profile data.");
+                    }
                 }
             } finally {
-                setLoading(false);
+                if (isMounted) setLoading(false);
             }
         };
 
         fetchInternDetails();
-    }, [targetId]); 
 
-    // ─── ✨ NEW: AVATAR UPLOAD HANDLER ✨ ───
+        return () => {
+            isMounted = false;
+        };
+    }, [targetId, isViewingOwnProfile]); 
+
     const handleAvatarUpload = async (event) => {
         const file = event.target.files[0];
         if (!file) return;
@@ -56,20 +125,15 @@ const InternProfile = () => {
 
         try {
             setUploadingAvatar(true);
-            // UPDATE THIS URL TO MATCH YOUR LARAVEL BACKEND ROUTE
             const response = await api.post('/intern/upload-avatar', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             
             toast.success("Profile picture updated!");
             
-            // Update local state so image changes instantly without refresh
             setIntern(prev => ({
                 ...prev,
-                intern: {
-                    ...prev.intern,
-                    avatar_url: response.data.avatar_url // Assuming backend returns the new URL
-                }
+                intern: { ...prev.intern, avatar_url: response.data.avatar_url }
             }));
         } catch (err) {
             console.error("Avatar upload error:", err);
@@ -79,7 +143,6 @@ const InternProfile = () => {
         }
     };
 
-    // ─── ✨ NEW: DOCUMENT UPLOAD HANDLER ✨ ───
     const handleDocumentUpload = async (docKey, event) => {
         const file = event.target.files[0];
         if (!file) return;
@@ -90,19 +153,18 @@ const InternProfile = () => {
 
         try {
             setUploadingDoc(docKey);
-            // UPDATE THIS URL TO MATCH YOUR LARAVEL BACKEND ROUTE
-            await api.post('/intern/upload-document', formData, {
+            const response = await api.post('/intern/upload-document', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             
-            toast.success(`${docKey.replace('_', ' ').toUpperCase()} uploaded successfully!`);
+            toast.success(`${docKey.replace('_', ' ').toUpperCase()} updated successfully!`);
             
-            // Update local state to show 'Yes' immediately
             setIntern(prev => ({
                 ...prev,
-                intern: {
-                    ...prev.intern,
-                    [`has_${docKey}`]: true
+                intern: { 
+                    ...prev.intern, 
+                    [`has_${docKey}`]: true,
+                    [`${docKey}_url`]: response.data.document_url 
                 }
             }));
         } catch (err) {
@@ -113,26 +175,27 @@ const InternProfile = () => {
         }
     };
 
-    // ─── LOADING STATE ───
+    const handleViewDocument = (docKey) => {
+        const url = intern?.intern?.[`${docKey}_url`];
+        if (url) {
+            window.open(url, '_blank');
+        } else {
+            toast.error("Document URL not found. Try re-uploading.");
+        }
+    };
+
     if (loading) {
         return (
             <div className={styles.loaderContainer}>
-                <div className={styles.skeletonGroup}>
-                    <div className={styles.skelAvatar}></div>
-                    <div className={styles.skelTitle}></div>
-                    <div className={styles.skelSub}></div>
-                </div>
+                <Loader2 size={40} className={styles.spinIcon} />
+                <p>Loading Profile...</p>
             </div>
         );
     }
 
-    // ─── ERROR STATE ───
     if (error || !intern) {
         return (
             <div className={styles.pageWrapper}>
-                <button onClick={() => navigate(-1)} className={styles.backButton}>
-                    <ArrowLeft size={16} /> Back
-                </button>
                 <div className={styles.errorBanner}>
                     <XCircle size={20} /> {error || "Intern not found."}
                 </div>
@@ -140,53 +203,49 @@ const InternProfile = () => {
         );
     }
 
-    // ─── DATA EXTRACTION ───
     const profile = intern.intern || {};
-    const requiredHours = profile.required_hours || 486;
-    const renderedHours = Math.round(intern.attendance_logs_sum_hours_rendered || 0);
-    const percent = requiredHours > 0 ? Math.min(Math.round((renderedHours / requiredHours) * 100), 100) : 0;
     
-    const isActive = intern.status?.toLowerCase() === 'active';
-
-    const schoolName = profile.school?.name || intern.school?.name || intern.school || profile.school_id || 'Not Assigned by HR';
-    const courseName = profile.course || intern.course || 'Not Assigned by HR';
+    const schoolName = profile.school?.name || intern.school?.name || intern.school || profile.school_id || 'Not Assigned';
+    const courseName = profile.course || intern.course || 'Not Assigned';
     const batchName = profile.batch || intern.batch || 'Current';
-    const branchName = profile.branch?.name || intern.branch?.name || intern.assigned_branch || profile.branch_id || 'Not Assigned by HR';
-    const departmentName = profile.department?.name || intern.department?.name || intern.assigned_department || profile.department_id || 'Not Assigned by HR';
+    const branchName = profile.branch?.name || intern.branch?.name || intern.assigned_branch || profile.branch_id || 'Not Assigned';
+    const departmentName = profile.department?.name || intern.department?.name || intern.assigned_department || profile.department_id || 'Not Assigned';
 
-    // ─── ✨ UPDATED HELPER COMPONENT FOR FILE UPLOADS ✨ ───
-    const DocCheck = ({ label, docKey, hasDoc }) => {
+    const DocCheck = ({ label, docKey, hasDoc, subtext }) => {
         const isUploading = uploadingDoc === docKey;
 
         return (
-            <div className={styles.docItem}>
-                <span className={styles.docLabel}>
-                    <FileText size={15} className={styles.detailIcon} /> {label}
-                </span>
+            <div className={`${styles.docRow} ${hasDoc ? styles.docRowSuccess : styles.docRowPending}`}>
+                <div className={styles.docIconBox}>
+                    {hasDoc ? <Check size={18} /> : <AlertCircle size={18} />}
+                </div>
                 
-                <div className={styles.docActionArea}>
-                    {hasDoc ? (
-                        <span className={`${styles.docBadge} ${styles.docBadgeValid}`}>
-                            <CheckCircle2 size={12} /> Yes
-                        </span>
-                    ) : (
-                        <span className={`${styles.docBadge} ${styles.docBadgeMissing}`}>
-                            <XCircle size={12} /> Missing
-                        </span>
+                <div className={styles.docInfo}>
+                    <h4 className={styles.docTitle}>{label}</h4>
+                    <p className={styles.docSubtext}>{subtext || (hasDoc ? 'File uploaded' : 'Missing file')}</p>
+                </div>
+
+                <div className={styles.docActions}>
+                    {hasDoc && (
+                        <button 
+                            className={styles.viewDocBtn} 
+                            onClick={() => handleViewDocument(docKey)}
+                            title="View uploaded document"
+                        >
+                            <Eye size={16} /> <span>View</span>
+                        </button>
                     )}
 
-                    {/* Show Upload Button ONLY if viewing own profile and doc is missing */}
-                    {isViewingOwnProfile && !hasDoc && (
-                        <label className={styles.uploadBtnLabel}>
+                    {isViewingOwnProfile && (
+                        <label className={hasDoc ? styles.reuploadBtnLabel : styles.uploadBtnLabel}>
                             {isUploading ? (
                                 <Loader2 size={14} className={styles.spinIcon} />
                             ) : (
-                                <><UploadCloud size={14} /> Upload</>
+                                hasDoc ? <><RefreshCw size={14} /> Re-upload</> : <><UploadCloud size={14} /> Upload</>
                             )}
                             <input 
                                 type="file" 
                                 className={styles.hiddenInput} 
-                                // ✨ UPDATED: Explicitly allow PDF, Images, and Word Docs
                                 accept=".pdf, .jpg, .jpeg, .png, .doc, .docx" 
                                 onChange={(e) => handleDocumentUpload(docKey, e)}
                                 disabled={isUploading}
@@ -198,33 +257,28 @@ const InternProfile = () => {
         );
     };
 
-    // ─── MAIN RENDER ───
     return (
         <div className={styles.pageWrapper}>
             <Toaster position="top-right" />
             
-            <div className={styles.headerContainer}>
-                <button onClick={() => navigate(-1)} className={styles.backButton}>
-                    <ArrowLeft size={16} /> Back
-                </button>
+            <PageHeader 
+                title="Intern Profile" 
+                subtitle="View and manage intern information and documents." 
+            />
+
+            <div className={styles.profileLayout}>
                 
                 {!isViewingOwnProfile && (
-                    <div className={styles.headerActions}>
-                        <button className={styles.editBtn}>Edit Profile</button>
+                    <div className={styles.hrActionsRow}>
                         <button className={styles.exportBtn}>Export Report</button>
                     </div>
                 )}
-            </div>
 
-            <div className={styles.mainGrid}>
-                
-                {/* ─── LEFT COLUMN ─── */}
-                <div className={styles.leftColumn}>
+                {/* ─── TOP ROW: IDENTITY BANNER ─── */}
+                <div className={styles.identityBanner}>
+                    <div className={styles.bannerBackground}></div>
                     
-                    <div className={`${styles.card} ${styles.identityCard}`}>
-                        <div className={styles.identityBg}></div>
-                        
-                        {/* ✨ UPDATED AVATAR WRAPPER ✨ */}
+                    <div className={styles.bannerContent}>
                         <div className={styles.avatarWrapper}>
                             {uploadingAvatar && (
                                 <div className={styles.avatarLoadingOverlay}>
@@ -232,23 +286,15 @@ const InternProfile = () => {
                                 </div>
                             )}
                             <img 
-                                // Uses uploaded avatar if available, otherwise uses DiceBear fallback
                                 src={profile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${intern.first_name + intern.id}`} 
                                 alt="avatar" 
                                 className={styles.avatarImg}
                             />
-                            
-                            {/* Overlay trigger ONLY for the intern */}
                             {isViewingOwnProfile && (
-                                <div 
-                                    className={styles.avatarHoverOverlay}
-                                    onClick={() => avatarInputRef.current.click()}
-                                >
+                                <div className={styles.avatarHoverOverlay} onClick={() => avatarInputRef.current.click()}>
                                     <Camera size={20} color="white" />
                                 </div>
                             )}
-                            
-                            {/* Hidden file input for avatar */}
                             <input 
                                 type="file" 
                                 accept="image/*" 
@@ -257,130 +303,167 @@ const InternProfile = () => {
                                 onChange={handleAvatarUpload}
                             />
                         </div>
-                        
-                        <h2 className={styles.profileName}>{intern.first_name} {intern.last_name}</h2>
-                        <p className={styles.profileEmail}>{intern.email}</p>
-                        
-                        <span className={`${styles.statusBadge} ${isActive ? styles.statusActive : styles.statusInactive}`}>
-                            {intern.status || 'Active'}
-                        </span>
-                    </div>
 
-                    <div className={styles.card}>
-                        <div className={styles.progressTitleWrap}>
-                            <Clock size={18} color="#0B1EAE" />
-                            <h3 className={styles.progressTitle}>OJT Progress</h3>
+                        <div className={styles.identityInfo}>
+                            <h2 className={styles.profileName}>{intern.first_name} {intern.last_name}</h2>
+                            <p className={styles.profileRole}>
+                                OJT Trainee <span className={styles.dot}>•</span> {departmentName}
+                            </p>
+                            
+                            <div className={styles.identityBadges}>
+                                <span className={`${styles.statusBadge} ${isPresentToday ? styles.statusActive : styles.statusAbsent}`}>
+                                    <div className={styles.statusDot}></div> {isPresentToday ? 'PRESENT' : 'ABSENT'}
+                                </span>
+                                <span className={styles.courseBadge}>
+                                    {courseName}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* ─── MIDDLE ROW: PROGRESS & ACADEMICS ─── */}
+                <div className={styles.middleGrid}>
+                    
+                    {/* Progress Card */}
+                    <div className={`${styles.card} ${styles.progressCard}`}>
+                        <div className={styles.cardHeader}>
+                            <Clock size={16} className={styles.headerIcon} /> OJT PROGRESS
                         </div>
                         
-                        <div className={styles.progressStatsWrap}>
-                            <div>
-                                <span className={styles.renderedHours}>{renderedHours}</span>
-                                <span className={styles.requiredHours}>/ {requiredHours} hrs</span>
+                        <div className={styles.progressMain}>
+                            <div className={styles.hoursDisplay}>
+                                <span className={styles.hoursRendered}>{progressStats.renderedHours}</span>
+                                <span className={styles.hoursRequired}>/ {progressStats.requiredHours} hrs</span>
                             </div>
-                            <span className={styles.percentText}>{percent}%</span>
+                            <span className={styles.percentText}>{progressStats.percent}%</span>
                         </div>
                         
                         <div className={styles.progressTrack}>
-                            <div className={styles.progressFill} style={{ width: `${percent}%` }}></div>
+                            <div className={styles.progressFill} style={{ width: `${progressStats.percent}%` }}></div>
+                        </div>
+                        
+                        <div className={styles.completionText}>
+                            Est. completion <span className={styles.highlightDate}>{progressStats.completionDate}</span>
                         </div>
 
-                        <div className={styles.completionBox}>
-                            <span className={styles.completionLabel}>Estimated Completion</span>
-                            <span className={styles.completionDate}>
-                                {profile.date_started ? new Date(new Date(profile.date_started).getTime() + (90 * 24 * 60 * 60 * 1000)).toLocaleDateString() : 'TBD'}
-                            </span>
+                        {/* M-F Dynamic Chart */}
+                        <div className={styles.weeklyChart}>
+                            {weeklyStats.map((day, idx) => {
+                                let barClass = styles.dayInactive; 
+                                if (day.status === 'present') barClass = styles.dayActive; 
+                                if (day.status === 'absent') barClass = styles.dayAbsent; 
+
+                                let height = '20%'; 
+                                if (day.status === 'present') {
+                                    height = `${Math.min((day.hours / 8) * 100, 100)}%`;
+                                }
+
+                                return (
+                                    <div key={idx} className={styles.dayColumn}>
+                                        <div className={`${styles.dayBar} ${barClass}`} style={{ height: height }}></div>
+                                        <span className={styles.dayLabel}>{day.label}</span>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
+
+                    {/* Academics Card */}
+                    <div className={`${styles.card} ${styles.academicCard}`}>
+                        <div className={styles.cardHeader}>
+                            <GraduationCap size={16} className={styles.headerIcon} /> ACADEMIC & PLACEMENT
+                        </div>
+
+                        <div className={styles.academicGrid}>
+                            <div className={styles.detailItemFull}>
+                                <label>SCHOOL / UNIVERSITY</label>
+                                <p>{schoolName}</p>
+                            </div>
+                            
+                            <div className={styles.detailItem}>
+                                <label>COURSE & BATCH</label>
+                                <p>{courseName}</p>
+                                <span className={styles.subtext}>Current • {batchName}</span>
+                            </div>
+                            
+                            <div className={styles.detailItem}>
+                                <label>DEPARTMENT</label>
+                                <p>{departmentName}</p>
+                                <span className={styles.subtext}>Technology Division</span>
+                            </div>
+                            
+                            <div className={styles.detailItem}>
+                                <label>ASSIGNED BRANCH</label>
+                                <p className={styles.flexVal}><Building2 size={14}/> {branchName}</p>
+                            </div>
+                            
+                            <div className={styles.detailItem}>
+                                <label>START DATE</label>
+                                <p className={styles.flexVal}><Calendar size={14}/> {profile.date_started ? new Date(profile.date_started).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric'}) : 'Pending'}</p>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
-                {/* ─── RIGHT COLUMN ─── */}
-                <div className={styles.rightColumn}>
+                {/* ─── BOTTOM ROW: EMERGENCY & DOCUMENTS ─── */}
+                <div className={styles.bottomGrid}>
                     
-                    <div className={styles.card}>
-                        <h3 className={styles.cardHeader}>
-                            <GraduationCap size={18} color="#0B1EAE" /> Academic & Placement Details
-                        </h3>
-                        
-                        <div className={styles.detailsGrid}>
-                            <div className={styles.detailItem}>
-                                <label className={styles.detailLabel}>School / University</label>
-                                <p className={styles.detailValue}>
-                                    {schoolName}
-                                </p>
-                            </div>
-                            <div className={styles.detailItem}>
-                                <label className={styles.detailLabel}>Course & Batch</label>
-                                <p className={styles.detailValue}>
-                                    {courseName}
-                                    {courseName !== 'Not Assigned by HR' && (
-                                        <span className={styles.detailValueLight}> ({batchName})</span>
-                                    )}
-                                </p>
-                            </div>
-                            <div className={styles.detailItem}>
-                                <label className={styles.detailLabel}>Assigned Branch</label>
-                                <div className={styles.detailValueFlex}>
-                                    <Building2 size={16} className={styles.detailIcon} /> 
-                                    {branchName}
+                    {/* Emergency Contact Card */}
+                    <div className={`${styles.card} ${styles.emergencyCard}`}>
+                        <div className={styles.cardHeader}>
+                            <ShieldCheck size={16} className={styles.headerIconAlert} /> EMERGENCY CONTACT
+                        </div>
+
+                        <div className={styles.emergencyGrid}>
+                            <div className={styles.contactMainBlock}>
+                                <User size={16} className={styles.contactIcon} />
+                                <div>
+                                    <label>CONTACT NAME</label>
+                                    <p>{profile.emergency_name || 'Not Provided'}</p>
                                 </div>
                             </div>
-                            <div className={styles.detailItem}>
-                                <label className={styles.detailLabel}>Department</label>
-                                <p className={styles.detailValue}>
-                                    {departmentName}
-                                </p>
-                            </div>
-                            <div className={styles.detailItem}>
-                                <label className={styles.detailLabel}>Start Date</label>
-                                <div className={styles.detailValueFlex}>
-                                    <Calendar size={16} className={styles.detailIcon} />
-                                    {profile.date_started ? new Date(profile.date_started).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric'}) : 'Pending'}
+                            
+                            <div className={styles.contactSubBlocks}>
+                                <div className={styles.contactBlock}>
+                                    <Phone size={16} className={styles.contactIcon} />
+                                    <div>
+                                        <label>PHONE</label>
+                                        <p>{profile.emergency_number || 'N/A'}</p>
+                                    </div>
+                                </div>
+                                <div className={styles.contactBlock}>
+                                    <MapPin size={16} className={styles.contactIcon} />
+                                    <div>
+                                        <label>ADDRESS</label>
+                                        <p>{profile.emergency_address || 'N/A'}</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div className={styles.bottomGrid}>
-                        
-                        <div className={styles.card}>
-                            <h3 className={styles.cardHeader}>
-                                <ShieldCheck size={18} color="#ef4444" /> Emergency Contact
-                            </h3>
-                            <div className={styles.emergencyList}>
-                                <div className={styles.detailItem}>
-                                    <label className={styles.detailLabel}>Contact Name</label>
-                                    <p className={styles.detailValue}>{profile.emergency_name || 'Not Provided'}</p>
-                                </div>
-                                <div className={styles.detailItem}>
-                                    <label className={styles.detailLabel}>Phone Number</label>
-                                    <p className={styles.detailValue}>{profile.emergency_number || 'Not Provided'}</p>
-                                </div>
-                                <div className={styles.detailItem}>
-                                    <label className={styles.detailLabel}>Address</label>
-                                    <p className={styles.emergencyValue}>{profile.emergency_address || 'Not Provided'}</p>
-                                </div>
-                            </div>
+                    {/* Documents Card */}
+                    <div className={`${styles.card} ${styles.documentsCard}`}>
+                        <div className={styles.cardHeader}>
+                            <FileText size={16} className={styles.headerIcon} /> ONBOARDING DOCUMENTS
                         </div>
 
-                        <div className={styles.card}>
-                            <h3 className={styles.cardHeader}>
-                                <FileText size={18} color="#10b981" /> Onboarding Documents
-                            </h3>
-                            <div className={styles.docsList}>
-                                {/* ✨ Added Resume/CV as requested ✨ */}
-                                <DocCheck label="Resume / CV" docKey="resume" hasDoc={profile.has_resume} />
-                                <DocCheck label="Memorandum of Agreement (MOA)" docKey="moa" hasDoc={profile.has_moa} />
-                                <DocCheck label="School Endorsement Letter" docKey="endorsement" hasDoc={profile.has_endorsement} />
-                                <DocCheck label="Non-Disclosure Agreement (NDA)" docKey="nda" hasDoc={profile.has_nda} />
-                                <DocCheck label="Intern Pledge" docKey="pledge" hasDoc={profile.has_pledge} />
-                            </div>
+                        <div className={styles.documentsList}>
+                            <DocCheck label="Resume / CV" docKey="resume" hasDoc={profile.has_resume} subtext="Standard job application format" />
+                            <DocCheck label="Memorandum of Agreement" docKey="moa" hasDoc={profile.has_moa} subtext="MOA • Signed by school" />
+                            <DocCheck label="School Endorsement Letter" docKey="endorsement" hasDoc={profile.has_endorsement} subtext="Required before Day 5" />
+                            <DocCheck label="Non-Disclosure Agreement" docKey="nda" hasDoc={profile.has_nda} subtext="NDA • Company legal form" />
+                            <DocCheck label="Intern Pledge" docKey="pledge" hasDoc={profile.has_pledge} subtext="Commitment to excellence" />
                         </div>
                     </div>
 
                 </div>
+
             </div>
         </div>
     );
 };
 
-export default InternProfile; 
+export default InternProfile;

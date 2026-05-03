@@ -3,7 +3,7 @@ import axios from 'axios';
 /**
  * API CONFIGURATION
  * This baseURL looks for the Vercel/Production environment variable first.
- * If not found (local development), it dynamically uses your current Wi-Fi IP!
+ * If not found (local development), it dynamically uses your current Wi-Fi IP or localhost.
  */
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || `http://${window.location.hostname}:8000/api`;
 
@@ -13,9 +13,14 @@ const api = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
+  // ✨ THIS IS THE MAGIC LINE ✨
+  // Without this, React will refuse to save the login cookie from Laravel!
+  withCredentials: true, 
 });
 
+// ==========================================
 // 1. REQUEST INTERCEPTOR
+// ==========================================
 // Automatically grabs your token and attaches it to every single request just before it fires
 api.interceptors.request.use(
   (config) => {
@@ -30,21 +35,27 @@ api.interceptors.request.use(
   }
 );
 
+// ==========================================
 // 2. RESPONSE INTERCEPTOR
-// If the server says "401 Unauthorized" (token expired/invalid), 
-// it kicks the user back to the login page automatically.
+// ==========================================
+// Handles global errors (like expired tokens)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Check if the error is 401 and we aren't already on the login page
     const isLoginRequest = error.config?.url?.includes('/login');
     
-    if (error.response?.status === 401 && !isLoginRequest) {
-      console.warn("Session expired. Redirecting to login...");
-      localStorage.removeItem('cims_token');
-      localStorage.removeItem('user'); // Good practice to clear user data too!
+    // ✨ THE FIX: We tell Axios to leave the verify-email page alone!
+    const isVerifyPage = window.location.pathname.includes('/verify-email');
+    
+    // Only kick them to login if it's a 401, NOT a login request, AND NOT the verify page.
+    if (error.response?.status === 401 && !isLoginRequest && !isVerifyPage) {
+      console.warn("Session expired or Unauthorized. Redirecting to login...");
       
-      // Use window.location for a hard redirect to clear any bad React state
+      // Clear out the dead tokens
+      localStorage.removeItem('cims_token');
+      localStorage.removeItem('user'); 
+      
+      // Hard redirect to clear React state
       window.location.href = '/login';
     }
     

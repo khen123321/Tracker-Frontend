@@ -1,13 +1,14 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-// ❌ REMOVED: import basicSsl from '@vitejs/plugin-basic-ssl'
+ // import basicSsl from '@vitejs/plugin-basic-ssl' // ✨ ADDED THIS IMPORT
 
 export default defineConfig({
   plugins: [
-    react(),
-    // ❌ REMOVED: basicSsl() 
+    react(), // ✅ This must stay active!
+    // basicSsl() // ✨ ADDED THIS PLUGIN TO ENABLE HTTPS
   ],
   server: {
-    host: true // ✅ KEEP THIS: It allows your phone to connect via your IP address
+   //host: true,   // ✅ Allows other devices on your Wi-Fi to connect
+    port: 5173    
   }
 })

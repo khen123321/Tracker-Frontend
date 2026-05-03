@@ -5,7 +5,7 @@
 }
 
 .skel {
-    border-radius: 6px;
+    border-radius: 10px;
     background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
     background-size: 700px 100%;
     animation: shimmer 1.5s ease-in-out infinite;
@@ -14,7 +14,7 @@
 
 /* Skeleton shape presets */
 .skelTitle      { width: 150px; height: 26px; }
-.skelIconBtn    { width: 36px;  height: 36px; border-radius: 8px !important; }
+.skelIconBtn    { width: 36px;  height: 36px; border-radius: 10px !important; }
 .skelDatePill   { width: 230px; height: 36px; }
 .skelStatLabel  { width: 90px;  height: 13px; margin-bottom: 10px; }
 .skelStatValue  { width: 55px;  height: 38px; }
@@ -25,7 +25,7 @@
 .skelName       { width: 115px; height: 13px; }
 .skelEmail      { width: 80px;  height: 11px; }
 .skelCell       { height: 13px; }
-.skelBadge      { height: 26px; max-width: 90px; border-radius: 8px !important; }
+.skelBadge      { height: 26px; max-width: 90px; border-radius: 10px !important; }
 .skelTh         { height: 11px; }
 
 .skelTheadRow {
@@ -77,7 +77,7 @@
     align-items: center;
     background: #fff;
     padding: 12px;
-    border-radius: 8px;
+    border-radius: 10px;
     border: 1px solid #f3f4f6;
 }
 
@@ -97,7 +97,7 @@
 .iconBtn {
     width: 36px;
     height: 36px;
-    border-radius: 8px;
+    border-radius: 10px;
     border: 1px solid #e2e8f0;
     background: #fff;
     display: flex;
@@ -116,7 +116,7 @@
     gap: 5px;
     background: #fff;
     border: 1px solid #e2e8f0;
-    border-radius: 8px;
+    border-radius: 10px;
     padding: 8px 12px;
     font-size: 13px;
     font-weight: 500;
@@ -131,7 +131,7 @@
     background: #fee2e2;
     color: #991b1b;
     padding: 12px;
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 13px;
     font-weight: 500;
 }
@@ -145,7 +145,7 @@
 
 .statCard {
     background: #fff;
-    border-radius: 8px;
+    border-radius: 10px;
     border: 1px solid #e8eaf0;
     padding: 12px;
     display: flex;
@@ -184,7 +184,7 @@
 .dateInput input {
     padding: 9px 36px 9px 12px;
     border: 1px solid #e2e8f0;
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 13px;
     color: #334155;
     background: #fff;
@@ -212,7 +212,7 @@
     width: 100%;
     padding: 9px 36px 9px 12px;
     border: 1px solid #e2e8f0;
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 13px;
     color: #334155;
     background: #fff;
@@ -232,7 +232,7 @@
 /* ══ TABLE SECTION ══ */
 .tableSection {
     background: #fff;
-    border-radius: 8px;
+    border-radius: 10px;
     border: 1px solid #e8eaf0;
     overflow: hidden;
 }
@@ -264,7 +264,7 @@
     gap: 5px;
     padding: 7px 12px;
     border: 1px solid #e2e8f0;
-    border-radius: 8px;
+    border-radius: 10px;
     background: #fff;
     font-size: 12px;
     font-weight: 500;
@@ -364,7 +364,7 @@
     align-items: center;
     gap: 5px;
     padding: 5px 12px;
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 12px;
     font-weight: 600;
     border: 1px solid #e2e8f0;

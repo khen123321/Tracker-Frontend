@@ -1,5 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import api from '../../../api/axios'; 
+import styles from './Forms.module.css'; // ✨ Imported the new CSS Module
+import toast, { Toaster } from 'react-hot-toast';
+import { 
+    XCircle, Clock, Edit3, ShieldAlert, 
+    Paperclip, Send, AlertTriangle, Calendar 
+} from "lucide-react";
+
+// ✨ YOUR PAGE HEADER IMPORT ✨
+import PageHeader from "../../../components/PageHeader";
 
 const Forms = () => {
     const [activeTab, setActiveTab] = useState('absent');
@@ -7,9 +16,48 @@ const Forms = () => {
     const [reason, setReason] = useState('');
     const [details, setDetails] = useState('');
     const [attachment, setAttachment] = useState(null);
-
+    
+    // Store the specific ID if this is an appeal
+    const [logId, setLogId] = useState(null);
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState({ type: '', text: '' });
+
+    // ─── ✨ BULLETPROOF AUTO-FILL LOGIC ✨ ───
+    useEffect(() => {
+        const savedLogId = sessionStorage.getItem('appeal_logId');
+        const savedLogDate = sessionStorage.getItem('appeal_logDate');
+
+        if (savedLogId) {
+            setActiveTab('appeal'); 
+            setLogId(savedLogId);
+            
+            if (savedLogDate) {
+                const d = new Date(savedLogDate);
+                if (!isNaN(d.getTime())) {
+                    const year = d.getFullYear();
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    setDateOfAbsence(`${year}-${month}-${day}`);
+                }
+            }
+            
+            sessionStorage.removeItem('appeal_logId');
+            sessionStorage.removeItem('appeal_logDate');
+        }
+    }, []);
+
+    // ─── DYNAMIC REASON PILLS (Chat Box Style) ───
+    const getReasonOptions = () => {
+        switch (activeTab) {
+            case 'overtime':
+                return ['Extra workload', 'Project deadline', 'Covering shift', 'Other'];
+            case 'correction':
+                return ['Forgot to clock in', 'System error', 'Network issue', 'Other'];
+            case 'appeal':
+                return ['Location error', 'Camera blurry', 'Wrong branch', 'Other'];
+            default: // absent & half-day
+                return ['Illness', 'Family emergency', 'Medical appointment', 'Personal matter', 'Other'];
+        }
+    };
 
     const handleFileChange = (e) => {
         if (e.target.files.length > 0) {
@@ -19,118 +67,202 @@ const Forms = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
-        setMessage({ type: '', text: '' });
-
-        const formData = new FormData();
-        formData.append('type', activeTab);
-        formData.append('date_of_absence', dateOfAbsence); // Matches Laravel validation
-        formData.append('reason', reason);
-        formData.append('additional_details', details);
-        if (attachment) {
-            formData.append('attachment', attachment);
+        
+        if (!reason) {
+            toast.error("Please select a reason.");
+            return;
         }
 
-        try {
-            // ✅ FIX: We removed 'const response =' because we weren't using the variable
-            await api.post('/intern/forms/submit', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            });
+        setLoading(true);
 
-            setMessage({ type: 'success', text: 'Form submitted successfully!' });
+        try {
+            const formData = new FormData();
+
+            if (activeTab === 'appeal' && logId) {
+                const combinedText = details ? `${reason}\n\nAdditional Details: ${details}` : reason;
+                formData.append('appeal_text', combinedText);
+                if (attachment) formData.append('appeal_file', attachment);
+
+                await api.post(`/attendance/logs/${logId}/appeal`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                });
+            } else {
+                formData.append('type', activeTab);
+                formData.append('date_of_absence', dateOfAbsence); 
+                formData.append('reason', reason);
+                formData.append('additional_details', details);
+                if (attachment) formData.append('attachment', attachment);
+
+                await api.post('/intern/forms/submit', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                });
+            }
+
+            toast.success("Request submitted successfully!");
             
-            // Clear fields
             setDateOfAbsence('');
             setReason('');
             setDetails('');
             setAttachment(null);
+            setLogId(null); 
+
             if (document.getElementById('file-input')) {
                 document.getElementById('file-input').value = '';
             }
         } catch (err) {
             console.error(err);
-            // If Laravel returns a 422 error, show the specific validation message
             const errorMsg = err.response?.data?.message || 'Failed to submit form. Check your connection.';
-            setMessage({ type: 'error', text: errorMsg });
+            toast.error(errorMsg);
         } finally {
             setLoading(false);
         }
     };
 
+    // Tab Configuration
+    const tabs = [
+        { id: 'absent', label: 'Absent', icon: XCircle },
+        { id: 'half-day', label: 'Half Day', icon: Clock },
+        { id: 'overtime', label: 'Overtime', icon: Clock },
+        { id: 'correction', label: 'Correction', icon: Edit3 },
+        { id: 'appeal', label: 'Appeal', icon: ShieldAlert }
+    ];
+
+    const ActiveIcon = tabs.find(t => t.id === activeTab)?.icon || XCircle;
+
     return (
-        <div className="p-6 max-w-5xl mx-auto">
-            <h1 className="text-2xl font-bold mb-6">Forms & Requests</h1>
+        <div className={styles.pageContainer}>
+            <Toaster position="top-right" />
+            
+            {/* ✨ PageHeader Component Included Here ✨ */}
+            <PageHeader 
+                title="Forms & Requests" 
+            />
 
-            {message.text && (
-                <div className={`p-4 mb-4 rounded-lg font-medium ${
-                    message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                }`}>
-                    {message.text}
+            {/* Main Form Card */}
+            <div className={styles.mainCard}>
+                
+                {/* Icon Card Tabs */}
+                <div className={styles.tabsGrid}>
+                    {tabs.map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => {
+                                setActiveTab(tab.id);
+                                setReason(''); 
+                                if (tab.id !== 'appeal') setLogId(null); 
+                            }}
+                            className={`${styles.tabBtn} ${activeTab === tab.id ? styles.tabActive : ''}`}
+                        >
+                            <tab.icon className={styles.tabIcon} size={24} />
+                            <span className={styles.tabLabel}>{tab.label}</span>
+                        </button>
+                    ))}
                 </div>
-            )}
 
-            <div className="flex gap-3 mb-6">
-                {['absent', 'half-day', 'overtime', 'correction'].map((tab) => (
-                    <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
-                        className={`px-6 py-2 rounded-lg font-bold capitalize transition ${
-                            activeTab === tab ? 'bg-yellow-500 text-white' : 'bg-yellow-100 text-yellow-700'
-                        }`}
-                    >
-                        {tab.replace('-', ' ')}
-                    </button>
-                ))}
-            </div>
-
-            <div className="bg-white rounded-xl shadow-md p-8 border border-gray-100">
-                <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Dynamic Form Header */}
+                <div className={styles.formHeader}>
+                    <div className={styles.iconCircle}>
+                        <ActiveIcon size={28} />
+                    </div>
                     <div>
-                        <label className="block text-gray-700 font-bold mb-2">Date of {activeTab}</label>
-                        <input 
-                            type="date" 
-                            className="w-full md:w-1/3 p-3 border rounded-lg outline-none focus:ring-2 focus:ring-yellow-500"
-                            value={dateOfAbsence}
-                            onChange={(e) => setDateOfAbsence(e.target.value)}
-                            required
-                        />
+                        <h2 className={styles.formTitle}>{activeTab.replace('-', ' ')} Request</h2>
+                        <p className={styles.formSubtitle}>
+                            {activeTab === 'appeal' 
+                                ? 'File an appeal for a rejected attendance record' 
+                                : `File an ${activeTab.replace('-', ' ')} and provide supporting reason`}
+                        </p>
+                    </div>
+                </div>
+
+                {activeTab === 'appeal' && logId && (
+                    <div className={styles.alertBox}>
+                        <AlertTriangle size={20} className={styles.alertIcon} />
+                        <div>
+                            <strong>Action Required</strong>
+                            <p>You are submitting a formal appeal for the rejected record on <b>{dateOfAbsence}</b>. 
+                            Please explain the situation and attach physical proof (like a logbook photo).</p>
+                        </div>
+                    </div>
+                )}
+
+                <form onSubmit={handleSubmit}>
+                    {/* Date Input */}
+                    <div className={styles.inputGroup}>
+                        <label className={styles.label}>
+                            Date of {activeTab.replace('-', ' ')}
+                        </label>
+                        <div className={styles.inputWrapper}>
+                            <input 
+                                type="date" 
+                                className={`${styles.input} ${logId ? styles.inputReadOnly : ''}`}
+                                value={dateOfAbsence}
+                                onChange={(e) => setDateOfAbsence(e.target.value)}
+                                required
+                                readOnly={!!logId} 
+                            />
+                        </div>
                     </div>
 
-                    <div>
-                        <label className="block text-gray-700 font-bold mb-2">Reason</label>
-                        <input 
-                            type="text" 
-                            className="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-yellow-500"
-                            value={reason}
-                            onChange={(e) => setReason(e.target.value)}
-                            required
-                        />
+                    {/* Chat Box Style Reason Pills */}
+                    <div className={styles.inputGroup}>
+                        <label className={styles.label}>Reason</label>
+                        <div className={styles.reasonPills}>
+                            {getReasonOptions().map((opt) => (
+                                <button
+                                    key={opt}
+                                    type="button"
+                                    onClick={() => setReason(opt)}
+                                    className={`${styles.pillBtn} ${reason === opt ? styles.pillActive : ''}`}
+                                >
+                                    {opt}
+                                </button>
+                            ))}
+                        </div>
+                        <input type="hidden" required value={reason} />
                     </div>
 
-                    <div>
-                        <label className="block text-gray-700 font-bold mb-2">Additional Details</label>
+                    {/* Additional Details Textarea */}
+                    <div className={styles.inputGroup}>
+                        <div className={styles.labelWrapper}>
+                            <label className={styles.label}>Additional Details</label>
+                            <span className={styles.optionalText}>(optional)</span>
+                        </div>
                         <textarea 
-                            rows="3"
-                            className="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-yellow-500"
+                            rows="4"
+                            placeholder="Provide any additional context or supporting information..."
+                            className={styles.textarea}
                             value={details}
                             onChange={(e) => setDetails(e.target.value)}
                         ></textarea>
+                        <p className={styles.hintText}>Min. 10 characters if adding details</p>
                     </div>
 
-                    <div>
-                        <label className="inline-flex items-center px-4 py-2 bg-gray-200 rounded-lg cursor-pointer hover:bg-gray-300">
-                            <span>📎 {attachment ? attachment.name : 'Attach File'}</span>
-                            <input id="file-input" type="file" className="hidden" onChange={handleFileChange} />
+                    {/* Dashed Dropzone Attachment Area */}
+                    <div className={styles.inputGroup}>
+                        <label 
+                            htmlFor="file-input"
+                            className={`${styles.dropzone} ${attachment ? styles.dropzoneActive : ''}`}
+                        >
+                            <Paperclip className={styles.dropIcon} size={32} />
+                            <p className={styles.dropzoneText}>
+                                {attachment ? attachment.name : 'Attach proof document'}
+                            </p>
+                            <p className={styles.dropzoneSub}>
+                                PDF, JPG, PNG — max 10MB
+                            </p>
+                            <input id="file-input" type="file" style={{ display: 'none' }} accept=".png,.jpg,.jpeg,.pdf" onChange={handleFileChange} />
                         </label>
                     </div>
 
-                    <div className="flex justify-end">
+                    {/* Submit Footer (No Save Draft) */}
+                    <div className={styles.submitWrapper}>
                         <button 
                             type="submit"
                             disabled={loading}
-                            className="px-10 py-3 bg-yellow-500 text-white font-bold rounded-lg hover:bg-yellow-600 disabled:opacity-50"
+                            className={styles.submitBtn}
                         >
-                            {loading ? 'Submitting...' : 'Submit'}
+                            <Send size={18} />
+                            {loading ? 'SUBMITTING...' : 'SUBMIT REQUEST'}
                         </button>
                     </div>
                 </form>

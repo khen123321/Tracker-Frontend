@@ -1,0 +1,350 @@
+/* ─── PAGE CONTAINER & LAYOUT ─── */
+.pageContainer {
+
+    background-color: #f1f5f9;
+    min-height: 100vh;
+    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+    display: flex;
+    flex-direction: column;
+    gap: 5px; /* ✨ Forces 5px gap between PageHeader and the Card below */
+}
+
+.mainCard {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    padding: 32px;
+    border: 1px solid #e2e8f0;
+}
+
+/* ─── TABS GRID ─── */
+.tabsGrid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 32px;
+}
+
+.tabBtn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    border-radius: 14px;
+    border: 2px solid #e2e8f0;
+    background: #ffffff;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.tabBtn:hover:not(.tabActive) {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+    color: #64748b;
+}
+
+.tabActive {
+    border-color: #eab308; /* Yellow theme */
+    background: #fefce8;
+    color: #a16207;
+}
+
+.tabIcon {
+    margin-bottom: 8px;
+    transition: color 0.2s ease;
+}
+
+.tabActive .tabIcon {
+    color: #ca8a04;
+}
+
+.tabLabel {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ─── FORM HEADER ─── */
+.formHeader {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 24px;
+}
+
+.iconCircle {
+    padding: 12px;
+    background: #fefce8;
+    color: #ca8a04;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.formTitle {
+    font-size: 20px;
+    font-weight: 800;
+    color: #0f172a;
+    text-transform: capitalize;
+    margin: 0 0 4px 0;
+}
+
+.formSubtitle {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0;
+}
+
+/* ─── FORM INPUTS ─── */
+.inputGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.labelWrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.optionalText {
+    font-size: 12px;
+    font-style: italic;
+    color: #94a3b8;
+}
+
+.inputWrapper {
+    width: 100%;
+    max-width: 300px;
+}
+
+.input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    font-size: 14px;
+    color: #334155;
+    outline: none;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.input:focus {
+    border-color: #eab308;
+    box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.15);
+}
+
+.inputReadOnly {
+    background: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+/* ─── CHAT BOX STYLE REASON PILLS ─── */
+.reasonPills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.pillBtn {
+    padding: 8px 18px;
+    border: 1px solid #cbd5e1;
+    border-radius: 99px;
+    font-size: 14px;
+    font-weight: 500;
+    background: #ffffff;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.pillBtn:hover:not(.pillActive) {
+    border-color: #94a3b8;
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+.pillActive {
+    border-color: #eab308;
+    background: #fefce8;
+    color: #a16207;
+}
+
+/* ─── TEXTAREA ─── */
+.textarea {
+    width: 100%;
+    padding: 16px;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    font-size: 14px;
+    color: #334155;
+    outline: none;
+    resize: none;
+    min-height: 100px;
+    font-family: inherit;
+    transition: all 0.2s;
+}
+
+.textarea::placeholder {
+    color: #94a3b8;
+}
+
+.textarea:focus {
+    border-color: #eab308;
+    box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.15);
+}
+
+.hintText {
+    font-size: 11px;
+    color: #94a3b8;
+    font-family: monospace;
+    margin: 0;
+}
+
+/* ─── DASHED DROPZONE ─── */
+.dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 130px;
+    border: 2px dashed #cbd5e1;
+    border-radius: 14px;
+    background: #f8fafc;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.dropzone:hover {
+    border-color: #94a3b8;
+    background: #f1f5f9;
+}
+
+.dropzoneActive {
+    border-color: #facc15;
+    background: #fefce8;
+}
+
+.dropIcon {
+    color: #94a3b8;
+    margin-bottom: 8px;
+    transition: color 0.2s;
+}
+
+.dropzoneActive .dropIcon {
+    color: #eab308;
+}
+
+.dropzoneText {
+    font-size: 14px;
+    font-weight: 600;
+    color: #334155;
+    margin: 0 0 4px 0;
+}
+
+.dropzoneSub {
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0;
+}
+
+/* ─── SUBMIT FOOTER ─── */
+.submitWrapper {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 24px;
+    border-top: 1px solid #f1f5f9;
+    margin-top: 32px;
+}
+
+.submitBtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 28px;
+    background: #eab308;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 14px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    box-shadow: 0 2px 4px rgba(234, 179, 8, 0.2);
+}
+
+.submitBtn:hover:not(:disabled) {
+    background: #ca8a04;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(234, 179, 8, 0.3);
+}
+
+.submitBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* ─── APPEAL ALERT BOX ─── */
+.alertBox {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 16px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 12px;
+    color: #1e40af;
+    margin-bottom: 24px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.alertIcon {
+    flex-shrink: 0;
+    color: #3b82f6;
+    margin-top: 2px;
+}
+
+.alertBox strong {
+    display: block;
+    font-size: 15px;
+    margin-bottom: 4px;
+    color: #1e3a8a;
+}
+
+/* ─── MOBILE RESPONSIVENESS ─── */
+@media (max-width: 768px) {
+    .tabsGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    /* Make the last tab (Appeal) span both columns on mobile to keep it neat */
+    .tabBtn:last-child {
+        grid-column: span 2;
+    }
+}

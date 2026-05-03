@@ -17,8 +17,14 @@ export default function InternDetailsModal({ intern, onClose }) {
   const [stats, setStats] = useState({ hours: 0, days: 0, avgIn: '--:--', rate: '0%' });
   
   const [showIdModal, setShowIdModal] = useState(false);
+  
+  // State for the Certificate Preview Modal
+  const [showCertPreview, setShowCertPreview] = useState(false);
   const [isCertLoading, setIsCertLoading] = useState(false);
   const certRef = useRef(null);
+
+  // ✨ NEW: State to hold the Base64 image
+  const [base64Avatar, setBase64Avatar] = useState(null);
 
   const [filterPeriod, setFilterPeriod] = useState('This Month');
   const [statusFilter, setStatusFilter] = useState('All'); 
@@ -79,7 +85,30 @@ export default function InternDetailsModal({ intern, onClose }) {
     }
   };
 
-  const profilePhotoUrl = intern.avatar_url || intern.rawData?.intern?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${intern.name || 'default'}`;
+  // Define the image URL (Using PNG instead of SVG)
+  const profilePhotoUrl = intern.avatar_url || intern.rawData?.intern?.avatar_url || `https://api.dicebear.com/7.x/avataaars/png?seed=${intern.name || 'default'}`;
+
+  // ✨ NEW: Convert the external image to a safe Base64 string silently in the background
+  useEffect(() => {
+    const convertImageToBase64 = async () => {
+      try {
+        const response = await fetch(profilePhotoUrl);
+        const blob = await response.blob();
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setBase64Avatar(reader.result); // Saves the image as raw text!
+        };
+        reader.readAsDataURL(blob);
+      } catch (err) {
+        console.error("Failed to convert profile picture:", err);
+        setBase64Avatar(profilePhotoUrl); // Fallback just in case
+      }
+    };
+    
+    if (profilePhotoUrl) {
+      convertImageToBase64();
+    }
+  }, [profilePhotoUrl]);
 
   const isSameDate = (d1, d2) => {
     const date1 = new Date(d1);
@@ -89,7 +118,6 @@ export default function InternDetailsModal({ intern, onClose }) {
            date1.getDate() === date2.getDate();
   };
 
-  // Helper to safely parse database dates without timezone shifting
   const parseSafeDate = (dateString) => {
     if (!dateString) return null;
     let cleanDate = dateString.split('T')[0].split(' ')[0];
@@ -101,17 +129,14 @@ export default function InternDetailsModal({ intern, onClose }) {
     return isNaN(d.getTime()) ? null : d;
   };
 
-  // ✨ THE MAGIC: Generates the strict Mon-Fri Calendar ✨
   const displayLogs = useMemo(() => {
     if (!logs) return [];
 
     const now = new Date();
     
-    // 1. Determine the absolute TRUE start date of the intern
     const profileStart = intern.rawData?.intern?.date_started || intern.rawData?.date_started || intern.rawData?.created_at;
     let trueStartDate = parseSafeDate(profileStart);
 
-    // If their first log is older than their profile date, trust the log!
     if (logs.length > 0) {
       const sortedLogs = [...logs].sort((a, b) => new Date(a.date) - new Date(b.date));
       const firstLogDate = parseSafeDate(sortedLogs[0].date);
@@ -120,14 +145,12 @@ export default function InternDetailsModal({ intern, onClose }) {
       }
     }
 
-    // Failsafe if absolutely no data exists
     if (!trueStartDate) {
         trueStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
     }
 
-    // 2. Determine bounds based on user's dropdown filter
     let startDate = new Date();
-    let endDate = new Date(now); // Cap end date to "Today"
+    let endDate = new Date(now); 
 
     if (filterPeriod === 'This Month') {
       startDate = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -135,21 +158,17 @@ export default function InternDetailsModal({ intern, onClose }) {
       startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       endDate = new Date(now.getFullYear(), now.getMonth(), 0); 
     } else {
-      // All Time
       startDate = new Date(trueStartDate);
     }
 
-    // ✨ THE HARD LIMIT: Never generate days before they actually started!
     if (startDate < trueStartDate) {
       startDate = new Date(trueStartDate);
     }
 
-    // Never predict the future
     if (endDate > now) {
       endDate = new Date(now);
     }
 
-    // 3. Generate all working days (Strictly Monday - Friday)
     const workingDays = [];
     let curr = new Date(startDate);
     curr.setHours(0,0,0,0);
@@ -157,13 +176,12 @@ export default function InternDetailsModal({ intern, onClose }) {
 
     while (curr <= endDate) {
       const dayOfWeek = curr.getDay();
-      if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Skip 0 (Sun) and 6 (Sat)
+      if (dayOfWeek !== 0 && dayOfWeek !== 6) { 
         workingDays.push(new Date(curr));
       }
       curr.setDate(curr.getDate() + 1);
     }
 
-    // 4. Map the days to existing logs, or inject "Absent"
     let completeLogs = workingDays.map(calendarDate => {
       const existingLog = logs.find(l => isSameDate(l.date, calendarDate));
       if (existingLog) return existingLog;
@@ -178,16 +196,13 @@ export default function InternDetailsModal({ intern, onClose }) {
       };
     });
 
-    // 5. Add any Overtime logs that happened on weekends
     logs.forEach(log => {
       const isAlreadyIncluded = completeLogs.some(cl => isSameDate(cl.date, log.date));
       if (!isAlreadyIncluded) completeLogs.push(log);
     });
 
-    // 6. Chronological sort required for the calendar grid
     completeLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    // 7. Apply Status Filter
     return completeLogs.filter(log => {
       if (statusFilter === 'All') return true;
       const logStatus = (log.status || 'Present').toLowerCase();
@@ -196,7 +211,6 @@ export default function InternDetailsModal({ intern, onClose }) {
 
   }, [logs, filterPeriod, statusFilter, intern]);
 
-  // Groups logs into "April 2026", "March 2026" for the grid blocks
   const groupedByMonth = useMemo(() => {
     const groups = {};
     displayLogs.forEach(log => {
@@ -269,23 +283,34 @@ export default function InternDetailsModal({ intern, onClose }) {
     document.body.removeChild(link);
   };
 
-  const handleGenerateCertificate = async () => {
+  const handleDownloadCertificate = async () => {
     setIsCertLoading(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 500)); 
+      
       const element = certRef.current;
+      
       const canvas = await html2canvas(element, { 
-        scale: 3, 
+        scale: 2, 
         useCORS: true, 
-        allowTaint: true,
-        backgroundColor: '#ffffff' 
+        backgroundColor: '#ffffff',
+        width: element.scrollWidth,
+        height: element.scrollHeight,
+        windowWidth: element.scrollWidth, 
+        windowHeight: element.scrollHeight
       });
+      
       const dataImage = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('landscape', 'px', [1123, 794]); 
-      pdf.addImage(dataImage, 'PNG', 0, 0, 1123, 794);
+      
+      const pdf = new jsPDF('landscape', 'mm', 'a4'); 
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      pdf.addImage(dataImage, 'PNG', 0, 0, pdfWidth, pdfHeight);
       
       const safeName = intern.name ? intern.name.replace(/ /g, '_') : 'Intern';
       pdf.save(`${safeName}_Certificate.pdf`);
+      
     } catch (error) {
       console.error("Error generating certificate:", error);
       alert("Failed to generate certificate.");
@@ -302,9 +327,9 @@ export default function InternDetailsModal({ intern, onClose }) {
           <div className={styles.header}>
             <h2 className={styles.modalTitle}>Intern Details</h2>
             <div className={styles.headerActions} style={{ position: 'relative', zIndex: 10 }}>
-              <button className={styles.actionBtn} onClick={handleGenerateCertificate} disabled={isCertLoading}>
-                {isCertLoading ? <Loader2 size={13} className="animate-spin" /> : <Award size={13} />} 
-                {isCertLoading ? 'Generating...' : 'Get Certificate'}
+              
+              <button className={styles.actionBtn} onClick={() => setShowCertPreview(true)}>
+                <Award size={13} /> Get Certificate
               </button>
 
               <button className={styles.actionBtn} onClick={() => setShowIdModal(true)}>
@@ -451,7 +476,6 @@ export default function InternDetailsModal({ intern, onClose }) {
                               style={{ 
                                 opacity: isAbsent ? 0.7 : 1, 
                                 borderLeft: isAbsent ? '3px solid #ef4444' : isLate ? '3px solid #f59e0b' : '3px solid #10b981',
-                                // ✨ Ensures the very first day snaps to the correct Mon-Fri column!
                                 gridColumnStart: (activeView === 'grid' && index === 0) ? getGridColumnStart(log.date) : 'auto'
                               }}
                             >
@@ -494,20 +518,64 @@ export default function InternDetailsModal({ intern, onClose }) {
           </div>
         </div>
       </div>
+      
       {showIdModal && <GenerateIdModal intern={{...intern, avatar_url: profilePhotoUrl}} onClose={() => setShowIdModal(false)} />}
       
-      <div style={{ position: 'absolute', top: '-9999px', left: '-9999px', opacity: 0, pointerEvents: 'none' }}>
-        <CertificateTemplate 
-          forwardRef={certRef}
-          intern={{
-            ...intern,
-            hours: stats.hours, 
-            gender: intern.rawData?.intern?.gender || 'female',
-            dateStarted: intern.rawData?.intern?.date_started || intern.rawData?.created_at,
-            dateCompleted: new Date().toISOString().split('T')[0]
-          }} 
-        />
-      </div>
+      {/* The Certificate Preview Modal */}
+      {showCertPreview && (
+        <div 
+          className={styles.overlay} 
+          onClick={() => setShowCertPreview(false)} 
+          style={{ zIndex: 9999999 }}
+        >
+          <div 
+            className={styles.modalContainer} 
+            style={{ width: 'auto', maxWidth: '95vw', padding: 0, overflow: 'hidden' }} 
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className={styles.header} style={{ padding: '20px', borderBottom: '1px solid #e2e8f0', margin: 0, borderRadius: 0 }}>
+              <h2 className={styles.modalTitle}>Certificate Preview</h2>
+              <button className={styles.closeBtn} onClick={() => setShowCertPreview(false)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* The actual visible Certificate */}
+            <div style={{ padding: '30px', backgroundColor: '#f8fafc', overflow: 'auto', display: 'flex', justifyContent: 'center' }}>
+              <div ref={certRef} style={{ boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}>
+                <CertificateTemplate 
+                  intern={{
+                    ...intern,
+                    avatar_url: base64Avatar || profilePhotoUrl, /* ✨ FIXED: Feed the safe Base64 image directly to the component! */
+                    hours: stats.hours, 
+                    gender: intern.rawData?.intern?.gender || 'female',
+                    dateStarted: intern.rawData?.intern?.date_started || intern.rawData?.created_at,
+                    dateCompleted: new Date().toISOString().split('T')[0]
+                  }} 
+                />
+              </div>
+            </div>
+
+            {/* Modal Footer with Download Button */}
+            <div style={{ padding: '20px', display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid #e2e8f0', backgroundColor: '#fff' }}>
+              <button 
+                onClick={handleDownloadCertificate} 
+                disabled={isCertLoading}
+                style={{ 
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                  padding: '10px 20px', backgroundColor: '#0B1EAE', color: '#fff',
+                  border: 'none', borderRadius: '6px', fontWeight: '500', cursor: isCertLoading ? 'not-allowed' : 'pointer',
+                  opacity: isCertLoading ? 0.7 : 1
+                }}
+              >
+                {isCertLoading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />} 
+                {isCertLoading ? 'Generating PDF...' : 'Download PDF'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </>
   );

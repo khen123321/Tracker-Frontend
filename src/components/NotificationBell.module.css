@@ -1,0 +1,240 @@
+/* =========================================================
+   PAGE LAYOUT & TYPOGRAPHY
+========================================================= */
+.pageWrapper {
+  padding: 24px 32px;
+  font-family: 'Poppins', sans-serif;
+  background-color: #f8fafc;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   MAIN HEADER (The "Chubby" Design)
+========================================================= */
+.headerContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  padding: 24px 28px; 
+  border-radius: 16px; 
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.titleArea {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Big, Ultra-Bold Poppins Title (Weight 900) */
+.pageTitle {
+  margin: 0;
+  font-size: 32px; 
+  font-weight: 900; 
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.pageSubtitle {
+  margin: 4px 0 0 0;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.actionsArea {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Chubby Calendar Button - matches the Figma box shape */
+.calendarBtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  padding: 12px 20px; 
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Poppins', sans-serif;
+}
+
+.calendarBtn:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #000000;
+}
+
+/* =========================================================
+   ACTION BAR & SEARCH
+========================================================= */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* Chubby Search Input */
+.searchWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0 16px;
+  height: 46px; /* Matches the chubby button heights */
+  width: 100%;
+  max-width: 320px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.searchWrapper:focus-within {
+  border-color: #0047AB; /* Deep Blue Focus Ring */
+  box-shadow: 0 0 0 3px rgba(0, 71, 171, 0.1);
+}
+
+.searchIcon {
+  color: #94a3b8;
+  margin-right: 8px;
+}
+
+.searchInput {
+  border: none;
+  outline: none;
+  width: 100%;
+  height: 100%;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #0f172a;
+  background: transparent;
+}
+
+.searchInput::placeholder {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+.primaryBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #0047AB; /* Deep Blue Primary */
+  color: #ffffff;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-family: 'Poppins', sans-serif;
+}
+
+.primaryBtn:hover {
+  background-color: #003380;
+}
+
+.accentBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #F2A71B; /* Golden Yellow Accent */
+  color: #0f172a;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: filter 0.2s ease;
+  font-family: 'Poppins', sans-serif;
+}
+
+.accentBtn:hover {
+  filter: brightness(0.95);
+}
+
+/* =========================================================
+   CARDS & CONTENT AREA
+========================================================= */
+.contentGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.card {
+  background: #ffffff;
+  padding: 24px 28px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.04);
+}
+
+.cardHeader {
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+}
+
+.cardTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+/* =========================================================
+   RESPONSIVE DESIGN
+========================================================= */
+@media (max-width: 768px) {
+  .pageWrapper {
+    padding: 16px;
+  }
+
+  .headerContainer {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 20px;
+  }
+  
+  .actionsArea {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .searchWrapper {
+    max-width: 100%;
+  }
+}
