@@ -278,10 +278,9 @@
   z-index: 2; /* Keeps the text visibly ON TOP of the white slider */
 }
 
-.pillActive {
-  background-color: white;
-  color: #0f172a;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+.pillActiveText {
+  background-color: transparent; /* Keep this transparent so the white slider shows behind it */
+  color:  rgba(0, 2, 112, 0.9); /* <--- YOUR NEW COLOR GOES HERE */
 }
 
 /* ─── ERROR BOX ─── */

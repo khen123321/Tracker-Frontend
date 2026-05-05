@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from '../../api/axios';
 import toast, { Toaster } from 'react-hot-toast';
-import { Mail } from 'lucide-react'; 
+import { Mail, X } from 'lucide-react'; 
 import logo from '../../assets/logo.png';
 import styles from './SignUpPage.module.css';
 
@@ -20,9 +20,13 @@ const CheckIcon = () => (
 );
 
 // ── Components ────────────────────────────────────────────────────────
-const SelectField = ({ label, name, value, onChange, disabled, children }) => (
+const SelectField = ({ label, name, value, onChange, disabled, required = true, children }) => (
   <div className={styles.inputGroup}>
-    <label className={styles.label}>{label}</label>
+    {label && (
+      <label className={styles.label}>
+        {label} {required && <span style={{ color: '#dc2626' }}>*</span>}
+      </label>
+    )}
     <div className={styles.selectWrapper}>
       <select name={name} value={value} onChange={onChange} disabled={disabled} className={styles.select}>
         {children}
@@ -41,40 +45,30 @@ export default function SignUpPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [isTermsModalOpen, setIsTermsModalOpen] = useState(false); 
   
-  // State: Tracks if they successfully registered and need to verify
   const [isRegistered, setIsRegistered] = useState(false);
-  // State: For triggering page load animations
   const [isPageLoaded, setIsPageLoaded] = useState(false);
 
-  // ── States for Dropdowns ──
   const [schoolsList, setSchoolsList] = useState([]);
   const [coursesList, setCoursesList] = useState([]);
   const [branchesList, setBranchesList] = useState([]);
   const [departmentsList, setDepartmentsList] = useState([]);
   const [loadingDropdowns, setLoadingDropdowns] = useState(true);
 
-  // ── States for Home Address (Nested Tree API) ──
   const [areaData, setAreaData] = useState([]);
   const [loadingAreas, setLoadingAreas] = useState(true);
 
   const [formData, setFormData] = useState({
-    // Personal
     first_name: '', middle_name: '', last_name: '', email: '',
-    // Home Address
     province: '', municipality: '', barangay: '',
-    // Emergency Contact
     emergency_name: '', emergency_phone: '', emergency_address: '', emergency_relationship: '',
-    // School Details
     course: '', school_id: '', branch_id: '', department_id: '', date_started: '',
-    // Documents & Security
-    has_moa: false, has_endorsement: false, has_pledge: false, has_nda: false,
+    has_moa: false, has_endorsement: false, has_acceptance: false, has_contract: false, has_pledge: false, has_nda: false,
     password: '', password_confirmation: '',
   });
 
-  // ── API Fetching on Page Load ──
   useEffect(() => {
-    // Trigger initial mount animation
     setIsPageLoaded(true);
 
     const fetchSchoolData = async () => {
@@ -111,14 +105,12 @@ export default function SignUpPage() {
     fetchAreaData();
   }, []);
 
-  // ── Dynamic Address Filtering ──
   const selectedProvinceObj = areaData.find(p => p.name === formData.province);
   const municipalitiesList = selectedProvinceObj ? selectedProvinceObj.municipalities : [];
 
   const selectedMunicipalityObj = municipalitiesList.find(m => m.name === formData.municipality);
   const barangaysList = selectedMunicipalityObj ? selectedMunicipalityObj.barangays : [];
 
-  // ── Handlers ──
   const handleSchoolChange = async (e) => {
     const selectedSchoolId = e.target.value;
     setFormData(prev => ({ ...prev, school_id: selectedSchoolId, course: '' }));
@@ -142,12 +134,62 @@ export default function SignUpPage() {
     setFormData(prev => ({ ...prev, municipality: e.target.value, barangay: '' }));
   };
 
-  const handleNext = () => setStep(p => p + 1);
+  const validateStep = (currentStep) => {
+    if (currentStep === 1) {
+      const requiredFields = ['last_name', 'first_name', 'email', 'province', 'municipality', 'barangay', 'emergency_name', 'emergency_phone', 'emergency_address', 'emergency_relationship'];
+      const missing = requiredFields.filter(f => !formData[f] || formData[f].trim() === '');
+      
+      if (missing.length > 0) {
+        toast.error('Please fill in all required fields.');
+        return false;
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        toast.error('Please enter a valid email address.');
+        return false;
+      }
+    }
+
+    if (currentStep === 2) {
+      const requiredFields = ['school_id', 'course', 'branch_id', 'department_id', 'date_started'];
+      const missing = requiredFields.filter(f => !formData[f]);
+      
+      if (missing.length > 0) {
+        toast.error('Please fill in all required fields.');
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const handleNext = () => {
+    if (validateStep(step)) {
+      setStep(p => p + 1);
+    }
+  };
+
   const handleBack = () => setStep(p => p - 1);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!agreedToTerms) { toast.error('Please agree to the Terms of Service.'); return; }
+    
+    if (!formData.password || !formData.password_confirmation) {
+      toast.error('Please enter and confirm your password.');
+      return;
+    }
+    if (formData.password !== formData.password_confirmation) {
+      toast.error('Passwords do not match.');
+      return;
+    }
+    if (formData.password.length < 8) {
+      toast.error('Password must be at least 8 characters long.');
+      return;
+    }
+    if (!agreedToTerms) { 
+      toast.error('Please agree to the Terms of Service.'); 
+      return; 
+    }
     
     setLoading(true);
 
@@ -174,6 +216,8 @@ export default function SignUpPage() {
       date_started: formData.date_started,
       has_moa: formData.has_moa ? 1 : 0,
       has_endorsement: formData.has_endorsement ? 1 : 0,
+      has_acceptance: formData.has_acceptance ? 1 : 0, 
+      has_contract: formData.has_contract ? 1 : 0,     
       has_pledge: formData.has_pledge ? 1 : 0,
       has_nda: formData.has_nda ? 1 : 0,
       password: formData.password,
@@ -184,8 +228,6 @@ export default function SignUpPage() {
 
     try {
       const res = await axios.post('/auth/register', payload); 
-      
-      // Check if Laravel told us they need to verify
       if (res.data.requires_verification) {
         setIsRegistered(true); 
       } else {
@@ -210,12 +252,12 @@ export default function SignUpPage() {
         <div className={styles.spaceY4}>
           <p className={styles.sectionTitle}>Personal Information</p>
           <div className={styles.inputGroup}>
-            <label className={styles.label}>Last Name</label>
+            <label className={styles.label}>Last Name <span style={{ color: '#dc2626' }}>*</span></label>
             <input type="text" name="last_name" placeholder="Last Name" className={styles.input} value={formData.last_name} onChange={handleChange} />
           </div>
           <div className={styles.grid2}>
             <div className={styles.inputGroup}>
-              <label className={styles.label}>First Name</label>
+              <label className={styles.label}>First Name <span style={{ color: '#dc2626' }}>*</span></label>
               <input type="text" name="first_name" placeholder="First Name" className={styles.input} value={formData.first_name} onChange={handleChange} />
             </div>
             <div className={styles.inputGroup}>
@@ -224,7 +266,7 @@ export default function SignUpPage() {
             </div>
           </div>
           <div className={styles.inputGroup}>
-            <label className={styles.label}>Email Address</label>
+            <label className={styles.label}>Email Address <span style={{ color: '#dc2626' }}>*</span></label>
             <input type="email" name="email" placeholder="Email" className={styles.input} value={formData.email} onChange={handleChange} />
           </div>
 
@@ -254,11 +296,11 @@ export default function SignUpPage() {
           <div style={{ paddingTop: '0.25rem' }}>
             <p className={styles.sectionTitle}>Emergency Contact</p>
             <div className={styles.spaceY3}>
-              <input type="text" name="emergency_name" placeholder="Contact Name" className={styles.input} value={formData.emergency_name} onChange={handleChange} />
-              <input type="text" name="emergency_phone" placeholder="Phone Number" className={styles.input} value={formData.emergency_phone} onChange={handleChange} />
-              <input type="text" name="emergency_address" placeholder="Address" className={styles.input} value={formData.emergency_address} onChange={handleChange} />
+              <input type="text" name="emergency_name" placeholder="Contact Name *" className={styles.input} value={formData.emergency_name} onChange={handleChange} />
+              <input type="text" name="emergency_phone" placeholder="Phone Number *" className={styles.input} value={formData.emergency_phone} onChange={handleChange} />
+              <input type="text" name="emergency_address" placeholder="Address *" className={styles.input} value={formData.emergency_address} onChange={handleChange} />
               <SelectField label="" name="emergency_relationship" value={formData.emergency_relationship} onChange={handleChange}>
-                <option value="">Relationship...</option>
+                <option value="">Relationship... *</option>
                 <option value="Parent">Parent</option>
                 <option value="Sibling">Sibling</option>
                 <option value="Spouse">Spouse</option>
@@ -302,36 +344,83 @@ export default function SignUpPage() {
           </SelectField>
 
           <div className={styles.inputGroup}>
-            <label className={styles.label}>Date Started</label>
+            <label className={styles.label}>Date Started <span style={{ color: '#dc2626' }}>*</span></label>
             <input type="date" name="date_started" className={styles.input} value={formData.date_started} onChange={handleChange} />
           </div>
         </div>
       );
-      case 3: return (
-        <div className={styles.spaceY3}>
-          <p className={styles.subTitle}>Documents Submitted</p>
-          {['has_moa', 'has_endorsement', 'has_pledge', 'has_nda'].map((key) => (
-            <label key={key} className={styles.checkboxRow}>
-              <input type="checkbox" name={key} checked={formData[key]} onChange={handleChange} className={styles.checkboxInput} />
-              <span className={styles.checkboxLabel}>{key.replace('has_', '').replace('_', ' ').toUpperCase()}</span>
-            </label>
-          ))}
-        </div>
-      );
+      
+      case 3: {
+        const documentsList = [
+          { key: 'has_moa', label: 'Memorandum of Agreement' },
+          { key: 'has_endorsement', label: 'Endorsement Letter' },
+          { key: 'has_acceptance', label: 'Acceptance Letter' },
+          { key: 'has_contract', label: 'Internship Contract and Plan' },
+          { key: 'has_pledge', label: 'Pledge of Confidentiality' },
+          { key: 'has_nda', label: 'Non-Disclosure Agreement' },
+        ];
+
+        return (
+          <div className={styles.spaceY3}>
+            <p className={styles.subTitle} style={{ textTransform: 'uppercase', fontSize: '0.8rem', fontWeight: '600', color: '#1e293b', marginBottom: '0.5rem' }}>
+              Documents and Credentials
+            </p>
+            <p style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '-0.25rem', marginBottom: '1rem', lineHeight: '1.4' }}>
+              Kindly ensure you have the necessary documents ready to upload to your profile after your account has been successfully created.
+            </p>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+              {documentsList.map((doc) => (
+                <label 
+                  key={doc.key} 
+                  className={styles.checkboxRow} 
+                  style={{ 
+                    border: '1px solid #e2e8f0', 
+                    borderRadius: '8px', 
+                    padding: '0.75rem 1rem', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.75rem', 
+                    cursor: 'pointer', 
+                    backgroundColor: '#ffffff',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
+                  }}
+                >
+                  <input 
+                    type="checkbox" 
+                    name={doc.key} 
+                    checked={formData[doc.key]} 
+                    onChange={handleChange} 
+                    className={styles.checkboxInput} 
+                    style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#3042a3' }} 
+                  />
+                  <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '500' }}>
+                    {doc.label}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+        );
+      } 
+      
       case 4: return (
         <div className={styles.spaceY4}>
           <div className={styles.inputGroup}>
-             <label className={styles.label}>Password</label>
+             <label className={styles.label}>Password <span style={{ color: '#dc2626' }}>*</span></label>
              <input type="password" name="password" placeholder="Create Password" className={styles.input} value={formData.password} onChange={handleChange} />
           </div>
           <div className={styles.inputGroup}>
-             <label className={styles.label}>Confirm Password</label>
+             <label className={styles.label}>Confirm Password <span style={{ color: '#dc2626' }}>*</span></label>
              <input type="password" name="password_confirmation" placeholder="Confirm Password" className={styles.input} value={formData.password_confirmation} onChange={handleChange} />
           </div>
           <div className={styles.termsContainer}>
             <label htmlFor="terms" className={styles.checkboxLabel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <input type="checkbox" id="terms" checked={agreedToTerms} onChange={(e) => setAgreedToTerms(e.target.checked)} className={styles.checkboxInput} />
-                I agree to the Terms and Conditions
+                <span>
+                    I agree to the <button type="button" onClick={() => setIsTermsModalOpen(true)} className={styles.inlineLink}>Terms and Conditions</button> <span style={{ color: '#dc2626' }}>*</span>
+                </span>
             </label>
           </div>
         </div>
@@ -374,7 +463,7 @@ export default function SignUpPage() {
         {step < 4 ? (
           <button type="button" onClick={handleNext} className={`${styles.btnPrimary} ${styles.btnAutoLeft}`}>Continue</button>
         ) : (
-          <button type="submit" disabled={loading || !agreedToTerms} className={styles.btnPrimary}>
+          <button type="submit" disabled={loading} className={styles.btnPrimary}>
             {loading ? 'Creating...' : 'Create Account'}
           </button>
         )}
@@ -397,10 +486,7 @@ export default function SignUpPage() {
       <div className={styles.leftPane}>
           <div className={styles.leftHeader}>
               <img src={logo} alt="CLIMBS Logo" className={styles.leftLogo} />
-              <div className={styles.leftTitleGroup}>
-                  <span className={styles.leftTitle}>CLIMBS</span>
-                  <span className={styles.leftSubTitle}>InternTracker</span>
-              </div>
+              <div className={styles.leftTitleGroup}></div>
           </div>
 
           <p className={styles.systemLabel}>CLIMBS Internship Monitoring System</p>
@@ -427,7 +513,6 @@ export default function SignUpPage() {
           <div className={styles.rightContent}>
               
               {isRegistered ? (
-                // ─── VERIFICATION PENDING SCREEN ───
                 <div className={styles.successScreenCard}>
                   <div className={styles.successIconWrapper}>
                     <Mail size={40} color="#3B82F6" />
@@ -453,42 +538,92 @@ export default function SignUpPage() {
 
               ) : (
 
-                // ─── ORIGINAL SIGNUP FORM WITH PINNED HEADER/FOOTER AND ANIMATED SCROLLING MIDDLE ───
                 <>
                   <div className={styles.formHeader}>
                       <h1 className={styles.welcomeText}>CREATE ACCOUNT</h1>
                       <p className={styles.subText}>Sign up to join the CLIMBS Intern program</p>
                   </div>
 
-                  {/* The form acts as the Flex container for the pinned layout */}
                   <form className={styles.formCard} onSubmit={step === 4 ? handleSubmit : (e) => e.preventDefault()}>
                     
-                    {/* PINNED TOP */}
                     <div className={styles.cardHeaderPinned}>
-                      {/* ✨ FIX: Call this as a function so React animates the CSS instead of destroying it! ✨ */}
                       {Stepper()}
                     </div>
 
-                    {/* SCROLLING MIDDLE + ANIMATION */}
-                    {/* The key={step} automatically triggers the CSS animation and resets scroll to top! */}
                     <div className={styles.cardBodyScrollable} key={`step-anim-${step}`}>
                       {renderStep()}
                     </div>
                     
-                    {/* PINNED BOTTOM */}
                     <div className={styles.cardFooterPinned}>
-                      {/* ✨ FIX: Call this as a function too ✨ */}
                       {NavButtons()}
                     </div>
 
                   </form>
-              
                 </>
 
               )}
 
           </div>
       </div>
+
+      {/* ✨ TERMS AND CONDITIONS MODAL ✨ */}
+      {isTermsModalOpen && (
+        <div className={styles.modalOverlay} onClick={() => setIsTermsModalOpen(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <div>
+                <h2 className={styles.modalTitle}>Terms and Conditions</h2>
+                <p className={styles.modalSubtitle}>For Interns | CLIMBS Life and General Insurance Cooperative</p>
+              </div>
+              <button className={styles.closeModalBtn} onClick={() => setIsTermsModalOpen(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className={styles.modalBody}>
+              <p>By creating an account, you agree to the following:</p>
+
+              <h4>1. DATA COLLECTION & PRIVACY</h4>
+              <p>CLIMBS InternTracker collects your personal information (name, email, school, course), GPS coordinates, selfie photos, and attendance records for the sole purpose of OJT monitoring. This is in compliance with Republic Act 10173 (Data Privacy Act of 2012). Your data will not be shared with third parties.</p>
+
+              <h4>2. ATTENDANCE MONITORING</h4>
+              <p>You consent to having your location verified and selfie captured during every clock-in and clock-out action. HR staff may review your selfies to verify attendance authenticity. Suspicious or fraudulent entries may result in hour deductions or your attendance being marked Absent.</p>
+
+              <h4>3. PHOTO RETENTION</h4>
+              <p>Selfie photos are automatically deleted after 5 working days. Profile photos are retained for the duration of your internship and used for ID card generation only.</p>
+
+              <h4>4. ACCEPTABLE USE</h4>
+              <p>You agree NOT to use VPNs or GPS spoofing tools, submit intentionally unclear selfies, or allow others to clock in on your behalf. Violations may result in account deactivation and reporting to your school coordinator.</p>
+
+              <h4>5. SYSTEM RECORDS</h4>
+              <p>Your Daily Time Record (DTR) and Certificate of Completion are generated from your recorded data. Disputes must be filed through the official appeal process within the system.</p>
+
+              <p style={{ marginTop: '1.5rem', fontStyle: 'italic', color: '#64748b' }}>For questions, contact HR at your assigned CLIMBS branch.</p>
+            </div>
+            
+            <div className={styles.modalFooter}>
+              <button 
+                type="button" 
+                onClick={() => setIsTermsModalOpen(false)} 
+                className={styles.btnSecondary}
+              >
+                Close
+              </button>
+              <button 
+                type="button" 
+                onClick={() => { 
+                  setAgreedToTerms(true); 
+                  setIsTermsModalOpen(false); 
+                }} 
+                className={styles.btnPrimary}
+              >
+                I Agree
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

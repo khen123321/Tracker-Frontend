@@ -54,12 +54,10 @@ export default function LoginPage() {
 
             {/* ─── LEFT SIDE ─── */}
             <div className={styles.leftSide}>
-
                 {/* Logo & Title at TOP */}
                 <div className={styles.leftHeader}>
                     <img src={logo} alt="CLIMBS Logo" className={styles.leftLogo} />
-                    <div className={styles.leftTitleGroup}>
-                    </div>
+                    <div className={styles.leftTitleGroup}></div>
                 </div>
 
                 <p className={styles.systemLabel}>CLIMBS Internship Monitoring System</p>
@@ -115,9 +113,8 @@ export default function LoginPage() {
 
                     <div className={styles.formCard}>
                         
-                        {/* ✨ NEW SLIDING PILL TOGGLE ✨ */}
+                        {/* Sliding Pill Toggle */}
                         <div className={styles.pillContainer}>
-                            {/* The physical sliding block */}
                             <div className={`${styles.slider} ${role === 'hr' ? styles.sliderRight : ''}`} />
                             
                             <button
@@ -157,7 +154,7 @@ export default function LoginPage() {
                                 </div>
                             </div>
 
-                            {/* Password Field */}
+                            {/* Password Field - Restored for both roles */}
                             <div className={styles.inputGroup}>
                                 <label className={styles.inputLabel}>Password</label>
                                 <div className={styles.inputWrapper}>
@@ -198,10 +195,14 @@ export default function LoginPage() {
                                 </button>
                             </div>
 
-                            {/* Forgot Password */}
-                            <div className={styles.forgotPasswordRow}>
-                                <a href="#" className={styles.forgotPasswordText}>Forgot Password?</a>
-                            </div>
+                            {/* ✨ Forgot Password - ONLY SHOWS FOR INTERNS NOW ✨ */}
+                            {role === 'intern' && (
+                                <div className={styles.forgotPasswordRow}>
+                                    <Link to="/forgot-password" className={styles.forgotPasswordText}>
+                                        Forgot Password?
+                                    </Link>
+                                </div>
+                            )}
 
                             {/* Sign Up Link (intern only) */}
                             {role === 'intern' && (

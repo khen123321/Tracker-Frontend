@@ -4,6 +4,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/auth/LoginPage';
 import SignUpPage from './pages/auth/SignUpPage';
 import VerifyEmail from './pages/auth/VerifyEmail'; 
+import ForgotPassword from './pages/auth/ForgotPassword'; // ✨ Added Forgot Password
+import ResetPassword from './pages/auth/ResetPassword';   // ✨ Added Reset Password
 import ProtectedRoute from './components/ProtectedRoute';
 import PermissionGuard from './components/PermissionGuard'; 
 
@@ -52,9 +54,15 @@ export default function App() {
         {/* 👇 ROOT REDIRECT */}
         <Route path="/" element={<Navigate to="/login" replace />} />
 
-        {/* PUBLIC ROUTES */}
+        {/* ==============================================
+            PUBLIC ROUTES (Accessible without login)
+        ============================================== */}
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/login" element={<LoginPage />} />
+        
+        {/* ✨ NEW PASSWORD RECOVERY ROUTES ✨ */}
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         
         {/* ✨ THE FIX: Perfectly matched to the email link URL ✨ */}
         <Route path="/verify-email" element={<VerifyEmail />} />
