@@ -99,8 +99,17 @@
   display: flex;
   flex-direction: row; 
   align-items: center;
-  gap: 24px; 
+  justify-content: flex-start; /* ✨ Changed from space-between so it sits near the text */
+  gap: 70px; /* ✨ This controls exactly how close the days are to the text */
+  width: 100%;
   flex: 1;
+  
+}
+
+.progressLeft {
+  display: flex;
+  align-items: center;
+  gap: 24px;
 }
 
 .donutWrapper {
@@ -166,6 +175,35 @@
   font-weight: 800;
   color: #0B1EAE;
   font-size: 16px;
+}
+
+/* ✨ NEW RIGHT SIDE: Huge Days Left Box ✨ */
+.progressRight {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-left: 24px;
+  margin-left: 12px;
+  border-left: 2px dashed #e2e8f0;
+  height: 80%;
+  margin-top: -35px;
+}
+
+.daysBigNumber {
+  font-size: 56px; 
+  font-weight: 900;
+  color: #0f172a;
+  line-height: 1;
+  letter-spacing: -2px;
+}
+
+.daysLabel {
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin-top: 4px;
 }
 
 /* ── 3 & 4. STAT CARDS (Days & Hours) ── */
@@ -449,7 +487,7 @@
   background: white;
   width: 100%;
   max-width: 500px;
-  max-height: 90vh; /* Prevents overflow on small screens */
+  max-height: 90vh; 
   border-radius: 16px;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   display: flex;
@@ -604,13 +642,26 @@
     grid-column: span 1; 
   }
 
-  /* Adjust Donut Chart alignment for small screens */
+  /* Adjust Layout for small screens */
   .progressContent {
     flex-direction: column;
     text-align: center;
     gap: 16px;
   }
   
+  .progressLeft {
+    flex-direction: column;
+  }
+
+  .progressRight {
+    border-left: none;
+    border-top: 2px dashed #e2e8f0;
+    padding-left: 0;
+    padding-top: 16px;
+    margin-left: 0;
+    width: 100%;
+  }
+
   .progressDetails {
     align-items: center;
   }

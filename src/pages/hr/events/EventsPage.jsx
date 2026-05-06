@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import multiMonthPlugin from '@fullcalendar/multimonth'; // ✨ NEW: Import the Multi-Month plugin
 import api from '../../../api/axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { X, MapPin, Trash2, Clock, GraduationCap, BookOpen, Plus, Pin, PinOff } from 'lucide-react';
@@ -306,7 +307,8 @@ const EventsPage = () => {
                 {/* --- MAIN CALENDAR --- */}
                 <main className={styles.calendarWrapper}>
                     <FullCalendar 
-                        plugins={[dayGridPlugin, interactionPlugin]} 
+                        // ✨ ADDED multiMonthPlugin here ✨
+                        plugins={[dayGridPlugin, interactionPlugin, multiMonthPlugin]} 
                         initialView="dayGridMonth" 
                         events={events} 
                         dateClick={handleDateClick} 
@@ -315,7 +317,13 @@ const EventsPage = () => {
                         headerToolbar={{
                             left: 'title',
                             center: 'today prev,next',
-                            right: 'dayGridMonth'
+                            // ✨ ADDED multiMonthYear to the toolbar ✨
+                            right: 'multiMonthYear,dayGridMonth'
+                        }}
+                        // ✨ Added friendly labels for the buttons ✨
+                        buttonText={{
+                            multiMonthYear: 'Year View',
+                            dayGridMonth: 'Month View'
                         }}
                     />
                 </main>

@@ -416,31 +416,52 @@ const Attendance = () => {
                         </div>
 
                         {modalStep === 1 && (
-    <div className={styles.stepBody}>
-        <div className={styles.locCircle}>
-            <MapPin size={40} color={isWithinPremises ? "#22C55E" : "#EF4444"} />
-        </div>
-        
-        {/* ✂️ Removed the <p className={styles.coordsText}> from here! */}
+                            <div className={styles.stepBody}>
+                                <div className={styles.locCircle}>
+                                    <MapPin size={40} color={isWithinPremises ? "#22C55E" : "#EF4444"} />
+                                </div>
+                                
+                                {loading ? (
+                                    <p className={styles.syncText}>Syncing with satellite...</p>
+                                ) : isWithinPremises ? (
+                                    <div className={styles.premisesBadge}>Validated: Within {assignedBranch?.name}</div>
+                                ) : (
+                                    <div className={styles.locationError}>
+                                        Location Mismatch: Not at {assignedBranch?.name}
+                                    </div>
+                                )}
+                                <button className={styles.modalPrimaryBtn} disabled={loading || !isWithinPremises} onClick={() => setModalStep(2)}>
+                                    {isWithinPremises ? "Proceed to Selfie" : "Invalid Location"}
+                                </button>
+                            </div>
+                        )}
 
-        {loading ? (
-            <p className={styles.syncText}>Syncing with satellite...</p>
-        ) : isWithinPremises ? (
-            <div className={styles.premisesBadge}>Validated: Within {assignedBranch?.name}</div>
-        ) : (
-            <div className={styles.locationError}>
-                Location Mismatch: Not at {assignedBranch?.name}
-            </div>
-        )}
-        <button className={styles.modalPrimaryBtn} disabled={loading || !isWithinPremises} onClick={() => setModalStep(2)}>
-            {isWithinPremises ? "Proceed to Selfie" : "Invalid Location"}
-        </button>
-    </div>
-)}
-
-                        {/* ✨ MODAL STEP 2: LIVE FACE DETECTION (USING SCAN ICON) ✨ */}
+                        {/* ✨ MODAL STEP 2: LIVE FACE DETECTION (WITH REMINDER) ✨ */}
                         {modalStep === 2 && (
                             <div className={styles.stepBody}>
+                                
+                                {/* 📸 NEW PHOTO GUIDELINES REMINDER 📸 */}
+                                <div style={{
+                                    backgroundColor: '#eff6ff',
+                                    color: '#1e40af',
+                                    padding: '12px',
+                                    borderRadius: '8px',
+                                    fontSize: '13px',
+                                    lineHeight: '1.5',
+                                    marginBottom: '16px',
+                                    border: '1px solid #bfdbfe',
+                                    display: 'flex',
+                                    gap: '10px',
+                                    alignItems: 'flex-start',
+                                    textAlign: 'left'
+                                }}>
+                                    <Camera size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
+                                    <div>
+                                        <strong>Photo Guidelines:</strong><br />
+                                        Please take a clear selfie with a wide background showing your surroundings inside CLIMBS premises. If the image appears blurry, please retake it to ensure you are clearly visible to HR and to avoid being flagged.
+                                    </div>
+                                </div>
+
                                 <div 
                                     className={styles.webcamBox} 
                                     style={{ 

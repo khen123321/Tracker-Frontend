@@ -4,7 +4,7 @@
 .pageWrapper {
     display: flex;
     flex-direction: column;
-    gap: 5px; /* ✨ Forces exactly 5px between Header and Main Content ✨ */
+    gap: 5px;
     font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     color: #0f172a;
     padding: 0;
@@ -64,7 +64,7 @@
     color: #64748b;
     letter-spacing: 1px;
     text-transform: uppercase;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
 }
 
 .headerIcon {
@@ -72,7 +72,7 @@
 }
 
 .headerIconAlert {
-    color: #ef4444; /* Red accent for emergency */
+    color: #ef4444;
 }
 
 /* =========================================
@@ -88,7 +88,6 @@
 
 .bannerBackground {
     height: 80px;
-    /* Soft brand blue gradient mimicking the dark banner shape */
     background: linear-gradient(135deg, #0B1EAE 0%, #3b82f6 100%); 
 }
 
@@ -210,6 +209,16 @@
     background: #16a34a;
 }
 
+.statusAbsent {
+    background: #fef2f2;
+    color: #ef4444;
+    border: 1px solid #fecaca;
+}
+
+.statusAbsent .statusDot {
+    background: #ef4444;
+}
+
 .statusInactive {
     background: #f1f5f9;
     color: #64748b;
@@ -257,7 +266,7 @@
 .hoursRendered {
     font-size: 2.8rem;
     font-weight: 800;
-    color: #10b981; /* Green mimicking the dark mode accent */
+    color: #10b981;
     line-height: 1;
 }
 
@@ -301,7 +310,7 @@
 .weeklyChart {
     display: flex;
     gap: 8px;
-    margin-top: auto; /* Pushes to bottom */
+    margin-top: auto;
     padding-top: 32px;
     height: 80px;
     align-items: flex-end;
@@ -325,7 +334,8 @@
     transition: height 0.5s ease;
 }
 
-.dayActive { background: #10b981; opacity: 0.85; }
+.dayActive  { background: #10b981; opacity: 0.85; }
+.dayAbsent  { background: #fca5a5; opacity: 0.85; }
 .dayInactive { background: #f1f5f9; }
 
 .dayLabel {
@@ -342,7 +352,7 @@
 }
 
 .detailItemFull {
-    grid-column: 1 / -1; /* Spans full width */
+    grid-column: 1 / -1;
 }
 
 .academicGrid label {
@@ -441,10 +451,43 @@
 }
 
 /* 2. Documents Card */
+
+/* ── Upload Instruction Banner ── */
+.docInstructionBanner {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+}
+
+.docInstructionIcon {
+    color: #2563eb;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.docInstructionText {
+    font-size: 0.82rem;
+    color: #1e40af;
+    margin: 0;
+    line-height: 1.55;
+    font-weight: 500;
+}
+
+.docInstructionText strong {
+    font-weight: 700;
+    color: #1d4ed8;
+}
+
+/* ── Document Rows ── */
 .documentsList {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
 }
 
 .docRow {
@@ -453,7 +496,7 @@
     gap: 16px;
     border: 1px solid #e2e8f0;
     border-radius: 12px;
-    padding: 16px;
+    padding: 14px 16px;
     transition: all 0.2s ease;
 }
 
@@ -475,8 +518,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
     border-radius: 10px;
     flex-shrink: 0;
 }
@@ -493,25 +536,98 @@
 
 .docInfo {
     flex-grow: 1;
+    min-width: 0;
 }
 
 .docTitle {
-    margin: 0 0 4px 0;
-    font-size: 0.95rem;
+    margin: 0 0 3px 0;
+    font-size: 0.92rem;
     font-weight: 700;
     color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .docSubtext {
     margin: 0;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     color: #64748b;
 }
 
 .docActions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.viewDocBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.viewDocBtn:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+    color: #0f172a;
+}
+
+.uploadBtnLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #2563eb;
+    border: 1px solid #2563eb;
+    color: #ffffff;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.uploadBtnLabel:hover {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+}
+
+.reuploadBtnLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.reuploadBtnLabel:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+    color: #0f172a;
 }
 
 .missingBadge {
@@ -523,29 +639,6 @@
     border-radius: 6px;
     letter-spacing: 0.5px;
     border: 1px solid #fecaca;
-}
-
-.uploadBtnLabel {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: #ffffff;
-    border: 1px solid #cbd5e1;
-    color: #475569;
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.uploadBtnLabel:hover {
-    background: #f8fafc;
-    border-color: #94a3b8;
-    color: #0f172a;
 }
 
 .hiddenInput {
@@ -599,7 +692,7 @@
     }
 
     .weeklyChart {
-        max-width: 360px; /* Constrain on full width */
+        max-width: 360px;
     }
 }
 
@@ -618,14 +711,17 @@
     }
 
     .docRow {
-        flex-direction: column;
-        align-items: flex-start;
-        text-align: left;
+        flex-wrap: wrap;
+        gap: 12px;
     }
 
     .docActions {
         width: 100%;
-        justify-content: space-between;
-        margin-top: 8px;
+        justify-content: flex-end;
+        margin-top: 4px;
+    }
+
+    .docTitle {
+        white-space: normal;
     }
 }

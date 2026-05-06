@@ -20,7 +20,7 @@ const NotificationBell = ({ role = 'intern', onNotificationClick }) => {
         const fetchAllData = async () => {
             try {
                 // Fetch REAL System Notifications ONLY
-                const notifEndpoint = '/notifications'; // We consolidated this in api.php!
+                const notifEndpoint = '/notifications'; 
                 const notifRes = await api.get(notifEndpoint);
 
                 if (!isMounted) return;
@@ -61,7 +61,7 @@ const NotificationBell = ({ role = 'intern', onNotificationClick }) => {
     const handleItemClick = async (notification, payload) => {
         if (!notification.read_at) {
             try {
-                await api.put(`/notifications/${notification.id}/read`).catch(() => {}); // Changed to PUT to match api.php
+                await api.put(`/notifications/${notification.id}/read`).catch(() => {}); 
                 setNotifications(prev => prev.map(n => 
                     n.id === notification.id ? { ...n, read_at: new Date().toISOString() } : n
                 ));
@@ -82,7 +82,8 @@ const NotificationBell = ({ role = 'intern', onNotificationClick }) => {
             if (isRejection) {
                 navigate('/intern-dashboard/logs'); 
             } else {
-                navigate('/intern-dashboard/attendance'); 
+                // ✨ ALL OTHER NOTIFICATIONS NOW DEFAULT TO ANNOUNCEMENTS ✨
+                navigate('/intern-dashboard/announcements'); 
             }
         } 
         else if (onNotificationClick) {

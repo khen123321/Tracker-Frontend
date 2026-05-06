@@ -1,4 +1,3 @@
-
 /* ══════════════════════════════════════════════════════════════
    SKELETON SHIMMER
 ══════════════════════════════════════════════════════════════ */
@@ -133,7 +132,7 @@
 
 .sectionTitle { font-size: 16px; font-weight: 700; margin: 0; color: #0f172a; }
 
-.viewAllLink { font-size: 13px; color: #0B1EAE; cursor: pointer; font-weight: 600; transition: color 0.2s; }
+.viewAllLink { font-size: 13px; color: #0B1EAE; cursor: pointer; font-weight: 600; transition: color 0.2s; display: flex; align-items: center; gap: 2px; }
 .viewAllLink:hover { text-decoration: underline; color: #4F63F1; }
 
 /* ══════════════════════════════════════════════════════════════
@@ -188,17 +187,13 @@
   display: flex;
   justify-content: center;
   align-items: center;
-
-  /* ✅ KEY FIX: reduced from 340px to match the att cards height
-     2 rows × 180px cards + 12px gap = 372px total att grid
-     Subtract sectionHeader (~50px) and card padding (32px) = ~290px */
   height: 270px;
   z-index: 1;
 }
 
 .donutCenter {
   position: absolute;
-  top: 42%;                /* ✅ adjusted from 40% to match new cy="40%" */
+  top: 42%;
   left: 50%;
   transform: translate(-50%, -50%);
   text-align: center;
@@ -294,7 +289,7 @@
 .emptyState { color: #94a3b8; font-size: 14px; text-align: center; padding: 20px 0; }
 
 /* ══════════════════════════════════════════════════════════════
-   FACEBOOK-STYLE BOTTOM RIGHT POPUP
+   FACEBOOK-STYLE POPUP
 ══════════════════════════════════════════════════════════════ */
 .quickViewPopup {
   position: fixed;
@@ -401,6 +396,755 @@
 .btnApprove:hover, .btnReject:hover { opacity: 0.9; }
 
 /* ══════════════════════════════════════════════════════════════
+   MODAL SYSTEM — BASE
+══════════════════════════════════════════════════════════════ */
+@keyframes modalOverlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes modalSlideIn {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: modalOverlayIn 0.2s ease;
+}
+
+.modalContainer {
+  background: #ffffff;
+  border-radius: 16px;
+  width: 100%;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 60px -12px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,0,0,0.05);
+  animation: modalSlideIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #ffffff;
+  flex-shrink: 0;
+}
+
+.modalTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modalIconWrap {
+  width: 34px;
+  height: 34px;
+  background: #eff6ff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0B1EAE;
+  flex-shrink: 0;
+}
+
+.modalTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.modalClose {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.modalClose:hover { background: #f1f5f9; color: #0f172a; border-color: #cbd5e1; }
+
+.modalBody {
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.modalBody::-webkit-scrollbar { width: 5px; }
+.modalBody::-webkit-scrollbar-track { background: transparent; }
+.modalBody::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+
+/* ─── MODAL STATS ROW ─── */
+.modalStats {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px 20px;
+  flex-wrap: wrap;
+  gap: 0;
+}
+
+.modalStatItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 80px;
+}
+
+.modalStatValue {
+  font-size: 28px;
+  font-weight: 800;
+  color: #0B1EAE;
+  line-height: 1;
+}
+
+.modalStatLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.modalStatDivider {
+  width: 1px;
+  height: 36px;
+  background: #e2e8f0;
+  margin: 0 8px;
+  flex-shrink: 0;
+}
+
+/* ─── MODAL CONTROLS ─── */
+.modalControls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modalSearch {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0 12px;
+  height: 38px;
+  transition: border-color 0.15s;
+}
+
+.modalSearch:focus-within {
+  border-color: #0B1EAE;
+  background: #fff;
+}
+
+.modalSearchIcon { color: #94a3b8; flex-shrink: 0; }
+
+.modalSearchInput {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  color: #0f172a;
+  outline: none;
+}
+
+.modalSearchInput::placeholder { color: #94a3b8; }
+
+.modalSortGroup {
+  display: flex;
+  background: #f1f5f9;
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.modalSortBtn {
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: transparent;
+  color: #64748b;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.modalSortActive {
+  background: #ffffff;
+  color: #0B1EAE;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+/* ─── MODAL STATES ─── */
+.modalLoading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  color: #64748b;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.modalEmpty {
+  text-align: center;
+  padding: 48px 20px;
+  color: #94a3b8;
+  font-size: 14px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px dashed #cbd5e1;
+}
+
+/* ─── SPINNING ANIMATION ─── */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.spinIcon { animation: spin 0.8s linear infinite; }
+
+/* ─── MODAL REFRESH BTN ─── */
+.modalRefreshBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  margin-left: auto;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.modalRefreshBtn:hover { background: #f1f5f9; color: #0f172a; }
+.modalRefreshBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ══════════════════════════════════════════════════════════════
+   DEPARTMENT MODAL
+══════════════════════════════════════════════════════════════ */
+.deptModalList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.deptModalItem {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  border-radius: 10px;
+  transition: all 0.15s;
+}
+
+.deptModalItem:hover {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.deptModalLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.deptModalRank {
+  width: 26px;
+  height: 26px;
+  background: #e0e7ff;
+  color: #0B1EAE;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.deptModalInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.deptModalName {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.deptModalShare {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.deptModalRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  width: 220px;
+}
+
+.deptModalBar {
+  flex: 1;
+  height: 8px;
+  background: #f1f5f9;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.deptModalFill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.5s ease;
+}
+
+.deptModalCount {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  min-width: 28px;
+  text-align: right;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   BRANCH MODAL
+══════════════════════════════════════════════════════════════ */
+.branchModalGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.branchModalCard {
+  padding: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.branchModalCard:hover {
+  border-color: #c7d2fe;
+  background: #f0f4ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(11,30,174,0.08);
+}
+
+.branchHQCard {
+  border-color: #0B1EAE;
+  background: linear-gradient(135deg, #f0f4ff 0%, #e8edff 100%);
+}
+
+.branchModalCardTop {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.branchModalIcon {
+  width: 30px;
+  height: 30px;
+  background: #dbeafe;
+  color: #0B1EAE;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.branchHQCard .branchModalIcon {
+  background: #0B1EAE;
+  color: #fff;
+}
+
+.branchModalCardInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.branchModalCardName {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.modalHqBadge {
+  background: #0B1EAE;
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.branchModalCardSub {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.branchModalCardBottom {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.branchModalCardCount {
+  font-size: 28px;
+  font-weight: 800;
+  color: #0B1EAE;
+  line-height: 1;
+}
+
+.branchModalCardLabel {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.branchModalProgress {
+  height: 4px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.branchModalProgressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #0B1EAE, #4F63F1);
+  border-radius: 999px;
+  transition: width 0.5s ease;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   REQUESTS MODAL
+══════════════════════════════════════════════════════════════ */
+.reqModalTabs {
+  display: flex;
+  gap: 6px;
+  background: #f1f5f9;
+  border-radius: 10px;
+  padding: 4px;
+}
+
+.reqModalTab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  background: transparent;
+  color: #64748b;
+  transition: all 0.15s;
+}
+
+.reqModalTab:hover { background: rgba(255,255,255,0.6); color: #334155; }
+
+.reqModalTabActive {
+  background: #ffffff;
+  color: #0B1EAE;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.reqModalBadge {
+  background: #e2e8f0;
+  color: #64748b;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.reqModalBadgeActive {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.reqModalList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.reqModalList::-webkit-scrollbar { width: 4px; }
+.reqModalList::-webkit-scrollbar-track { background: transparent; }
+.reqModalList::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+
+.reqModalItem {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.reqModalItem:hover {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.reqModalAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #0B1EAE, #4F63F1);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.reqModalInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.reqModalName {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.reqModalMeta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+.reqModalReason {
+  font-size: 12px;
+  color: #64748b;
+  font-style: italic;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+}
+
+.reqModalActions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.reqActionBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 12px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.reqApprove {
+  background: #ecfdf5;
+  color: #10b981;
+  border-color: #d1fae5;
+}
+.reqApprove:hover { background: #d1fae5; }
+
+.reqReject {
+  background: #fef2f2;
+  color: #ef4444;
+  border-color: #fee2e2;
+}
+.reqReject:hover { background: #fee2e2; }
+
+/* ─── INLINE DETAIL PANEL ─── */
+.reqDetailPanel {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  animation: modalSlideIn 0.2s ease;
+}
+
+.reqDetailHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #0B1EAE;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.reqDetailClose {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.reqDetailClose:hover { background: rgba(255,255,255,0.35); }
+
+.reqDetailBody {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.reqDetailGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.reqDetailField {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.reqDetailLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #94a3b8;
+  font-weight: 700;
+}
+
+.reqDetailValue {
+  font-size: 14px;
+  color: #0f172a;
+  font-weight: 500;
+}
+
+.reqDetailAttachment {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.reqDetailAttachment a {
+  color: #0B1EAE;
+  font-weight: 600;
+  font-size: 13px;
+  text-decoration: none;
+}
+.reqDetailAttachment a:hover { text-decoration: underline; }
+
+.reqDetailFooter {
+  display: flex;
+  gap: 8px;
+}
+
+.reqDetailApprove,
+.reqDetailReject {
+  flex: 1;
+  padding: 9px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s;
+}
+.reqDetailApprove { background: #10b981; color: white; }
+.reqDetailReject  { background: #ef4444; color: white; }
+.reqDetailApprove:hover, .reqDetailReject:hover { opacity: 0.88; }
+
+/* ══════════════════════════════════════════════════════════════
    RESPONSIVE
 ══════════════════════════════════════════════════════════════ */
 @media (max-width: 1200px) {
@@ -416,6 +1160,12 @@
   .bottomGrid { grid-template-columns: 1fr; }
   .cardRow { flex-direction: column; align-items: flex-start; gap: 10px; }
   .notifDropdown { right: -20px; max-width: 90vw; width: 300px; }
+  .modalBody { padding: 16px; }
+  .branchModalGrid { grid-template-columns: 1fr 1fr; }
+  .deptModalRight { width: 140px; }
+  .reqModalItem { flex-wrap: wrap; }
+  .reqModalActions { width: 100%; }
+  .reqActionBtn { flex: 1; justify-content: center; }
 }
 @media (max-width: 640px) {
   .topGrid { grid-template-columns: 1fr; }
@@ -424,10 +1174,11 @@
   .headerActions { width: 100%; justify-content: space-between; }
   .attGrid { grid-template-columns: 1fr 1fr; gap: 12px; }
   .attValue { font-size: 36px; }
-  
-  .quickViewPopup {
-    width: calc(100vw - 32px);
-    right: 16px;
-    bottom: 16px;
-  }
+  .quickViewPopup { width: calc(100vw - 32px); right: 16px; bottom: 16px; }
+  .modalStats { flex-wrap: wrap; gap: 12px; }
+  .modalStatDivider { display: none; }
+  .branchModalGrid { grid-template-columns: 1fr; }
+  .reqDetailGrid { grid-template-columns: 1fr; }
+  .reqModalReason { max-width: 180px; }
+  .modalControls { flex-wrap: wrap; }
 }

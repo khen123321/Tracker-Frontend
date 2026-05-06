@@ -20,6 +20,7 @@ const InternDashboardHome = () => {
         hoursRendered: 0,
         weekDaysPresent: 0,
         weekHoursRendered: 0,
+        tentativeDays: 0,
     });
 
     useEffect(() => {
@@ -50,6 +51,7 @@ const InternDashboardHome = () => {
                     hoursRendered: data.hoursRendered || 0,
                     weekDaysPresent: data.weekDaysPresent || 0,
                     weekHoursRendered: data.weekHoursRendered || 0,
+                    tentativeDays: data.tentativeDays || 0,
                 });
 
                 // 3. Fetch History Logs
@@ -138,11 +140,18 @@ const InternDashboardHome = () => {
         return new Date(dateString).toLocaleDateString('en-US', options);
     };
 
+    // ✨ TENTATIVE DAYS CALCULATION & SAFEGUARDS ✨
     const totalRequired = internStats.totalHoursRequired > 0 ? internStats.totalHoursRequired : 1;
-    const progressPercentage = Math.round((internStats.hoursRendered / totalRequired) * 100);
+    const safeHoursRendered = Math.max(0, internStats.hoursRendered); 
+    const progressPercentage = Math.min(100, Math.round((safeHoursRendered / totalRequired) * 100));
+
+    const displayHours = internStats.hoursRendered; 
+    const remainingHours = Math.max(0, totalRequired - safeHoursRendered);
+    const tentativeDays = internStats.tentativeDays || Math.ceil(remainingHours / 8); 
+
     const radius = 45;
     const circumference = 2 * Math.PI * radius;
-    const progressLength = (internStats.hoursRendered / totalRequired) * circumference;
+    const progressLength = (safeHoursRendered / totalRequired) * circumference;
 
     const hour = new Date().getHours();
     const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
@@ -202,27 +211,38 @@ const InternDashboardHome = () => {
                         </div>
                         
                         <div className={styles.progressContent}>
-                            <div className={styles.donutWrapper}>
-                                <svg width="120" height="120" viewBox="0 0 120 120">
-                                    <circle cx="60" cy="60" r={radius} fill="none" stroke="#f1f5f9" strokeWidth="10" />
-                                    <g transform="rotate(-90 60 60)">
-                                        <circle cx="60" cy="60" r={radius} fill="none" stroke="#0B1EAE" strokeWidth="10" 
-                                            strokeDasharray={`${progressLength} ${circumference}`} 
-                                            strokeDashoffset={0} strokeLinecap="round" />
-                                    </g>
-                                </svg>
-                                <div className={styles.donutText}>
-                                    <span className={styles.donutPercentage}>{progressPercentage}%</span>
-                                    <span className={styles.donutSubText}>complete</span>
+                            
+                            {/* LEFT: Chart and Text */}
+                            <div className={styles.progressLeft}>
+                                <div className={styles.donutWrapper}>
+                                    <svg width="120" height="120" viewBox="0 0 120 120">
+                                        <circle cx="60" cy="60" r={radius} fill="none" stroke="#f1f5f9" strokeWidth="10" />
+                                        <g transform="rotate(-90 60 60)">
+                                            <circle cx="60" cy="60" r={radius} fill="none" stroke="#0B1EAE" strokeWidth="10" 
+                                                strokeDasharray={`${progressLength} ${circumference}`} 
+                                                strokeDashoffset={0} strokeLinecap="round" />
+                                        </g>
+                                    </svg>
+                                    <div className={styles.donutText}>
+                                        <span className={styles.donutPercentage}>{progressPercentage}%</span>
+                                        <span className={styles.donutSubText}>complete</span>
+                                    </div>
+                                </div>
+
+                                <div className={styles.progressDetails}>
+                                    <h2 className={styles.progressTitle}>On-the-Job Training</h2>
+                                    <p className={styles.progressLog}>
+                                        <span className={styles.highlightText}>{displayHours}</span> of {internStats.totalHoursRequired} hours logged
+                                    </p>
                                 </div>
                             </div>
 
-                            <div className={styles.progressDetails}>
-                                <h2 className={styles.progressTitle}>On-the-Job Training</h2>
-                                <p className={styles.progressLog}>
-                                    <span className={styles.highlightText}>{internStats.hoursRendered}</span> of {internStats.totalHoursRequired} hours logged
-                                </p>
+                            {/* RIGHT: Huge Days Left Box */}
+                            <div className={styles.progressRight}>
+                                <span className={styles.daysBigNumber}>{tentativeDays}</span>
+                                <span className={styles.daysLabel}>days left</span>
                             </div>
+
                         </div>
                     </div>
                 </div>
@@ -253,7 +273,7 @@ const InternDashboardHome = () => {
                         <p className={styles.statSubtitle}>this week</p>
                     </div>
                     <div className={styles.pillBadge} style={{backgroundColor: '#eff6ff', color: '#1e40af', border: '1px solid #dbeafe'}}>
-                        {internStats.hoursRendered}h total logged
+                        {displayHours}h total logged
                     </div>
                 </div>
 
