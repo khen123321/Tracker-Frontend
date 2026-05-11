@@ -3,13 +3,11 @@ import api from '../../api/axios';
 import { Inbox, X, Calendar as CalendarIcon, MapPin, AlignLeft, Clock } from 'lucide-react';
 import PageHeader from '../../components/layout/PageHeader';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ✨ REDUX IMPORTS ✨
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store';
 
-interface StoredUser {
-    first_name?: string;
-    last_name?: string;
-    [key: string]: unknown;
-}
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface CalendarEvent {
     id: number | string;
@@ -57,7 +55,8 @@ interface AttendanceLog {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const InternDashboardHome: React.FC = () => {
-    const user: StoredUser = JSON.parse(localStorage.getItem('user') ?? '{}') || {};
+    // ✨ THE FIX: Pull the user from Redux instead of localStorage!
+    const { user } = useSelector((state: RootState) => state.auth);
 
     const [upcomingEvents, setUpcomingEvents] = useState<CalendarEvent[]>([]);
     const [timeLogs, setTimeLogs] = useState<TimelineLog[]>([]);
@@ -209,7 +208,12 @@ const InternDashboardHome: React.FC = () => {
 
     const hour = new Date().getHours();
     const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-    const fullName = `${user.first_name || 'KHEN JOSHUA'} ${user.last_name || 'VERSON'}`.trim().toUpperCase();
+    
+    // ✨ SAFETY CHECK: Safely extract the name from Redux
+    // Depending on what your backend sends, it might be in `first_name` or just `name`.
+    const firstName = user?.first_name || user?.name?.split(' ')[0] || 'KHEN JOSHUA';
+    const lastName = user?.last_name || user?.name?.split(' ').slice(1).join(' ') || 'VERSON';
+    const fullName = `${firstName} ${lastName}`.trim().toUpperCase();
 
     // ─── Calendar Grid ─────────────────────────────────────────────────────────
 
@@ -258,48 +262,66 @@ const InternDashboardHome: React.FC = () => {
     // ─── Render ────────────────────────────────────────────────────────────────
 
     return (
-        <div className="flex flex-col gap-[5px] w-full font-[Inter,system-ui,-apple-system,sans-serif] pb-3">
+        <div className="flex flex-col gap-[5px] w-full font-[Inter,system-ui,-apple-system,sans-serif] p-3">
 
             <style>{`
                 @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
                 @keyframes slideUp { from { opacity: 0; transform: translateY(30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+                
+                @keyframes shine {
+                    0% { left: -150%; }
+                    60% { left: 200%; }
+                    100% { left: 200%; }
+                }
+                .animate-shine {
+                    position: relative;
+                    overflow: hidden; 
+                }
+                .animate-shine::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: -150%;
+                    width: 50%;
+                    height: 100%;
+                    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+                    transform: skewX(-20deg); 
+                    animation: shine 5s ease-in-out infinite; 
+                    pointer-events: none; 
+                }
             `}</style>
 
             <PageHeader title="Dashboard" />
 
-            {/* ── DASHBOARD GRID ── */}
-            <div className="grid grid-cols-4 gap-[5px] max-[1100px]:grid-cols-2 max-[768px]:grid-cols-1">
+            <div className="grid grid-cols-4 gap-[5px] max-[1100px]:grid-cols-2 max-[768px]:flex max-[768px]:flex-col">
 
-                {/* ── LEFT STACK (spans 2 cols) ── */}
-                <div className="col-span-2 flex flex-col gap-[5px] max-[768px]:col-span-1">
+                {/* ── LEFT COLUMN ── */}
+                <div className="col-span-2 flex flex-col gap-[5px] w-full h-full max-[768px]:contents">
 
-                    {/* 1. GREETING CARD */}
-                    <div className={`${cardCls} justify-center bg-gradient-to-br from-white to-slate-50`}>
-                        <div className="flex flex-col gap-1">
-                            <p className="m-0 text-[15px] text-slate-500 leading-[1.4]">
+                    {/* 1. GREETING CARD -> MOBILE POSITION: 1 */}
+                    <div 
+                        className={`${cardCls} justify-center !p-3 !border-transparent animate-shine max-[768px]:order-1`}
+                        style={{ background: 'linear-gradient(90deg, #0B1EAE 0%, #152286 23.56%, #0D1767 63.46%, #050C48 100%)' }}
+                    >
+                        <div className="flex flex-col gap-1 relative z-10">
+                            <p className="m-0 text-[15px] text-white leading-[1.4]">
                                 {greeting},<br />
-                                <strong className="text-[#0B1EAE] font-extrabold text-xl">{fullName}</strong>
+                                <strong className="text-white font-extrabold text-xl">{fullName}</strong>
                             </p>
-                            <span className="text-[13px] text-slate-500 font-medium">Here is your OJT overview.</span>
+                            <span className="text-[13px] text-blue-200 font-medium">Here is your OJT overview.</span>
                         </div>
                     </div>
 
-                    {/* 2. OJT PROGRESS CARD */}
-                    <div className={`${cardCls} flex-1`}>
-                        <div className="flex items-center justify-between mb-4">
+                    {/* 2. OJT PROGRESS CARD -> MOBILE POSITION: 2 */}
+                    <div className={`${cardCls} flex-none max-[768px]:order-2`}>
+                        <div className="flex items-center justify-between mb-3 sm:mb-4">
                             <h3 className={cardHeaderCls}>OJT PROGRESS</h3>
                         </div>
 
-                        <div className={[
-                            'flex flex-row items-center justify-start gap-[70px] w-full flex-1',
-                            'max-[768px]:flex-col max-[768px]:text-center max-[768px]:gap-4',
-                        ].join(' ')}>
-
-                            {/* Left: donut + text */}
-                            <div className="flex items-center gap-6 max-[768px]:flex-col">
-                                {/* Donut */}
-                                <div className="relative w-[110px] h-[110px] flex-shrink-0 drop-shadow-sm">
-                                    <svg width="120" height="120" viewBox="0 0 120 120" className="w-full h-full">
+                        <div className="flex flex-row items-center justify-start w-full flex-1 gap-6 sm:gap-12">
+                            <div className="flex flex-row items-center gap-4 sm:gap-6">
+                                <div className="relative w-[150px] h-[150px] sm:w-[140px] sm:h-[140px] flex-shrink-0 drop-shadow-sm">
+                                    <svg width="100%" height="100%" viewBox="0 0 120 120" className="w-full h-full">
                                         <circle cx="60" cy="60" r={radius} fill="none" stroke="#f1f5f9" strokeWidth="10" />
                                         <g transform="rotate(-90 60 60)">
                                             <circle
@@ -311,172 +333,182 @@ const InternDashboardHome: React.FC = () => {
                                         </g>
                                     </svg>
                                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                        <span className="text-2xl font-extrabold text-[#0B1EAE] leading-none">{progressPercentage}%</span>
-                                        <span className="text-[10px] text-slate-500 font-bold mt-0.5 uppercase">complete</span>
+                                        <span className="text-xl sm:text-xl font-extrabold text-[#0B1EAE] leading-none">{progressPercentage}%</span>
+                                        <span className="text-[9px] sm:text-xs text-slate-500 font-bold mt-0.5 uppercase">complete</span>
                                     </div>
                                 </div>
 
-                                {/* Progress text */}
-                                <div className="flex flex-col justify-center max-[768px]:items-center">
-                                    <h2 className="text-lg font-extrabold text-slate-900 m-0 mb-1.5 tracking-tight">
+                                <div className="flex flex-col justify-center">
+                                    <h2 className="text-[20px] sm:text-lg font-extrabold text-slate-900 m-0 mb-0.5 sm:mb-1 tracking-tight leading-tight">
                                         On-the-Job Training
                                     </h2>
-                                    <p className="text-sm text-slate-500 m-0 leading-relaxed">
-                                        <span className="font-extrabold text-[#0B1EAE] text-base">{displayHours}</span>
-                                        {' '}of {internStats.totalHoursRequired} hours logged
+                                    <p className="text-[16px] sm:text-sm text-slate-500 m-0 leading-tight">
+                                        <span className="font-extrabold text-[#0B1EAE] text-[16px] sm:text-base">{displayHours}</span>
+                                        <span className="hidden sm:inline">{' '}of {internStats.totalHoursRequired} hours logged</span>
+                                        <span className="sm:hidden"><br/>of {internStats.totalHoursRequired} hrs</span>
                                     </p>
                                 </div>
                             </div>
 
-                            {/* Right: Days left */}
-                            <div className={[
-                                'flex flex-col items-center justify-center',
-                                'pl-6 ml-3 border-l-2 border-dashed border-slate-200 h-4/5 -mt-[35px]',
-                                'max-[768px]:border-l-0 max-[768px]:border-t-2 max-[768px]:pl-0 max-[768px]:pt-4 max-[768px]:ml-0 max-[768px]:w-full max-[768px]:mt-0',
-                            ].join(' ')}>
-                                <span className="text-[56px] font-black text-slate-900 leading-none tracking-[-2px]">{tentativeDays}</span>
-                                <span className="text-sm text-slate-500 font-extrabold uppercase mt-1">days left</span>
+                            <div className="flex flex-col items-center justify-center pl-9 sm:pl-6 ml-2 sm:ml-3 border-l-2 border-dashed border-slate-200">
+                                <span className="text-[36px] sm:text-[56px] font-black text-slate-900 leading-none tracking-tight">{tentativeDays}</span>
+                                <span className="text-[10px] sm:text-sm text-slate-500 font-extrabold uppercase mt-1 text-center leading-tight">
+                                    days<br className="sm:hidden" /> left
+                                </span>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                {/* ── 3. DAYS PRESENT ── */}
-                <div className={`${cardCls} col-span-1`}>
-                    <h3 className={cardHeaderCls}>DAYS PRESENT</h3>
-                    <div className="flex-1 flex flex-col justify-center mb-3">
-                        <div className="flex items-baseline gap-1.5">
-                            <span className="text-[56px] font-extrabold leading-none tracking-[-2px] text-[#0B1EAE]">
-                                {internStats.weekDaysPresent}
-                            </span>
-                            <span className="text-base text-slate-500 font-bold">days</span>
-                        </div>
-                        <p className="text-[13px] text-slate-400 mt-2 mb-0 font-semibold">this week</p>
-                    </div>
-                    <div className="px-3 py-2 rounded-lg text-xs font-bold text-center mt-auto w-full bg-amber-50 text-amber-700 border border-amber-100">
-                        Week just started
-                    </div>
-                </div>
-
-                {/* ── 4. HOURS RENDERED ── */}
-                <div className={`${cardCls} col-span-1`}>
-                    <h3 className={cardHeaderCls}>HOURS RENDERED</h3>
-                    <div className="flex-1 flex flex-col justify-center mb-3">
-                        <div className="flex items-baseline gap-1.5">
-                            <span className="text-[56px] font-extrabold leading-none tracking-[-2px] text-yellow-500">
-                                {internStats.weekHoursRendered}
-                            </span>
-                            <span className="text-base text-slate-500 font-bold">h</span>
-                        </div>
-                        <p className="text-[13px] text-slate-400 mt-2 mb-0 font-semibold">this week</p>
-                    </div>
-                    <div className="px-3 py-2 rounded-lg text-xs font-bold text-center mt-auto w-full bg-blue-50 text-blue-800 border border-blue-100">
-                        {displayHours}h total logged
-                    </div>
-                </div>
-
-                {/* ── 5. ATTENDANCE CALENDAR ── */}
-                <div className={`${cardCls} col-span-2 max-[1100px]:col-span-2 max-[768px]:col-span-1`}>
-                    <h3 className={cardHeaderCls}>ATTENDANCE — THIS MONTH</h3>
-                    <div className="w-full flex flex-col flex-1">
-                        {/* Day labels */}
-                        <div className="grid grid-cols-7 gap-1.5 mb-3 text-center">
-                            {daysOfWeek.map(day => (
-                                <div key={day} className="text-[12px] font-extrabold text-slate-400 uppercase max-[768px]:text-[10px]">
-                                    {day}
-                                </div>
-                            ))}
-                        </div>
-                        {/* Day cells */}
-                        <div className="grid grid-cols-7 gap-1.5">
-                            {calendarDays.map((date, index) => (
-                                <div
-                                    key={index}
-                                    className={[
-                                        'aspect-square flex items-center justify-center rounded-lg',
-                                        'text-[13px] font-bold transition-transform duration-100 cursor-default',
-                                        'max-[768px]:text-xs',
-                                        date
-                                            ? `hover:scale-105 ${calStateClasses[date.state] ?? calStateClasses.default}`
-                                            : 'bg-transparent',
-                                    ].join(' ')}
-                                >
-                                    {date ? date.day : ''}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-                {/* ── 6. PINNED ANNOUNCEMENTS ── */}
-                <div className={`${cardCls} col-span-1 min-h-[280px]`}>
-                    <h3 className={cardHeaderCls}>PINNED ANNOUNCEMENTS</h3>
-                    <div className="flex-1 overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded">
-                        {upcomingEvents.length > 0 ? (
-                            <div className="flex flex-col gap-2.5">
-                                {upcomingEvents.map(ev => (
+                    {/* 3. ATTENDANCE CALENDAR -> MOBILE POSITION: 4 */}
+                    <div className={`${cardCls} w-full flex-1 max-[768px]:order-4 max-[768px]:flex-none`}>
+                        <h3 className={cardHeaderCls}>ATTENDANCE — THIS MONTH</h3>
+                        <div className="w-full flex flex-col flex-1">
+                            <div className="grid grid-cols-7 gap-1.5 mb-3 text-center">
+                                {daysOfWeek.map(day => (
+                                    <div key={day} className="text-[12px] font-extrabold text-slate-400 uppercase max-[768px]:text-[10px]">
+                                        {day}
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="grid grid-cols-7 gap-1.5">
+                                {calendarDays.map((date, index) => (
                                     <div
-                                        key={ev.id}
+                                        key={index}
                                         className={[
-                                            'flex items-start gap-2.5 p-2.5 rounded-lg cursor-pointer',
-                                            'bg-slate-50 border border-transparent',
-                                            'transition-all duration-200 ease-in-out',
-                                            'hover:bg-blue-50 hover:border-blue-200 hover:-translate-y-px',
+                                            'aspect-square flex items-center justify-center rounded-lg',
+                                            'text-[13px] font-bold transition-transform duration-100 cursor-default',
+                                            'max-[768px]:text-xs',
+                                            date
+                                                ? `hover:scale-105 ${calStateClasses[date.state] ?? calStateClasses.default}`
+                                                : 'bg-transparent',
                                         ].join(' ')}
-                                        onClick={() => handleOpenAnnouncement(ev)}
                                     >
-                                        <div className="flex items-center justify-center pt-0.5">
-                                            <span className="text-[#0B1EAE] font-extrabold text-base leading-none">•</span>
-                                        </div>
-                                        <span className="text-[13px] text-slate-800 font-semibold leading-relaxed line-clamp-3">
-                                            {ev.title}
-                                        </span>
+                                        {date ? date.day : ''}
                                     </div>
                                 ))}
                             </div>
-                        ) : (
-                            <div className="flex flex-col items-center justify-center text-slate-400 text-sm py-10 px-5 text-center h-full">
-                                <div className="mb-3 text-slate-300"><Inbox size={28} /></div>
-                                <p>No pinned announcements</p>
-                            </div>
-                        )}
+                        </div>
                     </div>
+
                 </div>
 
-                {/* ── 7. RECENT TIME LOGS ── */}
-                <div className={`${cardCls} col-span-1 min-h-[280px]`}>
-                    <h3 className={cardHeaderCls}>RECENT TIME LOGS</h3>
-                    <div className="flex-1 overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded">
-                        {timeLogs.length > 0 ? (
-                            <div className="flex flex-col relative pl-1.5">
-                                {timeLogs.map((log, index) => (
-                                    <div key={log.id} className="flex gap-4 relative pb-5 last:pb-0">
-                                        {/* Visuals */}
-                                        <div className="flex flex-col items-center w-3">
-                                            <div className={[
-                                                'w-3 h-3 rounded-full z-[2] flex-shrink-0 border-2 border-white mt-1',
-                                                log.type === 'in'
-                                                    ? 'bg-[#0B1EAE] shadow-[0_0_0_2px_#bfdbfe]'
-                                                    : 'bg-slate-400 shadow-[0_0_0_2px_#cbd5e1]',
-                                            ].join(' ')} />
-                                            {index !== timeLogs.length - 1 && (
-                                                <div className="w-0.5 bg-slate-200 flex-1 mt-1" />
-                                            )}
-                                        </div>
-                                        {/* Content */}
-                                        <div className="flex flex-col gap-1">
-                                            <h4 className="m-0 text-sm font-bold text-slate-900">{log.title}</h4>
-                                            <p className="m-0 text-xs text-slate-500 font-medium">{log.displayTime}</p>
-                                        </div>
+                {/* ── RIGHT COLUMN ── */}
+                <div className="col-span-2 flex flex-col gap-[5px] w-full h-full max-[768px]:contents">
+                    
+                    {/* Top Row: Days Present & Hours Rendered -> MOBILE POSITION: 3 */}
+                    <div className="grid grid-cols-2 gap-[5px] max-[768px]:order-3">
+                        {/* 4. DAYS PRESENT */}
+                        <div className={`${cardCls} !p-4 h-fit`}>
+                            <h3 className={`${cardHeaderCls} !mb-2`}>DAYS PRESENT</h3>
+                            <div className="flex flex-col justify-center mb-2">
+                                <div className="flex items-baseline gap-1.5">
+                                    <span className="text-[42px] sm:text-[46px] font-extrabold leading-none tracking-[-2px] text-[#0B1EAE]">
+                                        {internStats.weekDaysPresent}
+                                    </span>
+                                    <span className="text-sm text-slate-500 font-bold">days</span>
+                                </div>
+                                <p className="text-[11px] sm:text-[12px] text-slate-400 mt-1 mb-0 font-semibold">this week</p>
+                            </div>
+                            <div className="px-2 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold text-center mt-2 w-full bg-amber-50 text-amber-700 border border-amber-100 truncate">
+                                <span className="hidden sm:inline">Week just started</span>
+                                <span className="sm:hidden">Week started</span>
+                            </div>
+                        </div>
+
+                        {/* 5. HOURS RENDERED */}
+                        <div className={`${cardCls} !p-4 h-fit`}>
+                            <h3 className={`${cardHeaderCls} !mb-2`}>HOURS RENDERED</h3>
+                            <div className="flex flex-col justify-center mb-2">
+                                <div className="flex items-baseline gap-1.5">
+                                    <span className="text-[42px] sm:text-[46px] font-extrabold leading-none tracking-[-2px] text-yellow-500">
+                                        {internStats.weekHoursRendered}
+                                    </span>
+                                    <span className="text-sm text-slate-500 font-bold">h</span>
+                                </div>
+                                <p className="text-[11px] sm:text-[12px] text-slate-400 mt-1 mb-0 font-semibold">this week</p>
+                            </div>
+                            <div className="px-2 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold text-center mt-2 w-full bg-blue-50 text-blue-800 border border-blue-100 truncate">
+                                <span className="hidden sm:inline">{displayHours}h total logged</span>
+                                <span className="sm:hidden">{displayHours}h logged</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Bottom Row: Pinned Announcements & Recent Time Logs -> MOBILE POSITION: 5 */}
+                    <div className="grid grid-cols-2 gap-[5px] max-[768px]:grid-cols-1 flex-1 max-[768px]:order-5 max-[768px]:flex-none">
+                        
+                        {/* 6. PINNED ANNOUNCEMENTS */}
+                        <div className={`${cardCls} min-h-[280px] w-full h-full`}>
+                            <h3 className={cardHeaderCls}>PINNED ANNOUNCEMENTS</h3>
+                            <div className="flex-1 overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded">
+                                {upcomingEvents.length > 0 ? (
+                                    <div className="flex flex-col gap-2.5">
+                                        {upcomingEvents.map(ev => (
+                                            <div
+                                                key={ev.id}
+                                                className={[
+                                                    'flex items-start gap-2.5 p-2.5 rounded-lg cursor-pointer',
+                                                    'bg-slate-50 border border-transparent',
+                                                    'transition-all duration-200 ease-in-out',
+                                                    'hover:bg-blue-50 hover:border-blue-200 hover:-translate-y-px',
+                                                ].join(' ')}
+                                                onClick={() => handleOpenAnnouncement(ev)}
+                                            >
+                                                <div className="flex items-center justify-center pt-0.5">
+                                                    <span className="text-[#0B1EAE] font-extrabold text-base leading-none">•</span>
+                                                </div>
+                                                <span className="text-[13px] text-slate-800 font-semibold leading-relaxed line-clamp-3">
+                                                    {ev.title}
+                                                </span>
+                                            </div>
+                                        ))}
                                     </div>
-                                ))}
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center text-slate-400 text-sm py-10 px-5 text-center h-full">
+                                        <div className="mb-3 text-slate-300"><Inbox size={28} /></div>
+                                        <p>No pinned announcements</p>
+                                    </div>
+                                )}
                             </div>
-                        ) : (
-                            <div className="flex flex-col items-center justify-center text-slate-400 text-sm py-10 px-5 text-center h-full">
-                                <div className="mb-3 text-slate-300"><Clock size={28} /></div>
-                                <p>No recent logs for this week.</p>
+                        </div>
+
+                        {/* 7. RECENT TIME LOGS */}
+                        <div className={`${cardCls} min-h-[280px] w-full h-full`}>
+                            <h3 className={cardHeaderCls}>RECENT TIME LOGS</h3>
+                            <div className="flex-1 overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded">
+                                {timeLogs.length > 0 ? (
+                                    <div className="flex flex-col relative pl-1.5">
+                                        {timeLogs.map((log, index) => (
+                                            <div key={log.id} className="flex gap-4 relative pb-5 last:pb-0">
+                                                {/* Visuals */}
+                                                <div className="flex flex-col items-center w-3">
+                                                    <div className={[
+                                                        'w-3 h-3 rounded-full z-[2] flex-shrink-0 border-2 border-white mt-1',
+                                                        log.type === 'in'
+                                                            ? 'bg-[#0B1EAE] shadow-[0_0_0_2px_#bfdbfe]'
+                                                            : 'bg-slate-400 shadow-[0_0_0_2px_#cbd5e1]',
+                                                    ].join(' ')} />
+                                                    {index !== timeLogs.length - 1 && (
+                                                        <div className="w-0.5 bg-slate-200 flex-1 mt-1" />
+                                                    )}
+                                                </div>
+                                                {/* Content */}
+                                                <div className="flex flex-col gap-1">
+                                                    <h4 className="m-0 text-sm font-bold text-slate-900">{log.title}</h4>
+                                                    <p className="m-0 text-xs text-slate-500 font-medium">{log.displayTime}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center text-slate-400 text-sm py-10 px-5 text-center h-full">
+                                        <div className="mb-3 text-slate-300"><Clock size={28} /></div>
+                                        <p>No recent logs for this week.</p>
+                                    </div>
+                                )}
                             </div>
-                        )}
+                        </div>
+
                     </div>
                 </div>
 

@@ -41,8 +41,9 @@ interface DtrDay {
     hours: string;
 }
 
-type FilterValue = 'all' | 'present' | 'absent' | 'late';
-type DotColor = 'green' | 'red' | 'orange' | null;
+// ✨ CHANGED: Added 'blue' to DotColor
+type FilterValue = 'all' | 'present' | 'absent' | 'late' | 'half day';
+type DotColor = 'green' | 'red' | 'orange' | 'blue' | null;
 
 interface FilterOption {
     label: string;
@@ -50,11 +51,13 @@ interface FilterOption {
     dot: DotColor;
 }
 
+// ✨ CHANGED: Half Day dot is now 'blue'
 const FILTERS: FilterOption[] = [
-    { label: 'All',     value: 'all',     dot: null },
-    { label: 'Present', value: 'present', dot: 'green' },
-    { label: 'Absent',  value: 'absent',  dot: 'red' },
-    { label: 'Late',    value: 'late',    dot: 'orange' },
+    { label: 'All',      value: 'all',      dot: null },
+    { label: 'Present',  value: 'present',  dot: 'green' },
+    { label: 'Half Day', value: 'half day', dot: 'blue' },
+    { label: 'Absent',   value: 'absent',   dot: 'red' },
+    { label: 'Late',     value: 'late',     dot: 'orange' },
 ];
 
 const Logs: React.FC = () => {
@@ -122,23 +125,27 @@ const Logs: React.FC = () => {
         return null;
     };
 
+    // ✨ CHANGED: Half Day now returns blue styling
     const getStatusClass = (status?: string): string => {
         switch (status?.toLowerCase()) {
-            case 'present': return 'bg-green-600/10 text-green-600';
-            case 'late':    return 'bg-amber-600/10 text-amber-600';
-            case 'absent':  return 'bg-red-600/10 text-red-600';
-            case 'leave':   return 'bg-blue-600/10 text-blue-600';
-            default:        return 'bg-slate-500/10 text-slate-500';
+            case 'present':  return 'bg-green-600/10 text-green-600';
+            case 'half day': return 'bg-blue-600/10 text-blue-600';
+            case 'late':     return 'bg-amber-600/10 text-amber-600';
+            case 'absent':   return 'bg-red-600/10 text-red-600';
+            case 'leave':    return 'bg-blue-600/10 text-blue-600';
+            default:         return 'bg-slate-500/10 text-slate-500';
         }
     };
 
+    // ✨ CHANGED: Half Day dot is now blue
     const getDotClass = (status?: string): string => {
          switch (status?.toLowerCase()) {
-            case 'present': return 'bg-green-600';
-            case 'late':    return 'bg-amber-600';
-            case 'absent':  return 'bg-red-600';
-            case 'leave':   return 'bg-blue-600';
-            default:        return 'bg-slate-500';
+            case 'present':  return 'bg-green-600';
+            case 'half day': return 'bg-blue-600';
+            case 'late':     return 'bg-amber-600';
+            case 'absent':   return 'bg-red-600';
+            case 'leave':    return 'bg-blue-600';
+            default:         return 'bg-slate-500';
         }
     }
 
@@ -165,6 +172,7 @@ const Logs: React.FC = () => {
         const h = parseFloat(getDailyHours(log) || '0');
         if (isNaN(h) || h === 0) return 'text-red-600';
         if (log.status?.toLowerCase() === 'leave') return 'text-blue-600';
+        if (log.status?.toLowerCase() === 'half day') return 'text-blue-600'; 
         if (h < 8) return 'text-amber-600';
         return 'text-green-600';
     };
@@ -193,8 +201,9 @@ const Logs: React.FC = () => {
         const presentDays = logs.filter(l => l.status?.toLowerCase() === 'present').length;
         const absences    = logs.filter(l => l.status?.toLowerCase() === 'absent').length;
         const late        = logs.filter(l => l.status?.toLowerCase() === 'late').length;
+        const halfDays    = logs.filter(l => l.status?.toLowerCase() === 'half day').length;
         const totalHours  = logs.reduce((acc, l) => acc + parseFloat(getDailyHours(l) || '0'), 0);
-        return { presentDays, totalHours, absences, late };
+        return { presentDays, totalHours, absences, late, halfDays };
     }, [logs]);
 
     const filteredLogs = useMemo(() => {
@@ -343,33 +352,68 @@ const Logs: React.FC = () => {
     }
 
     return (
-        <div className="bg-slate-100 min-h-screen font-sans flex flex-col gap-[5px]">
+        <div className="bg-slate-100 min-h-screen font-sans flex flex-col gap-[5px] p-[12px]">
             <Toaster position="top-right" />
 
-            <PageHeader title="Attendance History" onExportDTR={() => setShowDtrPreview(true)} />
+            <style>{`
+                @keyframes shine {
+                    0% { left: -150%; }
+                    60% { left: 200%; }
+                    100% { left: 200%; }
+                }
+                .animate-shine {
+                    position: relative;
+                    overflow: hidden; 
+                }
+                .animate-shine::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: -150%;
+                    width: 50%;
+                    height: 100%;
+                    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+                    transform: skewX(-20deg); 
+                    animation: shine 5s ease-in-out infinite; 
+                    pointer-events: none; 
+                }
+            `}</style>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-[5px]">
-                <div className="bg-white border border-slate-200 rounded-[14px] p-5 md:px-6 flex flex-col gap-1 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
-                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-[0.8px]">This Month</span>
-                    <span className="text-[30px] font-extrabold leading-none text-green-600">{stats.presentDays}</span>
-                    <span className="text-[12px] text-slate-400 mt-[2px]">days present</span>
+            <PageHeader title="Attendance History" />
+
+            <div 
+                className="flex overflow-x-auto gap-[5px] pb-1 snap-x snap-mandatory" 
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+                <div className="bg-white border border-slate-200 rounded-[14px] p-4 md:p-5 md:px-6 flex flex-col gap-1 shadow-[0_1px_3px_rgba(0,0,0,0.05)] min-w-[130px] flex-1 shrink-0 snap-start">
+                    <span className="text-[10px] md:text-[11px] font-semibold text-slate-400 uppercase tracking-[0.8px]">This Month</span>
+                    <span className="text-[24px] md:text-[30px] font-extrabold leading-none text-green-600">{stats.presentDays}</span>
+                    <span className="text-[11px] md:text-[12px] text-slate-400 mt-[2px]">days present</span>
                 </div>
-                <div className="bg-white border border-slate-200 rounded-[14px] p-5 md:px-6 flex flex-col gap-1 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
-                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-[0.8px]">Total Hours</span>
-                    <span className="text-[30px] font-extrabold leading-none text-blue-600">
-                        {stats.totalHours.toFixed(0)}<span className="text-[16px] font-semibold">h</span>
+                
+                {/* ✨ ADDED: Half Days Summary Card ✨ */}
+                <div className="bg-white border border-slate-200 rounded-[14px] p-4 md:p-5 md:px-6 flex flex-col gap-1 shadow-[0_1px_3px_rgba(0,0,0,0.05)] min-w-[130px] flex-1 shrink-0 snap-start">
+                    <span className="text-[10px] md:text-[11px] font-semibold text-slate-400 uppercase tracking-[0.8px]">Half Days</span>
+                    <span className="text-[24px] md:text-[30px] font-extrabold leading-none text-blue-500">{stats.halfDays}</span>
+                    <span className="text-[11px] md:text-[12px] text-slate-400 mt-[2px]">this month</span>
+                </div>
+
+                <div className="bg-white border border-slate-200 rounded-[14px] p-4 md:p-5 md:px-6 flex flex-col gap-1 shadow-[0_1px_3px_rgba(0,0,0,0.05)] min-w-[130px] flex-1 shrink-0 snap-start">
+                    <span className="text-[10px] md:text-[11px] font-semibold text-slate-400 uppercase tracking-[0.8px]">Total Hours</span>
+                    <span className="text-[24px] md:text-[30px] font-extrabold leading-none text-blue-600">
+                        {stats.totalHours.toFixed(0)}<span className="text-[14px] md:text-[16px] font-semibold">h</span>
                     </span>
-                    <span className="text-[12px] text-slate-400 mt-[2px]">logged</span>
+                    <span className="text-[11px] md:text-[12px] text-slate-400 mt-[2px]">logged</span>
                 </div>
-                <div className="bg-white border border-slate-200 rounded-[14px] p-5 md:px-6 flex flex-col gap-1 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
-                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-[0.8px]">Absences</span>
-                    <span className="text-[30px] font-extrabold leading-none text-red-600">{stats.absences}</span>
-                    <span className="text-[12px] text-slate-400 mt-[2px]">this month</span>
+                <div className="bg-white border border-slate-200 rounded-[14px] p-4 md:p-5 md:px-6 flex flex-col gap-1 shadow-[0_1px_3px_rgba(0,0,0,0.05)] min-w-[130px] flex-1 shrink-0 snap-start">
+                    <span className="text-[10px] md:text-[11px] font-semibold text-slate-400 uppercase tracking-[0.8px]">Absences</span>
+                    <span className="text-[24px] md:text-[30px] font-extrabold leading-none text-red-600">{stats.absences}</span>
+                    <span className="text-[11px] md:text-[12px] text-slate-400 mt-[2px]">this month</span>
                 </div>
-                <div className="bg-white border border-slate-200 rounded-[14px] p-5 md:px-6 flex flex-col gap-1 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
-                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-[0.8px]">Late</span>
-                    <span className="text-[30px] font-extrabold leading-none text-amber-600">{stats.late}</span>
-                    <span className="text-[12px] text-slate-400 mt-[2px]">this month</span>
+                <div className="bg-white border border-slate-200 rounded-[14px] p-4 md:p-5 md:px-6 flex flex-col gap-1 shadow-[0_1px_3px_rgba(0,0,0,0.05)] min-w-[130px] flex-1 shrink-0 snap-start">
+                    <span className="text-[10px] md:text-[11px] font-semibold text-slate-400 uppercase tracking-[0.8px]">Late</span>
+                    <span className="text-[24px] md:text-[30px] font-extrabold leading-none text-amber-600">{stats.late}</span>
+                    <span className="text-[11px] md:text-[12px] text-slate-400 mt-[2px]">this month</span>
                 </div>
             </div>
 
@@ -381,7 +425,13 @@ const Logs: React.FC = () => {
                             className={`bg-white border-[1.5px] border-slate-200 rounded-lg text-slate-500 text-[13px] font-semibold py-[7px] px-4 cursor-pointer transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:border-slate-300 hover:text-slate-900 hover:bg-slate-50 ${activeFilter === f.value ? '!bg-slate-900 !border-slate-900 !text-white' : ''}`}
                             onClick={() => setActiveFilter(f.value)}
                         >
-                            {f.dot && <span className={`w-[7px] h-[7px] rounded-full shrink-0 ${f.value === 'present' ? 'bg-green-600' : f.value === 'absent' ? 'bg-red-600' : 'bg-amber-600'}`} />}
+                            {/* ✨ CHANGED: Half Day now maps to blue-600 in the filters */}
+                            {f.dot && <span className={`w-[7px] h-[7px] rounded-full shrink-0 ${
+                                f.value === 'present' ? 'bg-green-600' :
+                                f.value === 'absent' ? 'bg-red-600' :
+                                f.value === 'late' ? 'bg-amber-600' :
+                                f.value === 'half day' ? 'bg-blue-600' : 'bg-slate-500'
+                            }`} />}
                             {f.label}
                         </button>
                     ))}
@@ -398,7 +448,7 @@ const Logs: React.FC = () => {
                             onChange={e => setSearchDate(e.target.value)}
                         />
                     </div>
-                    <button className="flex shrink-0 items-center gap-2 bg-[#0B1EAE] text-white text-[13px] font-semibold px-4 h-[38px] rounded-lg border-none cursor-pointer transition-all duration-200 shadow-[0_2px_4px_rgba(11,30,174,0.2)] hover:bg-[#081682] hover:-translate-y-px hover:shadow-[0_4px_8px_rgba(11,30,174,0.3)]" onClick={() => setShowDtrPreview(true)}>
+                    <button className="flex shrink-0 items-center gap-2 bg-yellow-500 text-white text-[13px] font-semibold px-4 h-[38px] rounded-lg border-none cursor-pointer transition-all duration-200 shadow-[0_2px_4px_rgba(234,179,8,0.3)] hover:bg-yellow-600 hover:-translate-y-px hover:shadow-[0_4px_8px_rgba(234,179,8,0.4)]" onClick={() => setShowDtrPreview(true)}>
                         <FileText size={16} /> Preview DTR
                     </button>
                 </div>
@@ -407,15 +457,18 @@ const Logs: React.FC = () => {
             <div className="bg-white border border-slate-200 rounded-[14px] overflow-hidden flex-1 shadow-[0_1px_4px_rgba(0,0,0,0.06)] overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[800px]">
                     <thead>
-                        <tr className="bg-yellow-400 border-b-2 border-yellow-500">
-                            <th className="py-3.5 px-5 text-slate-900 font-bold text-[12px] tracking-[0.9px] uppercase">Date</th>
-                            <th className="py-3.5 px-5 text-slate-900 font-bold text-[12px] tracking-[0.9px] uppercase">Time In</th>
-                            <th className="py-3.5 px-5 text-slate-900 font-bold text-[12px] tracking-[0.9px] uppercase">Lunch Out</th>
-                            <th className="py-3.5 px-5 text-slate-900 font-bold text-[12px] tracking-[0.9px] uppercase">Lunch In</th>
-                            <th className="py-3.5 px-5 text-slate-900 font-bold text-[12px] tracking-[0.9px] uppercase">Time Out</th>
-                            <th className="py-3.5 px-5 text-slate-900 font-bold text-[12px] tracking-[0.9px] uppercase">Hours</th>
-                            <th className="py-3.5 px-5 text-slate-900 font-bold text-[12px] tracking-[0.9px] uppercase">Status</th>
-                            <th className="py-3.5 px-5" />
+                        <tr 
+                            className="animate-shine"
+                            style={{ background: 'linear-gradient(90deg, #0B1EAE 0%, #152286 23.56%, #0D1767 63.46%, #050C48 100%)' }}
+                        >
+                            <th className="py-3.5 px-5 text-white font-bold text-[12px] tracking-[0.9px] uppercase relative z-10">Date</th>
+                            <th className="py-3.5 px-5 text-white font-bold text-[12px] tracking-[0.9px] uppercase relative z-10">Time In</th>
+                            <th className="py-3.5 px-5 text-white font-bold text-[12px] tracking-[0.9px] uppercase relative z-10">Lunch Out</th>
+                            <th className="py-3.5 px-5 text-white font-bold text-[12px] tracking-[0.9px] uppercase relative z-10">Lunch In</th>
+                            <th className="py-3.5 px-5 text-white font-bold text-[12px] tracking-[0.9px] uppercase relative z-10">Time Out</th>
+                            <th className="py-3.5 px-5 text-white font-bold text-[12px] tracking-[0.9px] uppercase relative z-10">Hours</th>
+                            <th className="py-3.5 px-5 text-white font-bold text-[12px] tracking-[0.9px] uppercase relative z-10">Status</th>
+                            <th className="py-3.5 px-5 relative z-10" />
                         </tr>
                     </thead>
                     <tbody>
@@ -602,7 +655,7 @@ const Logs: React.FC = () => {
                         </div>
 
                         <div className="flex justify-center gap-4 p-4 bg-white border-t border-slate-300 z-10 shrink-0">
-                            <button className="bg-yellow-500 text-white border-none py-2 px-8 rounded-md font-bold cursor-pointer transition-opacity hover:opacity-90" onClick={() => setShowDtrPreview(false)}>
+                            <button className="bg-slate-200 text-slate-700 border-none py-2 px-8 rounded-md font-bold cursor-pointer transition-opacity hover:bg-slate-300" onClick={() => setShowDtrPreview(false)}>
                                 Cancel
                             </button>
                             <button className="bg-slate-900 text-white border-none py-2 px-8 rounded-md font-bold cursor-pointer transition-opacity hover:opacity-90 disabled:bg-slate-400 disabled:cursor-not-allowed disabled:opacity-100" onClick={handleDownloadPdf} disabled={isGeneratingPdf}>

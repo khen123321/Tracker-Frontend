@@ -3,12 +3,15 @@ import api from '../api/axios';
 import { AlertTriangle, X, CheckCircle, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+// ✨ REDUX IMPORTS ✨
+import { useSelector } from 'react-redux';
+import { RootState } from '../store';
+
 import CustomBellIcon from './icons/CustomBellIcon';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface NotificationBellProps {
-    role?: string;
     onNotificationClick?: (id?: number | string) => void;
 }
 
@@ -31,15 +34,18 @@ interface NotificationItem {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const NotificationBell: React.FC<NotificationBellProps> = ({
-    role = 'intern',
     onNotificationClick,
 }) => {
+    // ✨ THE FIX: Pull the user's role straight from Redux
+    const { user } = useSelector((state: RootState) => state.auth);
+    const role = user?.role?.toLowerCase() || 'intern'; // Default fallback
+    const isHR = role === 'hr' || role === 'superadmin';
+
     const [notifications, setNotifications] = useState<NotificationItem[]>([]);
     const [unreadCount, setUnreadCount] = useState<number>(0);
     const [isOpen, setIsOpen] = useState<boolean>(false);
 
     const navigate = useNavigate();
-    const isHR = role === 'hr';
 
     useEffect(() => {
         let isMounted = true;
@@ -81,7 +87,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
             isMounted = false;
             clearInterval(interval);
         };
-    }, [isHR, role]);
+    }, [isHR, role]); // Depend on the Redux derived values
 
     const handleToggle = (): void => setIsOpen(!isOpen);
 

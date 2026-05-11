@@ -137,16 +137,42 @@ const Forms: React.FC = () => {
     const ActiveIcon = tabs.find(t => t.id === activeTab)?.icon || XCircle;
 
     return (
-        <div className="bg-slate-100 min-h-screen font-sans flex flex-col gap-[5px]">
+        // ✨ Added p-[12px] padding to the main wrapper
+        <div className="bg-slate-100 min-h-screen font-sans flex flex-col gap-[5px] p-[12px]">
             <Toaster position="top-right" />
             
+            {/* ✨ Animation styles for the shiny tabs */}
+            <style>{`
+                @keyframes shine {
+                    0% { left: -150%; }
+                    60% { left: 200%; }
+                    100% { left: 200%; }
+                }
+                .animate-shine {
+                    position: relative;
+                    overflow: hidden; 
+                }
+                .animate-shine::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: -150%;
+                    width: 50%;
+                    height: 100%;
+                    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+                    transform: skewX(-20deg); 
+                    animation: shine 5s ease-in-out infinite; 
+                    pointer-events: none; 
+                }
+            `}</style>
+
             {/* ✨ PageHeader Component Included Here ✨ */}
             <PageHeader title="Forms & Requests" />
 
             {/* Main Form Card */}
             <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-6 md:p-8 border border-slate-200">
                 
-                {/* Icon Card Tabs */}
+                {/* ✨ Icon Card Tabs (Now with Blue Gradient and Shine) ✨ */}
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
                     {tabs.map((tab) => (
                         <button
@@ -159,19 +185,21 @@ const Forms: React.FC = () => {
                             }}
                             className={`flex flex-col items-center justify-center p-4 rounded-[14px] border-2 cursor-pointer transition-all duration-200 last:col-span-2 md:last:col-span-1 ${
                                 activeTab === tab.id 
-                                    ? 'border-yellow-500 bg-yellow-50 text-yellow-800' 
+                                    ? 'border-transparent text-white animate-shine shadow-md' 
                                     : 'border-slate-200 bg-white text-slate-400 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-500'
                             }`}
+                            style={activeTab === tab.id ? { background: 'linear-gradient(90deg, #0B1EAE 0%, #152286 23.56%, #0D1767 63.46%, #050C48 100%)' } : {}}
                         >
-                            <tab.icon className={`mb-2 transition-colors duration-200 ${activeTab === tab.id ? 'text-yellow-600' : ''}`} size={24} />
-                            <span className="text-[12px] font-bold uppercase tracking-[0.5px]">{tab.label}</span>
+                            <tab.icon className={`mb-2 relative z-10 transition-colors duration-200 ${activeTab === tab.id ? 'text-white' : ''}`} size={24} />
+                            <span className="text-[12px] font-bold uppercase tracking-[0.5px] relative z-10">{tab.label}</span>
                         </button>
                     ))}
                 </div>
 
                 {/* Dynamic Form Header */}
                 <div className="flex items-center gap-4 pb-6 border-b border-slate-100 mb-6">
-                    <div className="p-3 bg-yellow-50 text-yellow-600 rounded-full flex items-center justify-center shrink-0">
+                    {/* Updated this icon background to match the blue theme */}
+                    <div className="p-3 bg-blue-50 text-[#0B1EAE] rounded-full flex items-center justify-center shrink-0">
                         <ActiveIcon size={28} />
                     </div>
                     <div>

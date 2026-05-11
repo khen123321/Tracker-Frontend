@@ -3,6 +3,10 @@ import api from '../../api/axios';
 import { Search, AlertCircle, ChevronDown } from 'lucide-react';
 import PageHeader from '../../components/layout/PageHeader';
 
+// ✨ REDUX IMPORTS
+import { useAppDispatch } from '../../store/hooks';
+import { openProfile } from '../../store/ui/drawerReducer';
+
 // ─── TYPES ───────────────────────────────────────────────────
 interface AttendanceLog {
   status?: string;
@@ -17,6 +21,7 @@ interface Intern {
   department?: { name: string };
   school?: { name: string };
   required_hours?: number;
+  avatar_url?: string;
 }
 
 interface InternUser {
@@ -24,12 +29,15 @@ interface InternUser {
   first_name: string;
   last_name: string;
   email?: string;
+  created_at?: string; // ✨ THE FIX: Added created_at to the interface
   attendance_logs?: AttendanceLog[];
   attendance_logs_sum_hours_rendered?: number;
   intern?: Intern;
   department?: { name: string };
   school?: { name: string } | string;
   assigned_department?: string;
+  profile_picture?: string;
+  profile?: { avatar_url?: string };
 }
 
 interface Stats {
@@ -69,6 +77,9 @@ const TimeTracker: React.FC = () => {
   const [deptFilter, setDeptFilter] = useState('All');
   const [schoolFilter, setSchoolFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
+
+  // ✨ INITIALIZE REDUX DISPATCH
+  const dispatch = useAppDispatch();
 
   const formatTime = (timeString?: string): string => {
     if (!timeString) return '-----';
@@ -132,7 +143,20 @@ const TimeTracker: React.FC = () => {
   }, [interns]);
 
   const processedInterns = useMemo(() => {
+    // ✨ THE FIX: Convert selectedDate to end of day to check creation dates safely
+    const selectedDateObj = new Date(selectedDate);
+    selectedDateObj.setHours(23, 59, 59, 999);
+
     return interns.filter(user => {
+      // 1. Time Travel Check: Hide interns if their account wasn't created yet
+      if (user.created_at) {
+        const accountCreatedDate = new Date(user.created_at);
+        if (accountCreatedDate > selectedDateObj) {
+          return false; 
+        }
+      }
+
+      // 2. Normal Filtering Logic
       const log = user.attendance_logs?.[0];
       const name = `${user.first_name} ${user.last_name}`.toLowerCase();
       const email = (user.email || '').toLowerCase();
@@ -147,7 +171,7 @@ const TimeTracker: React.FC = () => {
 
       return matchesSearch && matchesDept && matchesSchool && matchesStatus;
     });
-  }, [interns, searchTerm, deptFilter, schoolFilter, statusFilter]);
+  }, [interns, searchTerm, deptFilter, schoolFilter, statusFilter, selectedDate]); // ✨ Added selectedDate as dependency
 
   const getStatusMeta = (status?: string): { label: string; cls: string } => {
     const normalized = status?.toLowerCase() || 'absent';
@@ -202,14 +226,12 @@ const TimeTracker: React.FC = () => {
             </div>
           </div>
 
-          {/* Skeleton thead */}
           <div className="flex items-center gap-3 px-[14px] py-3 border-b border-[#f1f5f9] bg-[#f8fafc]">
             {[140, 80, 80, 80, 80, 70, 70, 100].map((w, i) => (
               <Sk key={i} w={w} h={11} />
             ))}
           </div>
 
-          {/* Skeleton rows */}
           {[...Array(6)].map((_, i) => (
             <div key={i} className="flex items-center gap-3 px-[14px] py-[14px] border-b border-[#f1f5f9] last:border-b-0">
               <div className="flex items-center gap-[10px] flex-[2] min-w-[140px]">
@@ -261,7 +283,6 @@ const TimeTracker: React.FC = () => {
 
       {/* Filters Row */}
       <div className="flex items-center gap-[5px] max-[640px]:flex-col max-[640px]:items-stretch">
-        {/* Date input */}
         <div className="relative flex items-center flex-1">
           <input
             type="date"
@@ -271,7 +292,6 @@ const TimeTracker: React.FC = () => {
           />
         </div>
 
-        {/* Dept filter */}
         <div className="relative flex items-center flex-1">
           <select
             value={deptFilter}
@@ -285,7 +305,6 @@ const TimeTracker: React.FC = () => {
           <ChevronDown size={13} className="absolute right-[10px] text-[#94a3b8] pointer-events-none" />
         </div>
 
-        {/* School filter */}
         <div className="relative flex items-center flex-1">
           <select
             value={schoolFilter}
@@ -299,7 +318,6 @@ const TimeTracker: React.FC = () => {
           <ChevronDown size={13} className="absolute right-[10px] text-[#94a3b8] pointer-events-none" />
         </div>
 
-        {/* Status filter */}
         <div className="relative flex items-center flex-1">
           <select
             value={statusFilter}
@@ -316,7 +334,6 @@ const TimeTracker: React.FC = () => {
 
       {/* Table Section */}
       <div className="bg-white rounded-[10px] border border-[#e8eaf0] overflow-hidden">
-        {/* Table Header */}
         <div className="flex justify-between items-center p-3 border-b border-[#f1f5f9]">
           <h2 className="text-[16px] font-bold text-[#0f172a] m-0">List Of Interns</h2>
           <div className="relative">
@@ -360,6 +377,12 @@ const TimeTracker: React.FC = () => {
                   const required = user.intern?.required_hours || 0;
                   const percent  = required > 0 ? Math.min(Math.round((rendered / required) * 100), 100) : 0;
 
+                  // ✨ FIX: Smart Avatar URL generation perfectly synced
+                  const dbAvatar = user.profile?.avatar_url || user.profile_picture || user.intern?.avatar_url;
+                  const finalAvatarSrc = dbAvatar 
+                    ? (dbAvatar.startsWith('http') ? dbAvatar : `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/storage/${dbAvatar}`)
+                    : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.first_name + user.id}`;
+
                   return (
                     <tr
                       key={user.id}
@@ -367,16 +390,30 @@ const TimeTracker: React.FC = () => {
                     >
                       {/* Intern cell */}
                       <td className="px-3 py-3 text-[#334155] whitespace-nowrap">
-                        <div className="flex items-center gap-[10px]">
-                          <div className="w-[34px] h-[34px] rounded-full bg-[#e2e8f0] flex items-center justify-center text-[#64748b] flex-shrink-0 overflow-hidden">
+                        {/* ✨ SYNCED REDUX TRIGGER: Clickable Name/Avatar opens the Drawer */}
+                        <div 
+                          className="flex items-center gap-[10px] cursor-pointer group"
+                          onClick={() => {
+                            if (user.id) {
+                              dispatch(openProfile(user.id));
+                            } else {
+                              alert('Sync Error: Account ID missing.');
+                            }
+                          }}
+                          title="View Full Profile"
+                        >
+                          <div className="w-[34px] h-[34px] rounded-full bg-[#e2e8f0] flex items-center justify-center text-[#64748b] flex-shrink-0 overflow-hidden group-hover:ring-2 group-hover:ring-[#0B1EAE] transition-all">
                             <img
-                              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.first_name + user.id}`}
-                              alt="avatar"
+                              src={finalAvatarSrc}
+                              alt={`${user.first_name}'s avatar`}
                               className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.first_name + user.id}`;
+                              }}
                             />
                           </div>
                           <div>
-                            <p className="font-semibold text-[#0f172a] m-0 mb-[2px] text-[13px]">{user.first_name} {user.last_name}</p>
+                            <p className="font-semibold text-[#0f172a] m-0 mb-[2px] text-[13px] group-hover:text-[#0B1EAE] transition-colors">{user.first_name} {user.last_name}</p>
                             <p className="text-[11px] text-[#94a3b8] m-0">{user.email}</p>
                           </div>
                         </div>

@@ -5,7 +5,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { EventClickArg } from '@fullcalendar/core';
 import api from '../../api/axios';
-import { Calendar as CalendarIcon, Clock, MapPin, X, Info } from 'lucide-react';
+import { Clock, MapPin, X, Info } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -111,26 +111,18 @@ const InternCalendar: React.FC = () => {
     // ─── Render ────────────────────────────────────────────────────────────────
 
     return (
-        <div className="p-5 flex flex-col gap-5">
+        <div className="p-[12px] flex flex-col gap-[5px] bg-slate-50 min-h-screen">
 
             {/* Inject FullCalendar global overrides */}
             <style>{calendarGlobalStyles}</style>
 
             {/* ─── HEADER ─── */}
-            <div className="flex justify-between items-center bg-white px-6 py-6 rounded-xl border border-slate-200">
-                <div className="flex items-center gap-3">
-                    <div className="bg-[#0B1EAE]/10 p-2 rounded-lg">
-                        <CalendarIcon className="text-[#0B1EAE]" size={24} />
-                    </div>
-                    <div>
-                        <h1 className="text-2xl font-extrabold text-slate-900 m-0">Company Events</h1>
-                        <p className="text-slate-500 text-sm mt-0.5">View upcoming activities and deadlines.</p>
-                    </div>
-                </div>
+            <div className="flex justify-between items-center bg-white px-6 py-6 rounded-xl border border-slate-200 shadow-sm">
+                <h1 className="text-2xl font-extrabold text-slate-900 m-0">Company Events</h1>
             </div>
 
             {/* ─── CALENDAR CARD ─── */}
-            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05)]">
+            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05)] flex-1">
                 <FullCalendar
                     plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                     initialView="dayGridMonth"
@@ -157,7 +149,7 @@ const InternCalendar: React.FC = () => {
             {/* ─── EVENT DETAILS MODAL (Read-Only) ─── */}
             {selectedEvent && (
                 <div
-                    className="fixed inset-0 bg-slate-900/40 backdrop-blur-[4px] flex items-center justify-center z-[1000]"
+                    className="fixed inset-0 bg-slate-900/40 backdrop-blur-[4px] flex items-center justify-center z-[1000] p-4"
                     onClick={() => setSelectedEvent(null)}
                 >
                     <div

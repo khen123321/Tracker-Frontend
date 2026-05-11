@@ -8,6 +8,10 @@ import api from "../../api/axios";
 import toast, { Toaster } from 'react-hot-toast';
 import PageHeader from '../../components/layout/PageHeader';
 
+// ✨ REDUX IMPORTS
+import { useAppDispatch } from '../../store/hooks';
+import { openProfile } from '../../store/ui/drawerReducer';
+
 // ─── TYPES ───
 interface SkProps {
   w?: string;
@@ -24,8 +28,19 @@ interface RejectModal {
 
 interface AttendanceLog {
   id: number;
+  user_id?: number; 
   intern_name: string;
   department: string;
+  profile_picture?: string; 
+  avatar_url?: string;      
+  user?: {
+    profile_picture?: string;
+    profile?: { avatar_url?: string };
+    intern?: { avatar_url?: string };
+  };
+  intern?: {
+    avatar_url?: string;
+  };
   is_flagged: number;
   image_in: string | null;
   lunch_out_selfie: string | null;
@@ -129,6 +144,8 @@ export default function CameraVerification() {
     show: false, logId: null, slot: null, reason: ''
   });
 
+  const dispatch = useAppDispatch();
+
   const BACKEND_HOST = window.location.hostname;
   const STORAGE_URL  = `http://${BACKEND_HOST}:8000/storage/`;
 
@@ -203,6 +220,7 @@ export default function CameraVerification() {
     }
   };
 
+  // ✨ THE FUNCTION THAT STRIPS PUBLIC/ FROM LARAVEL URLS ✨
   const getImageUrl = (path: string | null): string | null => {
     if (!path) return null;
     let cleanPath = path.replace(/^public\//, '');
@@ -226,21 +244,15 @@ export default function CameraVerification() {
       <style>{customStyles}</style>
       <Toaster position="top-right" />
 
-      {/* ✨ PAGE HEADER */}
       <PageHeader title="Camera Verification" />
 
-      {/* ✨ UNIFIED CONTROLS & PRIVACY BOX */}
       <div className="bg-white rounded-[10px] border border-[#e8eaf0] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col gap-4">
-
-        {/* Top Row: Subtitle & Filters */}
         <div className="flex justify-between items-center flex-wrap gap-4">
           <p className="m-0 text-slate-500 text-sm">
             Inspect individual selfies and manage 3-strike rejections.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center w-full sm:w-auto">
-
-            {/* Search */}
             <div className="relative flex items-center w-full sm:w-auto">
               <Search size={18} className="absolute left-3 text-slate-400" />
               <input
@@ -270,7 +282,6 @@ export default function CameraVerification() {
           </div>
         </div>
 
-        {/* Bottom Row: Privacy Banner */}
         <div className="flex items-center justify-between bg-blue-50 border border-blue-200 px-4 py-3 rounded-lg text-blue-900 text-sm">
           <div className="flex items-center gap-2">
             <Info size={18} color="#3b82f6" />
@@ -288,7 +299,6 @@ export default function CameraVerification() {
         </div>
       </div>
 
-      {/* ✨ LIST OR EMPTY STATE */}
       {loading ? (
         <div className="flex flex-col gap-[5px] w-full">
           {[1, 2, 3].map(i => (
@@ -311,6 +321,19 @@ export default function CameraVerification() {
         <div className="flex flex-col gap-[5px] w-full">
           {displayedLogs.map(log => {
             const isExpanded = expandedLogId === log.id;
+            
+            const dbAvatar = 
+              log.profile_picture || 
+              log.avatar_url || 
+              log.user?.profile?.avatar_url || 
+              log.user?.profile_picture || 
+              log.user?.intern?.avatar_url || 
+              log.intern?.avatar_url;
+
+            // ✨ USE GETIMAGEURL TO STRIP THE PUBLIC/ FOLDER AND ADD THE STORAGE URL
+            const finalAvatarSrc = dbAvatar 
+              ? (dbAvatar.startsWith('http') ? dbAvatar : (getImageUrl(dbAvatar) || ''))
+              : `https://api.dicebear.com/7.x/avataaars/svg?seed=${log.intern_name + (log.user_id || log.id)}`;
 
             return (
               <div
@@ -320,14 +343,49 @@ export default function CameraVerification() {
                 {/* ACCORDION HEADER */}
                 <div
                   onClick={() => toggleAccordion(log.id)}
-                  className="px-5 py-[14px] flex justify-between items-center bg-white cursor-pointer"
+                  className="px-5 py-[14px] flex justify-between items-center bg-white cursor-pointer group"
                   style={{ borderBottom: isExpanded ? '1px solid #f1f5f9' : 'none' }}
                 >
-                  <div>
-                    <h3 className="m-0 mb-0.5 text-[15px] font-bold text-slate-900">{log.intern_name}</h3>
-                    <p className="m-0 text-xs text-slate-500 flex items-center gap-1">
-                      <MapPin size={14} /> {log.department}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="w-[38px] h-[38px] rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0 overflow-hidden ring-[2.5px] ring-transparent group-hover:ring-[#0B1EAE] group-hover:ring-offset-2 transition-all duration-300 z-10"
+                      onClick={(e) => {
+                        e.stopPropagation(); 
+                        const targetId = log.user_id || log.id; 
+                        if (targetId) {
+                          dispatch(openProfile(targetId));
+                        } else {
+                          toast.error('Sync Error: Could not find Intern ID in the database response.');
+                        }
+                      }}
+                      title="View Full Profile"
+                    >
+                      <img
+                        src={finalAvatarSrc}
+                        alt={`${log.intern_name}'s avatar`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${log.intern_name + (log.user_id || log.id)}`;
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <h3 
+                        className="m-0 mb-0.5 text-[15px] font-bold text-slate-900 group-hover:text-[#0B1EAE] transition-colors z-10 relative"
+                        onClick={(e) => {
+                          e.stopPropagation(); 
+                          const targetId = log.user_id || log.id; 
+                          if (targetId) {
+                            dispatch(openProfile(targetId));
+                          }
+                        }}
+                      >
+                        {log.intern_name}
+                      </h3>
+                      <p className="m-0 text-xs text-slate-500 flex items-center gap-1">
+                        <MapPin size={14} /> {log.department || 'Not Assigned'}
+                      </p>
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-4">

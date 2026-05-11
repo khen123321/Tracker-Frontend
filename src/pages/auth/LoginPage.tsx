@@ -1,58 +1,63 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, Link } from 'react-router-dom';
-import { login } from '../../api/auth';
+import { useDispatch, useSelector } from 'react-redux';
 import toast, { Toaster } from 'react-hot-toast';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 
-import logo from '../../assets/logo.png';
+// ✨ REDUX IMPORTS ✨
+import { RootState } from '../../store';
+import { loginRequest } from '../../store/auth/actions';
 
-// Fallback for background image (using inline styles later to avoid Tailwind space-in-URL issues)
+import logo from '../../assets/logo.png';
 import bgImage from '../../assets/Bg_image.jpg';
 
 export default function LoginPage() {
-    const [role, setRole] = useState('intern');
-    const [authError, setAuthError] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
-    const [isTransitioning, setIsTransitioning] = useState(false);
+    const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    const {
-        register,
-        handleSubmit,
-        formState: { errors, isSubmitting }
-    } = useForm();
+    // ─── PULL GLOBAL STATE FROM REDUX ───
+    const { isAuthenticated, loading, error, user } = useSelector((state: RootState) => state.auth);
 
-    const onSubmit = async (data: any) => {
-        setAuthError('');
-        try {
-            const response = await login(data.email, data.password, role);
+    const [role, setRole] = useState('intern');
+    const [showPassword, setShowPassword] = useState(false);
+    const [isTransitioning, setIsTransitioning] = useState(false);
 
-            if (response.access_token) {
-                localStorage.setItem('cims_token', response.access_token);
-                localStorage.setItem('user', JSON.stringify(response.user));
-                sessionStorage.setItem('justLoggedIn', 'true');
+    const { register, handleSubmit, formState: { errors } } = useForm();
 
-                const targetPath = role === 'hr' ? '/dashboard' : '/intern-dashboard';
+    // ─── TRIGGER ANIMATION & NAVIGATION ON SUCCESS ───
+    useEffect(() => {
+        if (isAuthenticated && user) {
+            sessionStorage.setItem('justLoggedIn', 'true');
+            
+            // Trigger the left-shrink / right-expand animation
+            setIsTransitioning(true);
 
-                // ── Trigger the left-shrink / right-expand animation ──
-                setIsTransitioning(true);
+            // Navigate based on the actual role returned from the backend
+            const targetPath = (user.role === 'hr' || user.role === 'superadmin') 
+                ? '/dashboard' 
+                : '/intern-dashboard';
 
-                // Wait for the CSS transition to finish (0.7s) then navigate
-                setTimeout(() => {
-                    navigate(targetPath);
-                }, 750);
-            }
-        } catch (err: any) {
-            const message = err.response?.data?.message || 'Invalid Credentials. Please try again.';
-            setAuthError(message);
-            toast.error(message);
+            const timer = setTimeout(() => {
+                navigate(targetPath);
+            }, 750);
+
+            return () => clearTimeout(timer);
         }
+    }, [isAuthenticated, user, navigate]);
+
+    // ─── SUBMIT HANDLER (Now 1 line!) ───
+    const onSubmit = (data: any) => {
+        // Redux Saga intercepts this, hits the API, saves the token, and updates global state!
+        dispatch(loginRequest({ 
+            email: data.email, 
+            password: data.password, 
+            role: role 
+        }));
     };
 
     return (
         <>
-            {/* Inline keyframe for the specific greeting animation so you don't need tailwind.config edits */}
             <style>
                 {`
                     @keyframes customFadeIn {
@@ -63,7 +68,7 @@ export default function LoginPage() {
                         animation: customFadeIn 0.3s ease-in-out;
                     }
                     
-                    /* ✨ THE FIX: Hides the browser's default duplicate eye icon ✨ */
+                    /* Hides the browser's default duplicate eye icon */
                     input[type="password"]::-ms-reveal,
                     input[type="password"]::-webkit-reveal {
                         display: none;
@@ -84,7 +89,7 @@ export default function LoginPage() {
                         ${isTransitioning ? 'flex-[0_0_260px] min-w-0 py-6 px-4' : 'flex-1 py-10 px-8'}
                     `}
                 >
-                    {/* Logo & Title at TOP */}
+                    {/* Logo & Title */}
                     <div 
                         className={`
                             flex flex-row items-center justify-center gap-3 w-full mb-1 
@@ -93,20 +98,18 @@ export default function LoginPage() {
                         `}
                     >
                         <img src={logo} alt="CLIMBS Logo" className="h-[70px] w-auto" />
-                        <div className="flex flex-col leading-[1.1]"></div>
                     </div>
 
                     <p 
                         className={`
-                            text-white font-bold text-center transition-all duration-400 ease-out whitespace-nowrap overflow-hidden
-                            max-[900px]:mb-0
+                            text-white font-bold text-center transition-all duration-400 ease-out
+                            max-[900px]:mb-2 max-[900px]:text-[1.35rem] max-[900px]:leading-snug
                             ${isTransitioning ? 'text-[0.65rem] tracking-[0.2px] opacity-0 mt-1.5 mb-[1.5rem]' : 'text-[1.78rem] tracking-[0.3px] opacity-100 mt-1.5 mb-[1.5rem]'}
                         `}
                     >
                         CLIMBS Internship Monitoring System
                     </p>
 
-                    {/* Dynamic Greeting */}
                     <h2 
                         className={`
                             text-[#FFD700] text-[1.5rem] font-bold italic m-0 mb-4 text-center tracking-[0.3px] 
@@ -121,10 +124,7 @@ export default function LoginPage() {
                     {role === 'intern' ? (
                         <video
                             src="/intern mordie.webm"
-                            autoPlay
-                            loop
-                            muted
-                            playsInline
+                            autoPlay loop muted playsInline
                             className={`
                                 w-auto object-contain flex-1 drop-shadow-[0_0_30px_rgba(255,255,255,0.15)] 
                                 transition-all duration-500 ease-out max-[900px]:hidden
@@ -134,10 +134,7 @@ export default function LoginPage() {
                     ) : (
                         <video
                             src="/hr mordie.webm"
-                            autoPlay
-                            loop
-                            muted
-                            playsInline
+                            autoPlay loop muted playsInline
                             className={`
                                 w-auto object-contain flex-1 drop-shadow-[0_0_30px_rgba(255,255,255,0.15)] 
                                 transition-all duration-500 ease-out max-[900px]:hidden
@@ -146,7 +143,6 @@ export default function LoginPage() {
                         />
                     )}
 
-                    {/* Bottom tagline */}
                     <p 
                         className={`
                             text-white/85 text-[0.9rem] font-normal text-center leading-[1.6] mt-auto pt-4 
@@ -171,7 +167,6 @@ export default function LoginPage() {
                     `}
                     style={{ backgroundImage: `url("${bgImage}")` }}
                 >
-                    {/* Blue overlay on top of background image */}
                     <div 
                         className={`
                             absolute inset-0 backdrop-blur-[1px] z-0 transition-colors duration-500
@@ -186,18 +181,18 @@ export default function LoginPage() {
                             ${isTransitioning ? 'opacity-0 scale-[0.97] translate-y-2.5' : 'opacity-100 scale-100 translate-y-0'}
                         `}
                     >
-                        <div className="text-center mb-5">
-                            <h1 className="text-[3.5rem] font-black text-white m-0 mb-1 tracking-[2px] drop-shadow-[0_2px_12px_rgba(0,0,0,0.3)] max-[900px]:text-[2.5rem]">
-                                WELCOME
-                            </h1>
-                            <p className="text-[rgba(0,2,112,0.9)] text-[0.95rem] font-medium m-0">
-                                Login to your CLIMBS {role === 'hr' ? 'admin' : 'Intern'} account
-                            </p>
-                        </div>
-
                         <div className="bg-[rgba(255,255,255,0.97)] p-8 md:px-9 rounded-[16px] shadow-[0_20px_50px_rgba(0,0,0,0.25)] w-full max-w-[420px] max-[900px]:p-6">
                             
-                            {/* Sliding Pill Toggle */}
+                            {/* ✨ TEXT MOVED INSIDE THE CARD ✨ */}
+                            <div className="text-center mb-6">
+                                <h1 className="text-[2.5rem] font-black text-[#0B1EAE] m-0 mb-1 tracking-[1px] max-[900px]:text-[2.2rem]">
+                                    WELCOME
+                                </h1>
+                                <p className="text-slate-500 text-[0.95rem] font-medium m-0">
+                                    Login to your CLIMBS {role === 'hr' ? 'admin' : 'Intern'} account
+                                </p>
+                            </div>
+
                             <div className="flex bg-slate-100 rounded-full p-1 mb-6 relative">
                                 <div 
                                     className={`
@@ -206,25 +201,16 @@ export default function LoginPage() {
                                         ${role === 'hr' ? 'translate-x-[100%]' : 'translate-x-0'}
                                     `}
                                 />
-                                
                                 <button
-                                    className={`
-                                        flex-1 py-[0.6rem] px-4 rounded-full border-none bg-transparent text-[0.85rem] 
-                                        font-semibold cursor-pointer transition-colors duration-300 relative z-10
-                                        ${role === 'intern' ? 'text-[rgba(0,2,112,0.9)]' : 'text-slate-500'}
-                                    `}
-                                    onClick={() => { setRole('intern'); setAuthError(''); }}
+                                    className={`flex-1 py-[0.6rem] px-4 rounded-full border-none bg-transparent text-[0.85rem] font-semibold cursor-pointer transition-colors duration-300 relative z-10 ${role === 'intern' ? 'text-[rgba(0,2,112,0.9)]' : 'text-slate-500'}`}
+                                    onClick={() => setRole('intern')}
                                     type="button"
                                 >
                                     Intern
                                 </button>
                                 <button
-                                    className={`
-                                        flex-1 py-[0.6rem] px-4 rounded-full border-none bg-transparent text-[0.85rem] 
-                                        font-semibold cursor-pointer transition-colors duration-300 relative z-10
-                                        ${role === 'hr' ? 'text-[rgba(0,2,112,0.9)]' : 'text-slate-500'}
-                                    `}
-                                    onClick={() => { setRole('hr'); setAuthError(''); }}
+                                    className={`flex-1 py-[0.6rem] px-4 rounded-full border-none bg-transparent text-[0.85rem] font-semibold cursor-pointer transition-colors duration-300 relative z-10 ${role === 'hr' ? 'text-[rgba(0,2,112,0.9)]' : 'text-slate-500'}`}
+                                    onClick={() => setRole('hr')}
                                     type="button"
                                 >
                                     HR Admin
@@ -232,13 +218,13 @@ export default function LoginPage() {
                             </div>
 
                             <form onSubmit={handleSubmit(onSubmit)}>
-                                {authError && (
+                                {/* ✨ Display Redux Global Error State Here ✨ */}
+                                {error && (
                                     <div className="bg-red-50 text-red-600 px-4 py-[0.6rem] rounded-lg text-[0.85rem] text-center mb-4 border border-red-200">
-                                        {authError}
+                                        {error}
                                     </div>
                                 )}
 
-                                {/* Email Field */}
                                 <div className="mb-[1.1rem]">
                                     <label className="block text-[0.8rem] font-semibold text-slate-900 mb-[0.4rem]">Email Address</label>
                                     <div className="relative w-full">
@@ -246,18 +232,12 @@ export default function LoginPage() {
                                         <input
                                             type="email"
                                             placeholder="Enter Email Address"
-                                            className={`
-                                                w-full py-3 pr-4 pl-[2.5rem] border rounded-lg text-[0.9rem] outline-none 
-                                                bg-slate-50 text-slate-900 transition-all duration-200 focus:bg-white 
-                                                focus:ring-[3px] focus:ring-[#0B1EAE]/10
-                                                ${errors.email ? 'border-red-500' : 'border-slate-200 focus:border-[#0B1EAE]'}
-                                            `}
+                                            className={`w-full py-3 pr-4 pl-[2.5rem] border rounded-lg text-[0.9rem] outline-none bg-slate-50 text-slate-900 transition-all duration-200 focus:bg-white focus:ring-[3px] focus:ring-[#0B1EAE]/10 ${errors.email ? 'border-red-500' : 'border-slate-200 focus:border-[#0B1EAE]'}`}
                                             {...register('email', { required: true })}
                                         />
                                     </div>
                                 </div>
 
-                                {/* Password Field */}
                                 <div className="mb-[1.1rem]">
                                     <label className="block text-[0.8rem] font-semibold text-slate-900 mb-[0.4rem]">Password</label>
                                     <div className="relative w-full">
@@ -265,12 +245,7 @@ export default function LoginPage() {
                                         <input
                                             type={showPassword ? "text" : "password"}
                                             placeholder="Enter Password"
-                                            className={`
-                                                w-full py-3 pr-4 pl-[2.5rem] border rounded-lg text-[0.9rem] outline-none 
-                                                bg-slate-50 text-slate-900 transition-all duration-200 focus:bg-white 
-                                                focus:ring-[3px] focus:ring-[#0B1EAE]/10
-                                                ${errors.password ? 'border-red-500' : 'border-slate-200 focus:border-[#0B1EAE]'}
-                                            `}
+                                            className={`w-full py-3 pr-4 pl-[2.5rem] border rounded-lg text-[0.9rem] outline-none bg-slate-50 text-slate-900 transition-all duration-200 focus:bg-white focus:ring-[3px] focus:ring-[#0B1EAE]/10 ${errors.password ? 'border-red-500' : 'border-slate-200 focus:border-[#0B1EAE]'}`}
                                             {...register('password', { required: true })}
                                         />
                                         <button
@@ -284,7 +259,6 @@ export default function LoginPage() {
                                     </div>
                                 </div>
 
-                                {/* Keep Signed In */}
                                 <div className="flex mt-3 mb-5">
                                     <label className="flex items-center gap-2 text-[0.82rem] text-slate-500 cursor-pointer">
                                         <input type="checkbox" className="w-4 h-4 rounded cursor-pointer accent-[#0B1EAE]" />
@@ -292,34 +266,29 @@ export default function LoginPage() {
                                     </label>
                                 </div>
 
-                                {/* Login Button */}
                                 <div className="flex justify-center mb-2">
                                     <button
                                         type="submit"
-                                        className="bg-[#0B1EAE] hover:bg-[#050C48] text-white border-none py-3 px-[3.5rem] rounded-full font-bold text-[0.95rem] cursor-pointer transition-all duration-200 hover:-translate-y-[1px] disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none tracking-[0.5px]"
-                                        disabled={isSubmitting || isTransitioning}
+                                        className="bg-[#0B1EAE] hover:bg-[#050C48] text-white border-none py-3 px-[3.5rem] rounded-full font-bold text-[0.95rem] cursor-pointer transition-all duration-200 hover:-translate-y-[1px] disabled:opacity-70 disabled:cursor-not-allowed tracking-[0.5px]"
+                                        disabled={loading || isTransitioning}
                                     >
-                                        {isTransitioning ? 'Loading...' : 'Login'}
+                                        {loading || isTransitioning ? 'Loading...' : 'Login'}
                                     </button>
                                 </div>
 
-                                {/* Forgot Password - ONLY SHOWS FOR INTERNS NOW */}
                                 {role === 'intern' && (
-                                    <div className="text-center mt-4">
-                                        <Link to="/forgot-password" className="text-slate-600 text-[0.82rem] font-medium no-underline hover:text-[#0B1EAE] hover:underline">
-                                            Forgot Password?
-                                        </Link>
-                                    </div>
+                                    <>
+                                        <div className="text-center mt-4">
+                                            <Link to="/forgot-password" className="text-slate-600 text-[0.82rem] font-medium no-underline hover:text-[#0B1EAE] hover:underline">
+                                                Forgot Password?
+                                            </Link>
+                                        </div>
+                                        <div className="text-center mt-3 text-[0.82rem] text-slate-500">
+                                            Don't have an account?{' '}
+                                            <Link to="/signup" className="text-[#0B1EAE] font-bold no-underline ml-[3px] hover:underline">Sign Up here</Link>
+                                        </div>
+                                    </>
                                 )}
-
-                                {/* Sign Up Link (intern only) */}
-                                {role === 'intern' && (
-                                    <div className="text-center mt-3 text-[0.82rem] text-slate-500">
-                                        Don't have an account?{' '}
-                                        <Link to="/signup" className="text-[#0B1EAE] font-bold no-underline ml-[3px] hover:underline">Sign Up here</Link>
-                                    </div>
-                                )}
-
                             </form>
                         </div>
                     </div>

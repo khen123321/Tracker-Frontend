@@ -18,7 +18,7 @@ import InternsList from './pages/hr/interns/InternsList';
 import RoleManagement from './pages/hr/RoleManagement';
 import ExportReports from './pages/hr/ExportReports';
 import SettingsLayout from './pages/hr/settings/SettingsLayout'; 
-import CurriculumSettings from './pages/hr/settings/CurriculumSettings';  
+import CurriculumSettings from './pages/hr/settings/ProgramSettings';  
 import DepartmentSetting from './pages/hr/settings/DepartmentSetting'; 
 import BranchSetting from './pages/hr/settings/BranchSetting';          
 import TimeTracker from './pages/hr/TimeTracker'; 
@@ -32,7 +32,7 @@ import Attendance from './pages/intern/Attendance';
 import Logs from './pages/intern/Logs';
 import Forms from './pages/intern/Forms'; 
 import InternProfile from './pages/intern/InternProfile';
-import Announcement from './pages/intern/Announcement'; 
+
 
 // ✨ Dedicated Read-Only Intern Calendar
 import InternCalendar from './pages/intern/InternCalendar'; 
@@ -163,7 +163,6 @@ const App: React.FC = () => {
               <Route path="forms" element={<Forms />} />
               <Route path="profile" element={<InternProfile />} />
               <Route path="history" element={<PlaceholderPage title="History" />} />
-              <Route path="announcements" element={<Announcement />} />
             </Route>
           </Route>
 

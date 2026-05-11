@@ -125,12 +125,28 @@ export default function InternDetailsModal({ intern, onClose }: InternDetailsMod
     }
   };
 
-  const profilePhotoUrl = intern.avatar_url || intern.rawData?.intern?.avatar_url || `https://api.dicebear.com/7.x/avataaars/png?seed=${intern.name || 'default'}`;
+  // Extract raw path for ID Generator & API Bridge
+  const rawAvatarPath = intern.avatar_url || intern.rawData?.intern?.avatar_url;
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  
+  // Format visual URL (Used purely for seeing the image on screen)
+  const profilePhotoUrl = rawAvatarPath 
+    ? (rawAvatarPath.startsWith('http') ? rawAvatarPath : `${baseUrl}/storage/${rawAvatarPath}`)
+    : `https://api.dicebear.com/7.x/avataaars/png?seed=${intern.name || 'default'}`;
 
+  // ✨ THE AGGRESSIVE CORS BRIDGE FIX ✨
   useEffect(() => {
     const convertImageToBase64 = async () => {
       try {
-        const response = await fetch(profilePhotoUrl);
+        let fetchUrl = profilePhotoUrl;
+        
+        // If the URL accidentally contains '/storage/', slice it out and force the safe bridge
+        if (profilePhotoUrl && profilePhotoUrl.includes('/storage/')) {
+          const cleanPath = profilePhotoUrl.split('/storage/')[1];
+          fetchUrl = `${baseUrl}/api/get-avatar?path=${cleanPath}&t=${Date.now()}`;
+        }
+
+        const response = await fetch(fetchUrl);
         const blob = await response.blob();
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -146,7 +162,7 @@ export default function InternDetailsModal({ intern, onClose }: InternDetailsMod
     if (profilePhotoUrl) {
       convertImageToBase64();
     }
-  }, [profilePhotoUrl]);
+  }, [profilePhotoUrl, baseUrl]);
 
   const isSameDate = (d1: string | Date, d2: string | Date): boolean => {
     const date1 = new Date(d1);
@@ -324,19 +340,17 @@ export default function InternDetailsModal({ intern, onClose }: InternDetailsMod
   const handleDownloadCertificate = async () => {
     setIsCertLoading(true);
     try {
-      // Give the DOM a tiny bit more time to ensure all fonts and avatars load
       await new Promise(resolve => setTimeout(resolve, 800)); 
       
       const element = certRef.current;
       if (!element) throw new Error("Certificate element not found");
       
-      // ✨ THE FIX: Let html2canvas use natural dimensions, but reset the scroll axis
       const canvas = await html2canvas(element, { 
-        scale: 3, // Increased to 3 for super crisp high-res text
+        scale: 3, 
         useCORS: true, 
         backgroundColor: '#ffffff',
-        scrollX: 0, // Prevents the zoomed/cut-off shift
-        scrollY: 0  // Prevents the zoomed/cut-off shift
+        scrollX: 0, 
+        scrollY: 0  
       });
       
       const dataImage = canvas.toDataURL('image/png', 1.0);
@@ -350,7 +364,6 @@ export default function InternDetailsModal({ intern, onClose }: InternDetailsMod
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       
-      // ✨ THE FIX: Force the image to perfectly snap to the A4 landscape corners
       pdf.addImage(dataImage, 'PNG', 0, 0, pdfWidth, pdfHeight);
       
       const safeName = intern.name ? intern.name.replace(/ /g, '_') : 'Intern';
@@ -373,7 +386,6 @@ export default function InternDetailsModal({ intern, onClose }: InternDetailsMod
             <h2 className="text-base font-black text-slate-900 m-0">Intern Details</h2>
             <div className="flex items-center gap-1 flex-wrap relative z-10">
               
-              {/* ✨ Added type="button" to stop silent errors */}
               <button type="button" className="inline-flex items-center gap-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-900 cursor-pointer whitespace-nowrap transition-all duration-200 hover:bg-slate-50 hover:border-amber-500" onClick={() => setShowCertPreview(true)}>
                 <Award size={13} /> Get Certificate
               </button>
@@ -409,6 +421,7 @@ export default function InternDetailsModal({ intern, onClose }: InternDetailsMod
             <div className="bg-white rounded-xl border border-slate-200 p-4 flex justify-between items-center gap-3 flex-wrap">
               <div className="flex items-center gap-3">
                 <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-slate-100 flex-shrink-0">
+                  {/* Reverted perfectly to your original code so it renders visually without issue */}
                   <img src={profilePhotoUrl} alt="profile" className="w-full h-full object-cover rounded-full" />
                 </div>
                 <div>
@@ -565,14 +578,13 @@ export default function InternDetailsModal({ intern, onClose }: InternDetailsMod
         </div>
       </div>
       
-      {/* ✨ WRAPPED IN A RELATIVE DIV WITH Z-INDEX SO IT STEPS IN FRONT OF THE PARENT MODAL */}
       {showIdModal && (
         <div style={{ position: 'relative', zIndex: 9999999 }}>
-            <GenerateIdModal intern={{...intern, avatar_url: profilePhotoUrl}} onClose={() => setShowIdModal(false)} />
+            {/* ✨ Passes the RAW database path down to the generator so the API bridge handles it! */}
+            <GenerateIdModal intern={{...intern, avatar_url: rawAvatarPath}} onClose={() => setShowIdModal(false)} />
         </div>
       )}
       
-      {/* ✨ CHANGED TAILWIND z-[9999999] TO STRICT INLINE style={{zIndex: 9999999}} TO PREVENT COMPILER FAILURE */}
       {showCertPreview && (
         <div 
           className="fixed inset-0 bg-slate-900/70 backdrop-blur-lg flex items-center justify-center p-5"
@@ -584,7 +596,6 @@ export default function InternDetailsModal({ intern, onClose }: InternDetailsMod
             onClick={e => e.stopPropagation()}
           >
             
-            {/* Header */}
             <div className="flex-shrink-0 p-5 flex justify-between items-center border-b border-slate-200 bg-white">
               <h2 className="text-base font-black text-slate-900 m-0">Certificate Preview</h2>
               <button type="button" className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center cursor-pointer text-slate-500 transition-all duration-200 hover:bg-red-100 hover:text-red-500 hover:border-red-300" onClick={() => setShowCertPreview(false)}>
@@ -592,7 +603,6 @@ export default function InternDetailsModal({ intern, onClose }: InternDetailsMod
               </button>
             </div>
 
-            {/* ✨ THE FIX: Added "min-h-0" right here! This forces Flexbox to allow scrolling. */}
             <div className="flex-1 min-h-0 p-4 md:p-8 bg-slate-50 overflow-y-auto flex justify-center">
               <div ref={certRef} className="shadow-md h-max">
                 <CertificateTemplate 
@@ -608,10 +618,8 @@ export default function InternDetailsModal({ intern, onClose }: InternDetailsMod
               </div>
             </div>
 
-            {/* Footer (Now safely glued to the bottom) */}
             <div className="flex-shrink-0 p-4 md:p-5 flex justify-end items-center gap-3 border-t border-slate-200 bg-white">
               
-              {/* ✨ Added an explicit Cancel button at the bottom for you! */}
               <button 
                 type="button"
                 onClick={() => setShowCertPreview(false)}
@@ -637,5 +645,4 @@ export default function InternDetailsModal({ intern, onClose }: InternDetailsMod
 
     </>
   );
-  
 }

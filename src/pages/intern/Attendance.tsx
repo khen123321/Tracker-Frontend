@@ -1,54 +1,44 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
-import api from "../../api/axios";
+import React, { useState, useRef, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { 
     MapPin, Camera, CheckCircle, RefreshCcw, Clock, X, 
     Sun, Sunset, Navigation, AlertTriangle, Scan 
 } from "lucide-react";
 import Webcam from "react-webcam";
 import toast, { Toaster } from 'react-hot-toast';
+import * as faceapi from 'face-api.js';
 
 // ✨ PAGE HEADER IMPORT ✨
 import PageHeader from "../../components/layout/PageHeader";
 
-// ✨ FACE-API IMPORT ✨
-import * as faceapi from 'face-api.js';
-
-// ─── TYPESCRIPT INTERFACES ───
-interface Branch {
-    name: string;
-    latitude: number;
-    longitude: number;
-    radius?: number;
-}
-
-interface AttendanceLog {
-    time_in_am?: string | null;
-    time_out_am?: string | null;
-    time_in_pm?: string | null;
-    time_out_pm?: string | null;
-    am_in_status?: string;
-    lunch_out_status?: string;
-    lunch_in_status?: string;
-    pm_out_status?: string;
-    raw_date?: string;
-    date?: string;
-    created_at?: string;
-}
+// ✨ REDUX IMPORTS ✨
+import { RootState } from "../../store";
+import { 
+    syncServerTimeRequest, 
+    fetchAssignedBranchRequest, 
+    fetchTodayLogRequest, 
+    submitAttendanceRequest 
+} from "../../store/attendance/actions";
 
 const Attendance: React.FC = () => {
-    // ─── UI & TIME STATES (SERVER-SYNCED) ─────────────────────────────────────
+    const dispatch = useDispatch();
+
+    // ─── 1. PULL GLOBAL STATE FROM REDUX ─────────────────────────────────────
+    const { 
+        todayLog, 
+        assignedBranch, 
+        serverTimeOffset, 
+        loading, 
+        isSubmitting 
+    } = useSelector((state: RootState) => state.attendance);
+
+    // ─── 2. LOCAL UI STATES ──────────────────────────────────────────────────
     const [currentTime, setCurrentTime] = useState<Date>(new Date());
-    const [timeOffset, setTimeOffset] = useState<number>(0); 
     const [modalStep, setModalStep] = useState<number>(0); 
     const [selectedType, setSelectedType] = useState<string>("");
-
-    // ─── DATA STATES ──────────────────────────────────────────────────────────
-    const [loading, setLoading] = useState<boolean>(false);
     const [imgSrc, setImgSrc] = useState<string | null>(null);
     const [coords, setCoords] = useState<{ lat: number | null, lng: number | null }>({ lat: null, lng: null });
     const [isWithinPremises, setIsWithinPremises] = useState<boolean>(false);
-    const [assignedBranch, setAssignedBranch] = useState<Branch | null>(null);
-    const [todayLog, setTodayLog] = useState<AttendanceLog | null>(null);
 
     // ✨ FACE API STATES ✨
     const [modelsLoaded, setModelsLoaded] = useState<boolean>(false);
@@ -78,79 +68,27 @@ const Attendance: React.FC = () => {
         loadModels();
     }, []);
 
-    // ─── LIVE CLOCK (SYNCED TO SERVER) ────────────────────────────────────────
+    // ─── 3. FETCH REDUX DATA ON MOUNT ─────────────────────────────────────────
     useEffect(() => {
-        const timer = setInterval(() => setCurrentTime(new Date(Date.now() + timeOffset)), 1000);
+        dispatch(syncServerTimeRequest());
+        dispatch(fetchAssignedBranchRequest());
+        dispatch(fetchTodayLogRequest());
+    }, [dispatch]);
+
+    // ─── 4. LIVE CLOCK (SYNCED VIA REDUX OFFSET) ──────────────────────────────
+    useEffect(() => {
+        const timer = setInterval(() => setCurrentTime(new Date(Date.now() + serverTimeOffset)), 1000);
         return () => clearInterval(timer);
-    }, [timeOffset]);
+    }, [serverTimeOffset]);
 
     const currentHour = parseInt(
-        new Date(Date.now() + timeOffset).toLocaleString('en-US', {
+        new Date(Date.now() + serverTimeOffset).toLocaleString('en-US', {
             timeZone: 'Asia/Manila',
             hour: 'numeric',
             hour12: false
         })
     );
     const isAfternoon = currentHour >= 12;
-
-    // ─── 1. FETCH EXACT SERVER TIME ─────────────────────────────
-    const fetchServerTime = useCallback(async () => {
-        try {
-            const requestTime = Date.now(); 
-            const response = await api.get('/server-time');
-            const responseTime = Date.now();
-            const networkLatency = (responseTime - requestTime) / 2;
-            const trueServerTime = response.data.timestamp + networkLatency;
-            setTimeOffset(trueServerTime - Date.now());
-        } catch (err) {
-            console.error("Could not sync server time", err);
-            toast.error("Network Error: Could not sync with Server Time."); 
-        }
-    }, []);
-
-    // ─── 2. FETCH INTERN BRANCH DATA ──────────────────────────────────────────
-    const fetchInternData = useCallback(async () => {
-        try {
-            const response = await api.get('/auth/me');
-            if (response.data?.intern?.branch) {
-                setAssignedBranch(response.data.intern.branch);
-            }
-        } catch (err) {
-            console.error("Could not fetch branch data", err);
-        }
-    }, []);
-
-    // ─── 3. FETCH TODAY'S ATTENDANCE LOG ──────────────────────────────────────
-    const fetchHistory = useCallback(async () => {
-        try {
-            const response = await api.get('/attendance/history');
-            const logs: AttendanceLog[] = response.data || [];
-            const todayYMD = new Date(Date.now() + timeOffset).toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
-
-            const todayRecord = logs.find(log => {
-                try {
-                    const logDateStr = log.raw_date || log.date || log.created_at || '';
-                    const logYMD = new Date(logDateStr).toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
-                    return logYMD === todayYMD;
-                } catch  {
-                    return false; 
-                }
-            });
-
-            setTodayLog(todayRecord || null);
-        } catch (err) {
-            console.error("Failed to fetch today's log", err);
-        }
-    }, [timeOffset]);
-
-    useEffect(() => {
-        fetchServerTime();
-        fetchInternData();
-    }, [fetchServerTime, fetchInternData]);
-
-    useEffect(() => {
-        fetchHistory();
-    }, [fetchHistory]);
 
     // ─── ROBUST SHIFT LOCKING ─────────────────────────────────────────────────
     const isValidPunch = (val?: string | null) => val && val.trim() !== '' && val !== '-' && val !== 'null';
@@ -192,7 +130,6 @@ const Attendance: React.FC = () => {
         }
         setSelectedType(type);
         setModalStep(1);
-        setLoading(true);
 
         navigator.geolocation.getCurrentPosition(
             (pos) => {
@@ -209,12 +146,10 @@ const Attendance: React.FC = () => {
                     setIsWithinPremises(false);
                     toast.error(`You are too far from ${assignedBranch.name}`);
                 }
-                setLoading(false);
             },
             () => {
                 toast.error("Location access denied. Please enable GPS.");
                 setModalStep(0);
-                setLoading(false);
             },
             { enableHighAccuracy: true }
         );
@@ -275,37 +210,29 @@ const Attendance: React.FC = () => {
     };
 
     // ─── STEP 3: FINAL SUBMISSION ─────────────────────────────────────────────
-    const handleFinalSubmit = async () => {
+    const handleFinalSubmit = () => {
         if (!isWithinPremises) {
             toast.error("Cannot submit: You are outside the allowed premises.");
             return;
         }
-        setLoading(true);
-        const loadingToast = toast.loading("Logging attendance...");
+        
+        // ✨ FIRE THE ACTION TO REDUX SAGA! ✨
+        dispatch(submitAttendanceRequest({ 
+            type: selectedType, 
+            lat: coords.lat, 
+            lng: coords.lng, 
+            image: imgSrc 
+        }));
 
-        try {
-            const payload = { type: selectedType, lat: coords.lat, lng: coords.lng, image: imgSrc };
-            const response = await api.post('/attendance/log', payload);
-            const msg = response.data?.message || "Attendance logged!";
-
-            if (msg.includes('⚠️')) {
-                toast(msg, { id: loadingToast, icon: '⚠️', duration: 6000, style: { background: '#FEF08A', color: '#854D0E', fontWeight: 'bold' } });
-            } else {
-                toast.success(msg, { id: loadingToast, duration: 6000 });
-            }
-
-            fetchHistory();
-            setModalStep(0);
-            setImgSrc(null);
-            setIsWithinPremises(false);
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || "Submission failed", { id: loadingToast });
-        } finally {
-            setLoading(false);
-        }
+        // Reset the UI immediately (Saga handles the success/error toasts and the data fetching automatically!)
+        setModalStep(0);
+        setImgSrc(null);
+        setIsWithinPremises(false);
     };
 
-    const videoConstraints = { width: 1280, height: 720, facingMode: "user" };
+    const videoConstraints = { 
+        facingMode: "user"
+    };
 
     // ─── SHARED BUTTON STYLES ───
     const baseBtnStyle = "w-full h-[55px] md:h-[65px] rounded-lg border-none text-[18px] md:text-[20px] font-extrabold text-white flex items-center justify-center gap-1.5 transition-all duration-200";
@@ -318,7 +245,30 @@ const Attendance: React.FC = () => {
         <div className="p-[12px] bg-slate-100 min-h-screen flex flex-col gap-[5px] font-sans">
             <Toaster position="top-center" />
 
-            {/* ✨ PAGE HEADER COMPONENT ✨ */}
+            <style>{`
+                @keyframes shine {
+                    0% { left: -150%; }
+                    60% { left: 200%; }
+                    100% { left: 200%; }
+                }
+                .animate-shine {
+                    position: relative;
+                    overflow: hidden; 
+                }
+                .animate-shine::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: -150%;
+                    width: 50%;
+                    height: 100%;
+                    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+                    transform: skewX(-20deg); 
+                    animation: shine 5s ease-in-out infinite; 
+                    pointer-events: none; 
+                }
+            `}</style>
+
             <PageHeader title="Clock In/Out" />
 
             {needsResubmission && (
@@ -332,23 +282,28 @@ const Attendance: React.FC = () => {
             )}
 
             <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] overflow-hidden">
-                <div className="bg-[linear-gradient(270deg,#0B1EAE_0%,#152286_23.56%,#0D1767_63.46%,#050C48_100%)] m-4 md:m-5 p-[30px_20px] md:p-11 rounded-xl text-center text-white">
-                    <p className="text-[16px] md:text-[18px] mb-2 font-medium opacity-90 mt-0">
-                        {currentTime.toLocaleDateString('en-US', { 
-                            timeZone: 'Asia/Manila', weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' 
-                        })}
-                    </p>
-                    <h2 className="text-[38px] md:text-[48px] lg:text-[82px] font-black text-yellow-400 tracking-[2px] m-0 leading-tight">
-                        {currentTime.toLocaleTimeString('en-US', { 
-                            timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true 
-                        })}
-                    </h2>
-                    {assignedBranch && (
-                        <div className="flex items-center justify-center gap-1.5 mt-2.5 text-white/80 text-[14px]">
-                            <Navigation size={14} />
-                            Assigned to: <span className="font-bold underline">{assignedBranch.name}</span>
-                        </div>
-                    )}
+                <div 
+                    className="animate-shine m-4 md:m-5 p-[30px_20px] md:p-11 rounded-xl text-center text-white"
+                    style={{ background: 'linear-gradient(90deg, #0B1EAE 0%, #152286 23.56%, #0D1767 63.46%, #050C48 100%)' }}
+                >
+                    <div className="relative z-10 flex flex-col items-center">
+                        <p className="text-[16px] md:text-[18px] mb-2 font-medium opacity-90 mt-0">
+                            {currentTime.toLocaleDateString('en-US', { 
+                                timeZone: 'Asia/Manila', weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' 
+                            })}
+                        </p>
+                        <h2 className="text-[38px] md:text-[48px] lg:text-[82px] font-black text-white tracking-[2px] m-0 leading-tight">
+                            {currentTime.toLocaleTimeString('en-US', { 
+                                timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true 
+                            })}
+                        </h2>
+                        {assignedBranch && (
+                            <div className="flex items-center justify-center gap-1.5 mt-2.5 text-white/80 text-[14px]">
+                                <Navigation size={14} />
+                                Assigned to: <span className="font-bold underline">{assignedBranch.name}</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <div className="flex gap-4 items-start md:items-center bg-blue-50 border border-blue-200 mx-4 md:mx-5 mb-4 md:mb-5 p-3.5 md:p-4.5 rounded-xl">
@@ -372,7 +327,7 @@ const Attendance: React.FC = () => {
                                         <span className="text-rose-600 text-[11.5px] font-bold text-center mt-1.5">❌ Photo Rejected. Go to My Logs to appeal.</span>
                                     </>
                                 ) : (
-                                    <button className={`${baseBtnStyle} ${!canAmIn ? lockedBtnStyle : activeTimeInStyle}`} onClick={() => startVerification('time_in')} disabled={!canAmIn}>
+                                    <button className={`${baseBtnStyle} ${!canAmIn ? lockedBtnStyle : activeTimeInStyle}`} onClick={() => startVerification('time_in')} disabled={!canAmIn || loading}>
                                         <Clock size={20} /> {isAfternoon && !hasAmIn ? "AM CLOSED" : "AM IN"}
                                     </button>
                                 )}
@@ -385,7 +340,7 @@ const Attendance: React.FC = () => {
                                         <span className="text-rose-600 text-[11.5px] font-bold text-center mt-1.5">❌ Photo Rejected. Go to My Logs to appeal.</span>
                                     </>
                                 ) : (
-                                    <button className={`${baseBtnStyle} ${!canLunchOut ? lockedBtnStyle : activeTimeOutStyle}`} onClick={() => startVerification('lunch_out')} disabled={!canLunchOut}>
+                                    <button className={`${baseBtnStyle} ${!canLunchOut ? lockedBtnStyle : activeTimeOutStyle}`} onClick={() => startVerification('lunch_out')} disabled={!canLunchOut || loading}>
                                         <RefreshCcw size={20} /> LUNCH OUT
                                     </button>
                                 )}
@@ -404,7 +359,7 @@ const Attendance: React.FC = () => {
                                         <span className="text-rose-600 text-[11.5px] font-bold text-center mt-1.5">❌ Photo Rejected. Go to My Logs to appeal.</span>
                                     </>
                                 ) : (
-                                    <button className={`${baseBtnStyle} ${!canLunchIn ? lockedBtnStyle : activeTimeInStyle}`} onClick={() => startVerification('lunch_in')} disabled={!canLunchIn}>
+                                    <button className={`${baseBtnStyle} ${!canLunchIn ? lockedBtnStyle : activeTimeInStyle}`} onClick={() => startVerification('lunch_in')} disabled={!canLunchIn || loading}>
                                         <Clock size={20} /> {!isAfternoon ? "PM IN (Wait 12 PM)" : "PM IN"}
                                     </button>
                                 )}
@@ -417,7 +372,7 @@ const Attendance: React.FC = () => {
                                         <span className="text-rose-600 text-[11.5px] font-bold text-center mt-1.5">❌ Photo Rejected. Go to My Logs to appeal.</span>
                                     </>
                                 ) : (
-                                    <button className={`${baseBtnStyle} ${!canPmOut ? lockedBtnStyle : activeTimeOutStyle}`} onClick={() => startVerification('time_out')} disabled={!canPmOut}>
+                                    <button className={`${baseBtnStyle} ${!canPmOut ? lockedBtnStyle : activeTimeOutStyle}`} onClick={() => startVerification('time_out')} disabled={!canPmOut || loading}>
                                         <CheckCircle size={20} /> {!isAfternoon ? "PM OUT (Wait 12 PM)" : "PM OUT"}
                                     </button>
                                 )}
@@ -427,123 +382,132 @@ const Attendance: React.FC = () => {
                 </div>
             </div>
 
-            {/* MODAL */}
+            {/* ✨ RESPONSIVE MODAL ✨ */}
             {modalStep > 0 && (
-                <div className="fixed inset-0 bg-slate-900/70 flex justify-center items-center z-[1000] p-5 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white w-full max-w-[480px] p-6 md:p-[35px] rounded-[24px] relative text-center shadow-2xl animate-in zoom-in-95 duration-200">
-                        <button className="absolute top-5 right-5 border-none bg-transparent text-slate-400 cursor-pointer hover:text-slate-700 transition-colors" onClick={() => setModalStep(0)}>
-                            <X size={20} />
-                        </button>
+                <div className="fixed inset-0 bg-slate-900/80 flex justify-center items-center z-[1000] p-4 md:p-6 backdrop-blur-sm animate-in fade-in duration-200">
+                    
+                    <div className={`bg-white w-full max-w-[480px] max-h-[90vh] flex flex-col rounded-[24px] relative shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden ${modalStep > 1 ? 'h-full' : 'h-auto'}`}>
+                        
+                        {/* Header */}
+                        <div className="p-4 md:p-5 pb-2 shrink-0 relative text-center">
+                            <button 
+                                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 cursor-pointer hover:bg-slate-200 hover:text-slate-800 transition-colors border-none" 
+                                onClick={() => setModalStep(0)}
+                            >
+                                <X size={18} />
+                            </button>
 
-                        <h2 className="text-[18px] md:text-[20px] font-extrabold underline m-0 mb-5 md:mb-[30px] text-slate-900">
-                            {selectedType.replace('_', ' ').toUpperCase()} Verification
-                        </h2>
+                            <h2 className="text-[18px] md:text-[20px] font-extrabold m-0 mb-3 text-slate-900">
+                                {selectedType.replace('_', ' ').toUpperCase()} VERIFICATION
+                            </h2>
 
-                        <div className="flex items-center justify-center gap-2.5 mb-5 md:mb-[30px]">
-                            <div className={`w-9 h-9 rounded-full flex items-center justify-center font-extrabold ${modalStep >= 1 ? 'bg-[#0B1EAE] text-white' : 'bg-slate-200 text-slate-500'}`}>1</div>
-                            <div className="w-10 h-[2px] bg-slate-200"></div>
-                            <div className={`w-9 h-9 rounded-full flex items-center justify-center font-extrabold ${modalStep >= 2 ? 'bg-[#0B1EAE] text-white' : 'bg-slate-200 text-slate-500'}`}>2</div>
-                            <div className="w-10 h-[2px] bg-slate-200"></div>
-                            <div className={`w-9 h-9 rounded-full flex items-center justify-center font-extrabold ${modalStep >= 3 ? 'bg-[#0B1EAE] text-white' : 'bg-slate-200 text-slate-500'}`}>3</div>
+                            <div className="flex items-center justify-center gap-2.5">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-extrabold ${modalStep >= 1 ? 'bg-[#0B1EAE] text-white' : 'bg-slate-200 text-slate-500'}`}>1</div>
+                                <div className="w-8 h-[2px] bg-slate-200"></div>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-extrabold ${modalStep >= 2 ? 'bg-[#0B1EAE] text-white' : 'bg-slate-200 text-slate-500'}`}>2</div>
+                                <div className="w-8 h-[2px] bg-slate-200"></div>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-extrabold ${modalStep >= 3 ? 'bg-[#0B1EAE] text-white' : 'bg-slate-200 text-slate-500'}`}>3</div>
+                            </div>
                         </div>
 
-                        {/* STEP 1: LOCATION */}
-                        {modalStep === 1 && (
-                            <div className="flex flex-col items-center w-full">
-                                <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-[15px] ${isWithinPremises ? 'bg-green-100' : 'bg-rose-100'}`}>
-                                    <MapPin size={40} className={isWithinPremises ? "text-green-500" : "text-rose-500"} />
-                                </div>
-                                
-                                {loading ? (
-                                    <p className="text-slate-400 font-medium text-[14px] mb-[20px]">Syncing with satellite...</p>
-                                ) : isWithinPremises ? (
-                                    <div className="border-2 border-green-500 text-green-700 bg-green-50 px-5 py-1.5 rounded-full font-bold text-[14px] mb-[25px]">
-                                        Validated: Within {assignedBranch?.name}
+                        {/* Body */}
+                        <div className="p-4 md:p-5 pt-2 flex-1 flex flex-col items-center min-h-0">
+                            
+                            {/* STEP 1: LOCATION (FIXED SPACING) */}
+                            {modalStep === 1 && (
+                                <div className="flex flex-col items-center justify-center w-full my-auto py-8">
+                                    <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 shrink-0 ${isWithinPremises ? 'bg-green-100' : 'bg-rose-100'}`}>
+                                        <MapPin size={48} className={isWithinPremises ? "text-green-500" : "text-rose-500"} />
                                     </div>
-                                ) : (
-                                    <div className="bg-rose-50 text-rose-600 px-5 py-1.5 rounded-full font-bold text-[12px] border border-rose-200 mb-[20px]">
-                                        Location Mismatch: Not at {assignedBranch?.name}
-                                    </div>
-                                )}
-                                <button 
-                                    className="w-full bg-[linear-gradient(270deg,#0B1EAE_0%,#152286_23.56%,#0D1767_63.46%,#050C48_100%)] text-white border-none py-3.5 px-5 rounded-xl font-bold cursor-pointer transition-colors mt-2 hover:bg-[#081685] disabled:opacity-50 disabled:cursor-not-allowed" 
-                                    disabled={loading || !isWithinPremises} 
-                                    onClick={() => setModalStep(2)}
-                                >
-                                    {isWithinPremises ? "Proceed to Selfie" : "Invalid Location"}
-                                </button>
-                            </div>
-                        )}
-
-                        {/* STEP 2: LIVE FACE DETECTION */}
-                        {modalStep === 2 && (
-                            <div className="flex flex-col items-center w-full">
-                                
-                                {/* 📸 NEW PHOTO GUIDELINES REMINDER 📸 */}
-                                <div className="bg-blue-50 text-blue-800 p-3 rounded-lg text-[13px] leading-relaxed mb-4 border border-blue-200 flex gap-2.5 items-start text-left w-full">
-                                    <Camera size={18} className="shrink-0 mt-0.5 text-blue-600" />
-                                    <div>
-                                        <strong className="block mb-1 text-blue-900">Photo Guidelines:</strong>
-                                        Please take a clear selfie with a wide background showing your surroundings inside CLIMBS premises. If the image appears blurry, please retake it to ensure you are clearly visible to HR.
-                                    </div>
-                                </div>
-
-                                <div className={`w-full rounded-xl overflow-hidden mb-5 border-[3px] relative transition-colors duration-300 ${faceDetected ? 'border-emerald-500' : 'border-slate-200'}`}>
-                                    <Webcam
-                                        audio={false}
-                                        ref={webcamRef}
-                                        screenshotFormat="image/jpeg"
-                                        className="w-full block scale-x-[-1]"
-                                        videoConstraints={videoConstraints}
-                                        onPlay={handleVideoOnPlay}
-                                    />
-                                    <canvas 
-                                        ref={canvasRef} 
-                                        className="absolute top-0 left-0 w-full h-full z-10"
-                                    />
-                                </div>
-
-                                <div className={`mb-5 font-bold flex items-center gap-2 ${faceDetected ? 'text-emerald-500' : 'text-amber-500'}`}>
-                                    <Scan size={20} />
-                                    {faceStatusText}
-                                </div>
-
-                                <button 
-                                    className="w-full bg-[linear-gradient(270deg,#0B1EAE_0%,#152286_23.56%,#0D1767_63.46%,#050C48_100%)] text-white border-none py-3.5 px-5 rounded-xl font-bold transition-all mt-2 hover:bg-[#081685] disabled:opacity-50 disabled:cursor-not-allowed" 
-                                    onClick={capture}
-                                    disabled={!faceDetected}
-                                >
-                                    Capture Photo
-                                </button>
-                            </div>
-                        )}
-
-                        {/* STEP 3: SUBMISSION */}
-                        {modalStep === 3 && (
-                            <div className="flex flex-col items-center w-full">
-                                <div className="w-full relative rounded-xl overflow-hidden mb-5 border-2 border-slate-200">
-                                    {imgSrc && <img src={imgSrc} alt="Selfie" className="w-full block" />}
-                                    <div className="absolute inset-0 bg-green-500/40 flex items-center justify-center">
-                                        <CheckCircle size={48} className="text-white drop-shadow-md" />
-                                    </div>
-                                </div>
-                                <div className="flex flex-col md:flex-row gap-3 w-full">
+                                    
+                                    {isWithinPremises ? (
+                                        <div className="border-2 border-green-500 text-green-700 bg-green-50 px-6 py-3 rounded-full font-bold text-[14px] md:text-[15px] mb-8 text-center w-full max-w-[300px]">
+                                            Validated: Within {assignedBranch?.name}
+                                        </div>
+                                    ) : (
+                                        <div className="bg-rose-50 text-rose-600 px-6 py-3 rounded-full font-bold text-[14px] border border-rose-200 mb-8 text-center w-full max-w-[300px]">
+                                            Location Mismatch: Not at {assignedBranch?.name}
+                                        </div>
+                                    )}
                                     <button 
-                                        className="flex-1 py-3.5 rounded-xl border border-slate-300 bg-slate-50 font-semibold text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors" 
+                                        className="w-full max-w-[300px] shrink-0 bg-[linear-gradient(270deg,#0B1EAE_0%,#152286_23.56%,#0D1767_63.46%,#050C48_100%)] text-white border-none py-4 px-5 rounded-xl font-bold cursor-pointer transition-colors hover:bg-[#081685] disabled:opacity-50 disabled:cursor-not-allowed" 
+                                        disabled={!isWithinPremises} 
                                         onClick={() => setModalStep(2)}
                                     >
-                                        Retake
-                                    </button>
-                                    <button 
-                                        className="flex-[2] py-3.5 rounded-xl border-none bg-[linear-gradient(270deg,#0B1EAE_0%,#152286_23.56%,#0D1767_63.46%,#050C48_100%)] text-white font-bold cursor-pointer hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed transition-all" 
-                                        onClick={handleFinalSubmit} 
-                                        disabled={loading}
-                                    >
-                                        {loading ? 'Submitting...' : 'Confirm & Submit'}
+                                        {isWithinPremises ? "Proceed to Selfie" : "Invalid Location"}
                                     </button>
                                 </div>
-                            </div>
-                        )}
+                            )}
+
+                            {/* STEP 2: LIVE FACE DETECTION */}
+                            {modalStep === 2 && (
+                                <div className="flex flex-col items-center w-full h-full justify-between min-h-0">
+                                    
+                                    <div className="bg-blue-50 text-blue-800 p-2.5 rounded-lg text-[12px] md:text-[13px] leading-tight mb-3 border border-blue-200 flex gap-2 items-start text-left w-full shrink-0">
+                                        <Camera size={16} className="shrink-0 mt-0.5 text-blue-600" />
+                                        <div>
+                                            <strong className="block mb-0.5 text-blue-900">Photo Guidelines:</strong>
+                                            Take a clear selfie showing your surroundings inside CLIMBS premises.
+                                        </div>
+                                    </div>
+
+                                    <div className={`w-full flex-1 min-h-0 flex justify-center items-center rounded-xl overflow-hidden mb-3 border-[3px] relative bg-slate-900 transition-colors duration-300 ${faceDetected ? 'border-emerald-500' : 'border-slate-200'}`}>
+                                        <Webcam
+                                            audio={false}
+                                            ref={webcamRef}
+                                            screenshotFormat="image/jpeg"
+                                            className="w-full h-full object-cover block scale-x-[-1]"
+                                            videoConstraints={videoConstraints}
+                                            onPlay={handleVideoOnPlay}
+                                        />
+                                        <canvas 
+                                            ref={canvasRef} 
+                                            className="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
+                                        />
+                                    </div>
+
+                                    <div className={`mb-3 text-sm font-bold flex items-center gap-2 shrink-0 ${faceDetected ? 'text-emerald-500' : 'text-amber-500'}`}>
+                                        <Scan size={18} />
+                                        {faceStatusText}
+                                    </div>
+
+                                    <button 
+                                        className="w-full shrink-0 bg-[linear-gradient(270deg,#0B1EAE_0%,#152286_23.56%,#0D1767_63.46%,#050C48_100%)] text-white border-none py-3.5 px-5 rounded-xl font-bold transition-all hover:bg-[#081685] disabled:opacity-50 disabled:cursor-not-allowed" 
+                                        onClick={capture}
+                                        disabled={!faceDetected}
+                                    >
+                                        Capture Photo
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* STEP 3: SUBMISSION */}
+                            {modalStep === 3 && (
+                                <div className="flex flex-col items-center w-full h-full min-h-0">
+                                    <div className="w-full flex-1 min-h-0 flex justify-center items-center relative rounded-xl overflow-hidden mb-4 border-[3px] border-slate-200 bg-slate-900">
+                                        {imgSrc && <img src={imgSrc} alt="Selfie" className="w-full h-full object-cover block scale-x-[-1]" />}
+                                        <div className="absolute inset-0 bg-green-500/20 flex items-center justify-center">
+                                            <CheckCircle size={48} className="text-white drop-shadow-lg" />
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col sm:flex-row gap-3 w-full shrink-0">
+                                        <button 
+                                            className="w-full sm:flex-1 py-3.5 rounded-xl border border-slate-300 bg-white font-semibold text-slate-700 cursor-pointer hover:bg-slate-50 transition-colors" 
+                                            onClick={() => setModalStep(2)}
+                                        >
+                                            Retake
+                                        </button>
+                                        <button 
+                                            className="w-full sm:flex-[2] py-3.5 rounded-xl border-none bg-[linear-gradient(270deg,#0B1EAE_0%,#152286_23.56%,#0D1767_63.46%,#050C48_100%)] text-white font-bold cursor-pointer hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed transition-all" 
+                                            onClick={handleFinalSubmit} 
+                                            disabled={isSubmitting}
+                                        >
+                                            {isSubmitting ? 'Submitting...' : 'Confirm & Submit'}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}

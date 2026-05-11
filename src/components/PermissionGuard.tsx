@@ -1,30 +1,43 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store'; // Adjust path if needed
 
 interface PermissionGuardProps {
-  requiredPermission: string;
-  children: React.ReactNode;
+    requiredPermission: string;
+    children: React.ReactNode;
 }
 
-export default function PermissionGuard({ requiredPermission, children }: PermissionGuardProps) {
-    // 1. Grab the user data from local storage
-    const user: { role?: string; permissions?: string[] } = JSON.parse(localStorage.getItem('user') ?? 'null') || {};
-    
-    // 2. Extract their specific permissions array (default to empty if none exist)
-    const permissions: string[] = user.permissions || [];
-    
-    // 3. Check if they are the ultimate boss
-    const isSuperAdmin: boolean = user.role?.toLowerCase() === 'superadmin';
+const PermissionGuard = ({ requiredPermission, children }: PermissionGuardProps) => {
+    // ✨ THE FIX: Get user and permissions directly from Redux!
+    const { user } = useSelector((state: RootState) => state.auth);
 
-    // 4. THE GATEKEEPER LOGIC
-    // If they are the Super Admin, let them pass automatically.
-    // Otherwise, check if their specific permissions array includes the required string.
-    if (isSuperAdmin || permissions.includes(requiredPermission)) {
-        return children;
+    // 1. If no user is found, block access
+    if (!user) {
+        return null; // Or <Navigate to="/login" replace />
     }
 
-    // 5. BOUNCED
-    // If they are just normal HR/Intern and don't have the checkbox for this page,
-    // silently redirect them back to the main HR dashboard.
-    return <Navigate to="/dashboard" replace />;
-}
+    // 2. Superadmins get a free pass to everything
+    if (user.role?.toLowerCase() === 'superadmin') {
+        return <>{children}</>;
+    }
+
+    // 3. Check if the user has the specific required permission
+    const userPermissions = user.permissions || [];
+    const hasPermission = userPermissions.includes(requiredPermission);
+
+    if (!hasPermission) {
+        // You can return null (blank) or redirect them somewhere else
+        // return <Navigate to="/dashboard" replace />;
+        return (
+            <div className="flex items-center justify-center h-full text-slate-400">
+                <h2>You do not have permission to view this page.</h2>
+            </div>
+        );
+    }
+
+    // 4. Permission granted! Render the page.
+    return <>{children}</>;
+};
+
+export default PermissionGuard;

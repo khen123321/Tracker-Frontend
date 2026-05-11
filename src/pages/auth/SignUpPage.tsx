@@ -111,7 +111,7 @@ export default function SignUpPage() {
 
     const fetchAreaData = async () => {
       try {
-        const response = await fetch('https://coop-sustain-be.climbs.coop/api/area-registration');
+        const response = await fetch('/api/area-registration')
         const data = await response.json();
         setAreaData(data); 
       } catch (err) {
@@ -646,21 +646,35 @@ export default function SignUpPage() {
               ) : (
 
                 <>
-                  <div className="text-center mb-5">
-                      <h1 className="text-[1.8rem] min-[900px]:text-[3rem] font-black text-white m-0 mb-1 tracking-widest drop-shadow-md">CREATE ACCOUNT</h1>
-                      <p className="text-[#000270]/90 text-[0.95rem] font-medium">Sign up to join the CLIMBS Intern program</p>
-                  </div>
-
-                  <form className="bg-white/95 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.25)] w-full max-w-[500px] flex flex-col overflow-visible min-[900px]:max-h-[80vh] min-[900px]:overflow-hidden p-0" onSubmit={step === 4 ? handleSubmit : (e) => e.preventDefault()}>
+                  {/* ✨ MOVED "CREATE ACCOUNT" TEXT HERE ✨ */}
+                  <form 
+                    className="bg-white/95 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.25)] w-full max-w-[500px] flex flex-col max-h-[85vh] min-[900px]:max-h-[80vh] overflow-hidden p-0" 
+                    onSubmit={step === 4 ? handleSubmit : (e) => e.preventDefault()}
+                  >
+                    {/* Header inside the form container */}
+                    <div className="pt-8 pb-2 px-9 text-center bg-white/95 shrink-0 z-10">
+                        <h1 className="text-[2.2rem] min-[900px]:text-[2.5rem] font-black text-[#0B1EAE] m-0 tracking-wide drop-shadow-sm">
+                            CREATE ACCOUNT
+                        </h1>
+                        <p className="text-slate-600 text-[0.95rem] font-medium mt-1 mb-0">
+                            Sign up to join the CLIMBS Intern program
+                        </p>
+                    </div>
                     
-                    <div className="p-6 min-[900px]:pt-8 min-[900px]:px-9 min-[900px]:pb-4 bg-transparent shrink-0 border-b border-slate-200/60 z-10">
+                    {/* Stepper */}
+                    <div className="px-9 pb-4 bg-white/95 shrink-0 border-b border-slate-200/60 z-10">
                       {Stepper()}
                     </div>
 
-                    <div className="p-6 min-[900px]:px-9 min-[900px]:py-6 flex-1 overflow-visible min-[900px]:overflow-y-auto custom-scrollbar animate-[slideFadeIn_0.3s_ease-out_forwards]" key={`step-anim-${step}`}>
+                    {/* Form Inputs (Scrollable) */}
+                    <div 
+                      className="p-6 min-[900px]:px-9 min-[900px]:py-6 flex-1 overflow-y-auto custom-scrollbar animate-[slideFadeIn_0.3s_ease-out_forwards]" 
+                      key={`step-anim-${step}`}
+                    >
                       {renderStep()}
                     </div>
                     
+                    {/* Nav Buttons (Fixed Bottom) */}
                     <div className="p-6 min-[900px]:py-4 min-[900px]:px-9 min-[900px]:pb-6 bg-white border-t border-slate-200/80 shrink-0 z-10 shadow-[0_-4px_10px_rgba(0,0,0,0.02)]">
                       {NavButtons()}
                     </div>

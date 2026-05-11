@@ -1,7 +1,7 @@
 // src/components/GlobalDrawer.tsx
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { closeProfile } from '../store/slices/drawerSlice';
+import { closeProfile } from '../store/ui/drawerReducer';
 import InternProfileDrawer from './InternProfileDrawer'; // Adjust this path if needed
 import { RootState, AppDispatch } from '../store';
 

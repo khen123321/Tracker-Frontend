@@ -25,7 +25,7 @@ import PageHeader from '../../../components/layout/PageHeader';
 
 // ✨ REDUX IMPORTS
 import { useAppDispatch } from '../../../store/hooks';
-import { openProfile } from '../../../store/slices/drawerSlice';
+import { openProfile } from '../../../store/ui/drawerReducer';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -45,6 +45,8 @@ interface InternRecord {
   intern?: {
     avatar_url?: string;
     date_started?: string;
+    start_date?: string;
+    created_at?: string;
     department?: { name: string };
     school?: { name: string };
     course?: string;
@@ -53,6 +55,9 @@ interface InternRecord {
     emergency_address?: string;
   };
   department?: { name: string };
+  profile_picture?: string;
+  profile?: { avatar_url?: string };
+  updated_at?: string;
 }
 
 interface SelectedInternModal {
@@ -172,10 +177,14 @@ export default function InternsList() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const [confirmArchiveText, setConfirmArchiveText] = useState('');
+  
+  // ✨ EXPORT STATE
   const [exportType, setExportType] = useState('info');
   const [exportFormat, setExportFormat] = useState('Excel');
+  const [dateRange, setDateRange] = useState('This Month');
 
-  const [hoursInputType, setHoursInputType] = useState<'time' | 'full_day'>(
+  // ✨ FIX: Added the new half day types to the state
+  const [hoursInputType, setHoursInputType] = useState<'time' | 'full_day' | 'half_day_am' | 'half_day_pm'>(
     'time'
   );
   const [eventType, setEventType] = useState('Regular Day');
@@ -425,30 +434,48 @@ export default function InternsList() {
     }
   };
 
+  // ✨ BULLETPROOF EXPORT FIX
   const handleBulkExport = async () => {
     try {
       setIsProcessing(true);
       const internIds = selectedInterns.map((i) => i.id);
+      
       const response = await api.post(
         '/hr/interns/bulk-export',
-        { ids: internIds, type: exportType, format: exportFormat },
+        { 
+          ids: internIds, 
+          type: exportType, 
+          format: exportFormat,
+          date_range: dateRange // ✨ Sends the Date Range!
+        },
         { responseType: 'blob' }
       );
+
+      // ✨ SAFETY CHECK: Did Laravel send an error instead of a file?
+      if (response.data.type === 'application/json') {
+        const text = await response.data.text();
+        const errorData = JSON.parse(text);
+        showNotification(`Export Error: ${errorData.message || 'Server error'}`, 'error');
+        setIsProcessing(false);
+        return;
+      }
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute(
         'download',
-        `Intern_Export_${new Date().toISOString().split('T')[0]}.${exportFormat.toLowerCase()}`
+        `Intern_Export_${new Date().toISOString().split('T')[0]}.csv`
       );
       document.body.appendChild(link);
       link.click();
+      link.remove();
 
       clearSelection();
       showNotification('Export downloaded successfully!');
-    } catch {
-      showNotification('Export failed.', 'error');
+    } catch (err: any) {
+      console.error('Export exception:', err);
+      showNotification('Export failed to process.', 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -492,13 +519,32 @@ export default function InternsList() {
     }
   };
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
+  // ✨ THE AGGRESSIVE DATE HUNTER ✨
+  const formatDate = (user: any, viewMode: string) => {
+    // 1. First, try to grab the exact target dates
+    let targetDate = viewMode === 'archived' 
+      ? user?.deleted_at 
+      : user?.intern?.date_started || user?.date_started || user?.intern?.start_date || user?.start_date;
+
+    // 2. If those are blank (null), aggressively hunt for standard Laravel timestamps
+    if (!targetDate) {
+      targetDate = user?.created_at || user?.intern?.created_at || user?.updated_at;
+    }
+
+    // 3. If Laravel sent literally zero dates, then we show N/A
+    if (!targetDate) return 'N/A';
+
+    try {
+      // Safely format the date (also fixes the classic Safari 'Invalid Date' bug by replacing spaces with 'T')
+      const safeDate = targetDate.replace(' ', 'T'); 
+      return new Date(safeDate).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+    } catch (e) {
+      return 'N/A';
+    }
   };
 
   // ─── Skeleton Loading State ──────────────────────────────────────────────────
@@ -901,6 +947,11 @@ export default function InternsList() {
                     user.school ||
                     'Not Assigned';
 
+                  const dbAvatar = user.profile?.avatar_url || user.profile_picture || user.intern?.avatar_url;
+                  const finalAvatarSrc = dbAvatar 
+                    ? (dbAvatar.startsWith('http') ? dbAvatar : `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/storage/${dbAvatar}`)
+                    : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.first_name + user.id}`;
+
                   return (
                     <tr
                       key={user.id}
@@ -921,8 +972,7 @@ export default function InternsList() {
 
                       <td className="py-4 px-4 border-b border-slate-100 text-[13px] text-slate-500 align-middle">
                         <div
-                          className="flex items-center gap-2 cursor-pointer"
-                          // ✨ TRIGGER REDUX DRAWER ✨
+                          className="flex items-center gap-[10px] cursor-pointer group"
                           onClick={() => {
                             if (user.id) {
                               dispatch(openProfile(user.id));
@@ -932,29 +982,30 @@ export default function InternsList() {
                           }}
                           title="View Full Profile"
                         >
-                          <div className="w-8 h-8 rounded-full bg-slate-100 overflow-hidden flex-shrink-0">
+                          <div className="w-[34px] h-[34px] rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0 overflow-hidden group-hover:ring-[2.5px] group-hover:ring-[#0B1EAE] group-hover:ring-offset-2 transition-all duration-300">
                             <img
-                              src={
-                                user.intern?.avatar_url ||
-                                `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}`
-                              }
-                              alt="avatar"
+                              src={finalAvatarSrc}
+                              alt={`${user.first_name}'s avatar`}
+                              className="w-full h-full object-cover"
                               style={{
                                 filter:
                                   viewMode === 'archived'
                                     ? 'grayscale(100%)'
                                     : 'none',
                               }}
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.first_name + user.id}`;
+                              }}
                             />
                           </div>
                           <div className="flex flex-col gap-0.5">
                             <p
-                              className="text-[13px] font-semibold m-0 mb-0.5"
+                              className="text-[13px] font-semibold m-0 mb-0.5 transition-colors group-hover:text-[#0B1EAE]"
                               style={{
                                 color:
                                   viewMode === 'archived'
                                     ? '#64748b'
-                                    : '#0B1EAE',
+                                    : '#0f172a',
                               }}
                             >
                               {user.first_name} {user.last_name}
@@ -982,13 +1033,7 @@ export default function InternsList() {
                       </td>
 
                       <td className="py-4 px-4 border-b border-slate-100 text-[13px] text-slate-500 align-middle">
-                        {formatDate(
-                          viewMode === 'archived'
-                            ? user.deleted_at
-                            : user.intern?.date_started ||
-                                user.date_started ||
-                                user.created_at
-                        )}
+                        {formatDate(user, viewMode)}
                       </td>
 
                       <td className="py-4 px-4 border-b border-slate-100 text-[13px] text-slate-500 align-middle">
@@ -1027,7 +1072,7 @@ export default function InternsList() {
                               emergency_address:
                                 user.intern?.emergency_address ||
                                 'NOT PROVIDED',
-                              avatar_url: user.intern?.avatar_url || null,
+                              avatar_url: finalAvatarSrc,
                               rawData: user,
                             });
                           }}
@@ -1353,10 +1398,14 @@ export default function InternsList() {
                 <h3 className="text-[11px] font-bold text-slate-500 uppercase mb-0.5">
                   Data Range
                 </h3>
-                <select className="w-full px-3 py-2 border border-slate-200 rounded-xl text-[13px] text-slate-900 outline-none bg-white focus:border-[#0B1EAE]">
-                  <option>This Month</option>
-                  <option>Last Month</option>
-                  <option>All Time</option>
+                <select 
+                  value={dateRange}
+                  onChange={(e) => setDateRange(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-[13px] text-slate-900 outline-none bg-white focus:border-[#0B1EAE]"
+                >
+                  <option value="This Month">This Month</option>
+                  <option value="Last Month">Last Month</option>
+                  <option value="All Time">All Time</option>
                 </select>
               </div>
               <div className="flex flex-col gap-1.5">
@@ -1428,12 +1477,13 @@ export default function InternsList() {
               </div>
             </div>
 
+            {/* ✨ UPDATED EVENT TYPES (Added Late and Half Day) */}
             <div className="flex flex-col gap-1.5">
               <h3 className="text-[11px] font-bold text-slate-500 uppercase mb-0.5">
-                Event Type
+                Event Type / Status
               </h3>
               <div className="flex items-center gap-1.5 flex-wrap">
-                {['Regular Day', 'Event/ Activity', 'Makeup Hours'].map(
+                {['Regular Day', 'Late', 'Half Day', 'Event/ Activity', 'Makeup Hours'].map(
                   (type) => (
                     <button
                       key={type}
@@ -1451,11 +1501,12 @@ export default function InternsList() {
               </div>
             </div>
 
+            {/* ✨ UPDATED INPUT METHODS (Added AM/PM Half Days) */}
             <div className="flex flex-col gap-1.5">
               <h3 className="text-[11px] font-bold text-slate-500 uppercase mb-0.5">
                 Input Method
               </h3>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 <button
                   onClick={() => setHoursInputType('time')}
                   className={`border rounded-xl px-3 py-[7px] text-[13px] font-semibold cursor-pointer flex items-center justify-center gap-1.5 transition-all duration-200 ${
@@ -1475,6 +1526,26 @@ export default function InternsList() {
                   }`}
                 >
                   Full Day (8 hrs)
+                </button>
+                <button
+                  onClick={() => setHoursInputType('half_day_am')}
+                  className={`border rounded-xl px-3 py-[7px] text-[13px] font-semibold cursor-pointer flex items-center justify-center gap-1.5 transition-all duration-200 ${
+                    hoursInputType === 'half_day_am'
+                      ? 'bg-[#0B1EAE] text-white border-[#0B1EAE] hover:bg-[#050C48]'
+                      : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
+                  }`}
+                >
+                  Half Day AM
+                </button>
+                <button
+                  onClick={() => setHoursInputType('half_day_pm')}
+                  className={`border rounded-xl px-3 py-[7px] text-[13px] font-semibold cursor-pointer flex items-center justify-center gap-1.5 transition-all duration-200 ${
+                    hoursInputType === 'half_day_pm'
+                      ? 'bg-[#0B1EAE] text-white border-[#0B1EAE] hover:bg-[#050C48]'
+                      : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
+                  }`}
+                >
+                  Half Day PM
                 </button>
               </div>
             </div>

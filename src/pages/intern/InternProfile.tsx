@@ -55,20 +55,12 @@ interface ProgressStats {
     completionDate: string;
 }
 
-interface WeeklyDay {
-    label: string;
-    status: 'present' | 'absent' | 'future';
-    hours: number;
-}
-
 interface DocCheckProps {
     label: string;
     docKey: string;
     hasDoc: boolean | undefined;
     subtext?: string;
 }
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 interface InternProfileProps {
   isHrView?: boolean;
@@ -90,14 +82,6 @@ const InternProfile: React.FC<InternProfileProps> = ({ isHrView }) => {
         percent: 0,
         completionDate: 'Calculating...'
     });
-
-    const [weeklyStats, setWeeklyStats] = useState<WeeklyDay[]>([
-        { label: 'M', status: 'present', hours: 8 },
-        { label: 'T', status: 'absent', hours: 0 },
-        { label: 'W', status: 'present', hours: 7.5 },
-        { label: 'T', status: 'present', hours: 8 },
-        { label: 'F', status: 'future', hours: 0 }
-    ]);
 
     const [isPresentToday, setIsPresentToday] = useState<boolean>(true);
     const [uploadingAvatar, setUploadingAvatar] = useState<boolean>(false);
@@ -125,7 +109,6 @@ const InternProfile: React.FC<InternProfileProps> = ({ isHrView }) => {
                     completion = statsRes.data.completionDate;
 
                     if (isMounted) {
-                        if (statsRes.data.weeklyStats) setWeeklyStats(statsRes.data.weeklyStats);
                         if (statsRes.data.isPresentToday !== undefined) setIsPresentToday(statsRes.data.isPresentToday);
                     }
                 } else {
@@ -140,7 +123,6 @@ const InternProfile: React.FC<InternProfileProps> = ({ isHrView }) => {
                     }
 
                     if (isMounted) {
-                        if (hrStatsRes.data.weeklyStats) setWeeklyStats(hrStatsRes.data.weeklyStats);
                         if (hrStatsRes.data.isPresentToday !== undefined) setIsPresentToday(hrStatsRes.data.isPresentToday);
                     }
                 }
@@ -246,8 +228,6 @@ const InternProfile: React.FC<InternProfileProps> = ({ isHrView }) => {
         }
     };
 
-    // ─── Loading State ─────────────────────────────────────────────────────────
-
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center h-[50vh] text-slate-500 gap-4 font-[Poppins,system-ui,sans-serif]">
@@ -257,19 +237,15 @@ const InternProfile: React.FC<InternProfileProps> = ({ isHrView }) => {
         );
     }
 
-    // ─── Error State ───────────────────────────────────────────────────────────
-
     if (error || !intern) {
         return (
-            <div className="flex flex-col gap-[5px] font-[Poppins,system-ui,sans-serif] text-slate-900 p-0 min-h-screen bg-slate-100">
+            <div className="flex flex-col gap-[5px] font-[Poppins,system-ui,sans-serif] text-slate-900 p-[12px] min-h-screen bg-slate-100">
                 <div className="flex items-center gap-2 bg-red-50 text-red-500 p-4 rounded-xl font-semibold border border-red-200 mt-5">
                     <XCircle size={20} /> {error || "Intern not found."}
                 </div>
             </div>
         );
     }
-
-    // ─── Derived Values ────────────────────────────────────────────────────────
 
     const profile = intern.intern ?? ({} as InternProfile);
 
@@ -281,8 +257,6 @@ const InternProfile: React.FC<InternProfileProps> = ({ isHrView }) => {
     const batchName      = profile.batch  ?? intern.batch  ?? 'Current';
     const branchName     = getName(profile.branch as string | { name: string }) ?? getName(intern.branch as string | { name: string }) ?? intern.assigned_branch ?? profile.branch_id ?? 'Not Assigned';
     const departmentName = getName(profile.department as string | { name: string }) ?? getName(intern.department as string | { name: string }) ?? intern.assigned_department ?? profile.department_id ?? 'Not Assigned';
-
-    // ─── DocCheck Sub-component ────────────────────────────────────────────────
 
     const DocCheck: React.FC<DocCheckProps> = ({ label, docKey, hasDoc, subtext }) => {
         const isUploading = uploadingDoc === docKey;
@@ -297,7 +271,6 @@ const InternProfile: React.FC<InternProfileProps> = ({ isHrView }) => {
                         : 'bg-white border-slate-100 hover:border-slate-300',
                 ].join(' ')}
             >
-                {/* Icon box */}
                 <div
                     className={[
                         'flex items-center justify-center w-[38px] h-[38px] rounded-[10px] flex-shrink-0',
@@ -307,7 +280,6 @@ const InternProfile: React.FC<InternProfileProps> = ({ isHrView }) => {
                     {hasDoc ? <Check size={18} /> : <AlertCircle size={18} />}
                 </div>
 
-                {/* Info */}
                 <div className="flex-grow min-w-0">
                     <h4
                         className={[
@@ -323,7 +295,6 @@ const InternProfile: React.FC<InternProfileProps> = ({ isHrView }) => {
                     </p>
                 </div>
 
-                {/* Actions */}
                 <div className="flex items-center gap-2.5 flex-shrink-0 max-[768px]:w-full max-[768px]:justify-end max-[768px]:mt-1">
                     {hasDoc && (
                         <button
@@ -366,20 +337,14 @@ const InternProfile: React.FC<InternProfileProps> = ({ isHrView }) => {
         );
     };
 
-    // ─── Render ────────────────────────────────────────────────────────────────
-
     return (
-        <div className="flex flex-col gap-[5px] font-[Poppins,system-ui,sans-serif] text-slate-900 p-0 min-h-screen bg-slate-100">
+        <div className="flex flex-col gap-[5px] font-[Poppins,system-ui,sans-serif] text-slate-900 p-[12px] min-h-screen bg-slate-100">
             <Toaster position="top-right" />
 
-            <PageHeader
-                title="Intern Profile"
-                subtitle="View and manage intern information and documents."
-            />
+            <PageHeader title="Intern Profile" />
 
             <div className="flex flex-col gap-[5px]">
 
-                {/* HR Actions */}
                 {!isViewingOwnProfile && (
                     <div className="flex justify-end">
                         <button className="bg-white border border-slate-300 text-slate-500 px-4 py-2 rounded-lg text-[0.85rem] font-semibold cursor-pointer transition-all shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:bg-slate-50 hover:border-slate-400 hover:text-slate-900">
@@ -390,17 +355,44 @@ const InternProfile: React.FC<InternProfileProps> = ({ isHrView }) => {
 
                 {/* ─── IDENTITY BANNER ─── */}
                 <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
-                    {/* Gradient strip */}
-                    <div className="h-20 bg-gradient-to-br from-[#0B1EAE] to-blue-500" />
+                    
+                    <style>{`
+                        @keyframes shine {
+                            0% { left: -150%; }
+                            60% { left: 200%; }
+                            100% { left: 200%; }
+                        }
+                        .animate-shine {
+                            position: relative;
+                            overflow: hidden; 
+                        }
+                        .animate-shine::after {
+                            content: '';
+                            position: absolute;
+                            top: 0;
+                            left: -150%;
+                            width: 50%;
+                            height: 100%;
+                            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+                            transform: skewX(-20deg); 
+                            animation: shine 5s ease-in-out infinite; 
+                            pointer-events: none; 
+                        }
+                    `}</style>
+
+                    <div 
+                        className="w-full h-20 animate-shine" 
+                        style={{ background: 'linear-gradient(90deg, #0B1EAE 0%, #152286 23.56%, #0D1767 63.46%, #050C48 100%)' }}
+                    >
+                    </div>
 
                     <div
                         className={[
-                            'flex items-start gap-6 px-8 pb-8 -mt-9',
+                            'flex items-start gap-6 px-8 pb-8 relative z-10 -mt-9',
                             'max-[768px]:flex-col max-[768px]:items-center max-[768px]:text-center',
                             'max-[768px]:px-5 max-[768px]:pb-5 max-[768px]:-mt-[50px]',
                         ].join(' ')}
                     >
-                        {/* Avatar */}
                         <div className="group relative w-[100px] h-[100px] rounded-full border-4 border-white bg-white flex-shrink-0 shadow-[0_4px_10px_rgba(0,0,0,0.08)]">
                             {uploadingAvatar && (
                                 <div className="absolute inset-0 bg-slate-900/40 rounded-full flex items-center justify-center z-10">
@@ -432,7 +424,6 @@ const InternProfile: React.FC<InternProfileProps> = ({ isHrView }) => {
                             />
                         </div>
 
-                        {/* Identity info */}
                         <div className="mt-11 flex flex-col gap-1.5 max-[768px]:mt-4 max-[768px]:items-center">
                             <h2 className="text-[1.6rem] font-extrabold text-slate-900 m-0 leading-tight">
                                 {intern.first_name} {intern.last_name}
@@ -442,7 +433,6 @@ const InternProfile: React.FC<InternProfileProps> = ({ isHrView }) => {
                             </p>
 
                             <div className="flex items-center gap-3 mt-2">
-                                {/* Present/Absent badge */}
                                 <span
                                     className={[
                                         'px-3 py-1 rounded-full text-xs font-extrabold flex items-center gap-1.5 uppercase tracking-[0.5px] border',
@@ -460,7 +450,6 @@ const InternProfile: React.FC<InternProfileProps> = ({ isHrView }) => {
                                     {isPresentToday ? 'PRESENT' : 'ABSENT'}
                                 </span>
 
-                                {/* Course badge */}
                                 <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-xs font-extrabold border border-blue-200 tracking-[0.5px]">
                                     {courseName}
                                 </span>
@@ -469,232 +458,176 @@ const InternProfile: React.FC<InternProfileProps> = ({ isHrView }) => {
                     </div>
                 </div>
 
-                {/* ─── MIDDLE ROW: PROGRESS & ACADEMICS ─── */}
-                <div className="grid grid-cols-[360px_1fr] gap-[5px] max-[1100px]:grid-cols-1">
+                {/* ─── MAIN CONTENT GRID (COLUMN-BASED LAYOUT) ─── */}
+                <div className="grid grid-cols-[360px_1fr] gap-[5px] max-[1100px]:grid-cols-1 items-start">
 
-                    {/* Progress Card */}
-                    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col">
-                        <div className="flex items-center gap-2 text-xs font-extrabold text-slate-500 tracking-widest uppercase mb-4">
-                            <Clock size={16} className="text-slate-400" />
-                            OJT PROGRESS
-                        </div>
+                    {/* LEFT COLUMN: Progress & Emergency Contact stacked together */}
+                    <div className="flex flex-col gap-[5px]">
+                        
+                        {/* Progress Card */}
+                        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col">
+                            {/* ✨ Moved Est Completion to the header row! */}
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center gap-2 text-xs font-extrabold text-slate-500 tracking-widest uppercase">
+                                    <Clock size={16} className="text-slate-400" />
+                                    OJT PROGRESS
+                                </div>
+                                <div className="text-[11px] text-slate-500 font-medium">
+                                    Est. <span className="font-bold text-slate-800">{progressStats.completionDate}</span>
+                                </div>
+                            </div>
 
-                        {/* Hours */}
-                        <div className="flex justify-between items-end mb-3">
-                            <div className="flex items-baseline gap-1.5">
-                                <span className="text-5xl font-extrabold text-emerald-500 leading-none">
-                                    {progressStats.renderedHours}
-                                </span>
-                                <span className="text-base text-slate-400 font-bold">
-                                    / {progressStats.requiredHours} hrs
+                            <div className="flex justify-between items-end mb-3">
+                                <div className="flex items-baseline gap-1.5">
+                                    <span className="text-5xl font-extrabold text-[#0B1EAE] leading-none">
+                                        {progressStats.renderedHours}
+                                    </span>
+                                    <span className="text-base text-[#0B1EAE]/70 font-bold">
+                                        / {progressStats.requiredHours} hrs
+                                    </span>
+                                </div>
+                                <span className="text-xl font-extrabold text-[#0B1EAE]">
+                                    {progressStats.percent}%
                                 </span>
                             </div>
-                            <span className="text-xl font-extrabold text-emerald-500">
-                                {progressStats.percent}%
-                            </span>
+
+                            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-gradient-to-r from-[#0B1EAE] to-blue-500 rounded-full transition-[width] duration-[800ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                                    style={{ width: `${progressStats.percent}%` }}
+                                />
+                            </div>
                         </div>
 
-                        {/* Progress bar */}
-                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden mb-4">
-                            <div
-                                className="h-full bg-emerald-500 rounded-full transition-[width] duration-[800ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
-                                style={{ width: `${progressStats.percent}%` }}
-                            />
-                        </div>
+                        {/* Emergency Contact Card (Moved directly underneath Progress) */}
+                        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col">
+                            <div className="flex items-center gap-2 text-xs font-extrabold text-slate-500 tracking-widest uppercase mb-4">
+                                <ShieldCheck size={16} className="text-red-500" />
+                                EMERGENCY CONTACT
+                            </div>
 
-                        <div className="text-sm text-slate-500">
-                            Est. completion{' '}
-                            <span className="font-bold text-slate-900">{progressStats.completionDate}</span>
-                        </div>
-
-                        {/* M–F Weekly Chart */}
-                        <div className="flex gap-2 mt-auto pt-8 h-20 items-end justify-between max-[1100px]:max-w-[360px]">
-                            {weeklyStats.map((day, idx) => {
-                                const barColor =
-                                    day.status === 'present'
-                                        ? 'bg-emerald-500 opacity-85'
-                                        : day.status === 'absent'
-                                        ? 'bg-red-300 opacity-85'
-                                        : 'bg-slate-100';
-
-                                const height =
-                                    day.status === 'present'
-                                        ? `${Math.min((day.hours / 8) * 100, 100)}%`
-                                        : '20%';
-
-                                return (
-                                    <div
-                                        key={idx}
-                                        className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end"
-                                    >
-                                        <div
-                                            className={`w-full max-w-[24px] rounded-t-[4px] transition-[height] duration-500 ease-in-out ${barColor}`}
-                                            style={{ height }}
-                                        />
-                                        <span className="text-[0.65rem] font-extrabold text-slate-400">
-                                            {day.label}
-                                        </span>
+                            <div className="flex flex-col gap-4">
+                                <div className="border border-slate-200 rounded-xl p-4 flex items-start gap-4 bg-stone-50">
+                                    <User size={16} className="text-slate-400 mt-0.5" />
+                                    <div>
+                                        <label className="text-[0.7rem] font-extrabold text-slate-400 uppercase tracking-[0.5px] mb-1 block">
+                                            CONTACT NAME
+                                        </label>
+                                        <p className="text-[0.95rem] font-bold text-slate-900 m-0 break-words">
+                                            {profile.emergency_name || 'Not Provided'}
+                                        </p>
                                     </div>
-                                );
-                            })}
-                        </div>
-                    </div>
+                                </div>
 
-                    {/* Academics Card */}
-                    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col">
-                        <div className="flex items-center gap-2 text-xs font-extrabold text-slate-500 tracking-widest uppercase mb-4">
-                            <GraduationCap size={16} className="text-slate-400" />
-                            ACADEMIC & PLACEMENT
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-x-6 gap-y-7 max-[1100px]:grid-cols-1">
-                            {/* School – full width */}
-                            <div className="col-span-2 max-[1100px]:col-span-1">
-                                <label className="text-xs font-bold text-slate-400 uppercase tracking-[0.5px] block mb-1.5">
-                                    SCHOOL / UNIVERSITY
-                                </label>
-                                <p className="text-[1.05rem] font-bold text-slate-900 m-0">{schoolName}</p>
-                            </div>
-
-                            <div>
-                                <label className="text-xs font-bold text-slate-400 uppercase tracking-[0.5px] block mb-1.5">
-                                    COURSE & BATCH
-                                </label>
-                                <p className="text-[1.05rem] font-bold text-slate-900 m-0">{courseName}</p>
-                                <span className="text-sm text-slate-500 block mt-1 font-medium">
-                                    Current • {batchName}
-                                </span>
-                            </div>
-
-                            <div>
-                                <label className="text-xs font-bold text-slate-400 uppercase tracking-[0.5px] block mb-1.5">
-                                    DEPARTMENT
-                                </label>
-                                <p className="text-[1.05rem] font-bold text-slate-900 m-0">{departmentName}</p>
-                                <span className="text-sm text-slate-500 block mt-1 font-medium">
-                                    Technology Division
-                                </span>
-                            </div>
-
-                            <div>
-                                <label className="text-xs font-bold text-slate-400 uppercase tracking-[0.5px] block mb-1.5">
-                                    ASSIGNED BRANCH
-                                </label>
-                                <p className="text-[1.05rem] font-bold text-slate-900 m-0 flex items-center gap-2">
-                                    <Building2 size={14} /> {branchName}
-                                </p>
-                            </div>
-
-                            <div>
-                                <label className="text-xs font-bold text-slate-400 uppercase tracking-[0.5px] block mb-1.5">
-                                    START DATE
-                                </label>
-                                <p className="text-[1.05rem] font-bold text-slate-900 m-0 flex items-center gap-2">
-                                    <Calendar size={14} />
-                                    {profile.date_started
-                                        ? new Date(profile.date_started).toLocaleDateString('en-US', {
-                                              month: 'short',
-                                              day: 'numeric',
-                                              year: 'numeric',
-                                          })
-                                        : 'Pending'}
-                                </p>
+                                <div className="flex flex-col gap-4">
+                                    <div className="border border-slate-200 rounded-xl p-4 flex items-start gap-4">
+                                        <Phone size={16} className="text-slate-400 mt-0.5" />
+                                        <div>
+                                            <label className="text-[0.7rem] font-extrabold text-slate-400 uppercase tracking-[0.5px] mb-1 block">
+                                                PHONE
+                                            </label>
+                                            <p className="text-[0.95rem] font-bold text-slate-900 m-0 break-words">
+                                                {profile.emergency_number || 'N/A'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="border border-slate-200 rounded-xl p-4 flex items-start gap-4">
+                                        <MapPin size={16} className="text-slate-400 mt-0.5" />
+                                        <div>
+                                            <label className="text-[0.7rem] font-extrabold text-slate-400 uppercase tracking-[0.5px] mb-1 block">
+                                                ADDRESS
+                                            </label>
+                                            <p className="text-[0.95rem] font-bold text-slate-900 m-0 break-words">
+                                                {profile.emergency_address || 'N/A'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                {/* ─── BOTTOM ROW: EMERGENCY & DOCUMENTS ─── */}
-                <div className="grid grid-cols-[360px_1fr] gap-[5px] max-[1100px]:grid-cols-1">
+                    {/* RIGHT COLUMN: Academics & Onboarding Docs */}
+                    <div className="flex flex-col gap-[5px]">
+                        
+                        {/* Academics Card */}
+                        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col">
+                            <div className="flex items-center gap-2 text-xs font-extrabold text-slate-500 tracking-widest uppercase mb-4">
+                                <GraduationCap size={16} className="text-slate-400" />
+                                ACADEMIC & PLACEMENT
+                            </div>
 
-                    {/* Emergency Contact Card */}
-                    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col">
-                        <div className="flex items-center gap-2 text-xs font-extrabold text-slate-500 tracking-widest uppercase mb-4">
-                            <ShieldCheck size={16} className="text-red-500" />
-                            EMERGENCY CONTACT
-                        </div>
-
-                        <div className="flex flex-col gap-4">
-                            {/* Contact Name */}
-                            <div className="border border-slate-200 rounded-xl p-4 flex items-start gap-4 bg-stone-50">
-                                <User size={16} className="text-slate-400 mt-0.5" />
-                                <div>
-                                    <label className="text-[0.7rem] font-extrabold text-slate-400 uppercase tracking-[0.5px] mb-1 block">
-                                        CONTACT NAME
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-7 max-[1100px]:grid-cols-1">
+                                <div className="col-span-2 max-[1100px]:col-span-1">
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-[0.5px] block mb-1.5">
+                                        SCHOOL / UNIVERSITY
                                     </label>
-                                    <p className="text-[0.95rem] font-bold text-slate-900 m-0 break-words">
-                                        {profile.emergency_name || 'Not Provided'}
+                                    <p className="text-[1.05rem] font-bold text-slate-900 m-0">{schoolName}</p>
+                                </div>
+
+                                <div>
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-[0.5px] block mb-1.5">
+                                        COURSE & BATCH
+                                    </label>
+                                    <p className="text-[1.05rem] font-bold text-slate-900 m-0">{courseName}</p>
+                                    <span className="text-sm text-slate-500 block mt-1 font-medium">
+                                        Current • {batchName}
+                                    </span>
+                                </div>
+
+                                <div>
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-[0.5px] block mb-1.5">
+                                        DEPARTMENT
+                                    </label>
+                                    <p className="text-[1.05rem] font-bold text-slate-900 m-0">{departmentName}</p>
+                                    <span className="text-sm text-slate-500 block mt-1 font-medium">
+                                        Technology Division
+                                    </span>
+                                </div>
+
+                                <div>
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-[0.5px] block mb-1.5">
+                                        ASSIGNED BRANCH
+                                    </label>
+                                    <p className="text-[1.05rem] font-bold text-slate-900 m-0 flex items-center gap-2">
+                                        <Building2 size={14} /> {branchName}
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-[0.5px] block mb-1.5">
+                                        START DATE
+                                    </label>
+                                    <p className="text-[1.05rem] font-bold text-slate-900 m-0 flex items-center gap-2">
+                                        <Calendar size={14} />
+                                        {profile.date_started
+                                            ? new Date(profile.date_started).toLocaleDateString('en-US', {
+                                                  month: 'short',
+                                                  day: 'numeric',
+                                                  year: 'numeric',
+                                              })
+                                            : 'Pending'}
                                     </p>
                                 </div>
                             </div>
+                        </div>
 
-                            {/* Phone & Address */}
-                            <div className="flex flex-col gap-4">
-                                <div className="border border-slate-200 rounded-xl p-4 flex items-start gap-4">
-                                    <Phone size={16} className="text-slate-400 mt-0.5" />
-                                    <div>
-                                        <label className="text-[0.7rem] font-extrabold text-slate-400 uppercase tracking-[0.5px] mb-1 block">
-                                            PHONE
-                                        </label>
-                                        <p className="text-[0.95rem] font-bold text-slate-900 m-0 break-words">
-                                            {profile.emergency_number || 'N/A'}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="border border-slate-200 rounded-xl p-4 flex items-start gap-4">
-                                    <MapPin size={16} className="text-slate-400 mt-0.5" />
-                                    <div>
-                                        <label className="text-[0.7rem] font-extrabold text-slate-400 uppercase tracking-[0.5px] mb-1 block">
-                                            ADDRESS
-                                        </label>
-                                        <p className="text-[0.95rem] font-bold text-slate-900 m-0 break-words">
-                                            {profile.emergency_address || 'N/A'}
-                                        </p>
-                                    </div>
-                                </div>
+                        {/* Onboarding Documents Card */}
+                        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col">
+                            <div className="flex items-center gap-2 text-xs font-extrabold text-slate-500 tracking-widest uppercase mb-4">
+                                <FileText size={16} className="text-slate-400" />
+                                ONBOARDING DOCUMENTS
+                            </div>
+
+                            <div className="flex flex-col gap-2.5">
+                                <DocCheck label="Resume / CV" docKey="resume" hasDoc={profile.has_resume} subtext="Standard job application format" />
+                                <DocCheck label="Memorandum of Agreement" docKey="moa" hasDoc={profile.has_moa} subtext="MOA • Signed by school" />
+                                <DocCheck label="School Endorsement Letter" docKey="endorsement" hasDoc={profile.has_endorsement} subtext="Required before Day 5" />
+                                <DocCheck label="Non-Disclosure Agreement" docKey="nda" hasDoc={profile.has_nda} subtext="NDA • Company legal form" />
+                                <DocCheck label="Intern Pledge" docKey="pledge" hasDoc={profile.has_pledge} subtext="Commitment to excellence" />
                             </div>
                         </div>
-                    </div>
 
-                    {/* Documents Card */}
-                    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col">
-                        <div className="flex items-center gap-2 text-xs font-extrabold text-slate-500 tracking-widest uppercase mb-4">
-                            <FileText size={16} className="text-slate-400" />
-                            ONBOARDING DOCUMENTS
-                        </div>
-
-                        <div className="flex flex-col gap-2.5">
-                            <DocCheck
-                                label="Resume / CV"
-                                docKey="resume"
-                                hasDoc={profile.has_resume}
-                                subtext="Standard job application format"
-                            />
-                            <DocCheck
-                                label="Memorandum of Agreement"
-                                docKey="moa"
-                                hasDoc={profile.has_moa}
-                                subtext="MOA • Signed by school"
-                            />
-                            <DocCheck
-                                label="School Endorsement Letter"
-                                docKey="endorsement"
-                                hasDoc={profile.has_endorsement}
-                                subtext="Required before Day 5"
-                            />
-                            <DocCheck
-                                label="Non-Disclosure Agreement"
-                                docKey="nda"
-                                hasDoc={profile.has_nda}
-                                subtext="NDA • Company legal form"
-                            />
-                            <DocCheck
-                                label="Intern Pledge"
-                                docKey="pledge"
-                                hasDoc={profile.has_pledge}
-                                subtext="Commitment to excellence"
-                            />
-                        </div>
                     </div>
                 </div>
 

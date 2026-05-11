@@ -513,7 +513,7 @@ function RequestsModal({ isOpen, onClose, onRequestAction }: { isOpen: boolean; 
       setRequests(prev => {
         const updated = { ...prev };
         (Object.keys(updated) as (keyof typeof updated)[]).forEach(key => {
-          updated[key] = updated[key].filter(r => r.id !== id);
+          updated[key] = (updated[key] || []).filter(r => r.id !== id);
         });
         return updated;
       });
@@ -539,7 +539,7 @@ function RequestsModal({ isOpen, onClose, onRequestAction }: { isOpen: boolean; 
     r.reason?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const totalPending = Object.values(requests).reduce((s, arr) => s + arr.length, 0);
+  const totalPending = Object.values(requests).reduce((s, arr) => s + (arr || []).length, 0);
 
   const TAB_CONFIG = [
     { key: 'absent' as const, label: 'Absent' },
@@ -777,7 +777,8 @@ export default function DashboardHome() {
         setStats(prev => ({
           ...prev,
           ...res.data,
-          pending_requests: res.data.pending_requests || prev.pending_requests,
+          // ✨ SAFETY: Always fallback to empty arrays if PHP sends empty data
+          pending_requests: res.data.pending_requests || { absent: [], halfDay: [], overtime: [] },
         }));
     } catch (err) {
       console.error('Error fetching stats:', err);
@@ -811,7 +812,7 @@ export default function DashboardHome() {
         ...prev,
         pending_requests: {
           ...prev.pending_requests,
-          [type]: prev.pending_requests[type].filter(req => req.id !== id),
+          [type]: (prev.pending_requests[type] || []).filter(req => req.id !== id),
         },
       }));
     } catch {
@@ -827,7 +828,7 @@ export default function DashboardHome() {
       setStats(prev => {
         const updatedPending = { ...prev.pending_requests };
         (Object.keys(updatedPending) as (keyof typeof updatedPending)[]).forEach(key => {
-          updatedPending[key] = updatedPending[key].filter(req => req.id !== id);
+          updatedPending[key] = (updatedPending[key] || []).filter(req => req.id !== id);
         });
         return { ...prev, pending_requests: updatedPending };
       });
@@ -841,6 +842,12 @@ export default function DashboardHome() {
   };
 
   const openRequestPopup = async (requestId: number) => {
+    // ✨ THE SAFETY GUARD
+    if (!requestId || requestId === 0) {
+      console.warn("Invalid Request ID. Aborting API call.");
+      return; 
+    }
+
     setActivePopup({ id: requestId, loading: true } as RequestDetail & { loading: boolean });
     try {
       const res = await api.get(`/hr/requests/${requestId}`);
@@ -967,7 +974,7 @@ export default function DashboardHome() {
                       stroke="none"
                       cy="35%"
                     >
-                      {stats.course_distribution.map((_, index) => {
+                      {(stats.course_distribution || []).map((_, index) => {
                         const gradients = ['url(#gradBlueShiny)', 'url(#gradLavenderShiny)', 'url(#gradSilverShiny)', 'url(#gradSilverLightShiny)'];
                         return <Cell key={`cell-${index}`} fill={gradients[index % gradients.length]} />;
                       })}
@@ -1177,7 +1184,8 @@ export default function DashboardHome() {
               >
                 {tab.label}
                 <span className={`text-[12px] px-2 py-[2px] rounded-xl ${activeTab === tab.key ? 'bg-[#bfdbfe] text-[#1d4ed8]' : 'bg-[#e2e8f0] text-[#475569]'}`}>
-                  {stats.pending_requests[tab.key].length}
+                  {/* ✨ SAFETY: Check if array exists before calling .length */}
+                  {(stats.pending_requests[tab.key] || []).length}
                 </span>
               </div>
             ))}

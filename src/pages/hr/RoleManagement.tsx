@@ -194,7 +194,14 @@ export default function RoleManagement() {
     const loadId = toast.loading("Creating account & sending verification email...");
     
     try {
-      await api.post('/hr/users', newUser);
+      // ✨ THE FIX: We intercept the empty string and convert it to null here!
+      const payload = {
+        ...newUser,
+        branch_id: newUser.branch_id === "" ? null : newUser.branch_id
+      };
+
+      // ✨ Send the modified payload instead of the raw newUser state
+      await api.post('/hr/users', payload);
       await fetchData(); 
       
       toast.success("Account created! Verification email sent.", { id: loadId });
