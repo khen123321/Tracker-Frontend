@@ -7,7 +7,7 @@ import {
     ChevronRight, LogOut, X, ChevronDown, ChevronUp
 } from 'lucide-react';
 
-// ✨ REDUX IMPORTS
+//  REDUX IMPORTS
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store';
 import { logoutRequest } from '../../store/auth/actions';
@@ -30,7 +30,7 @@ interface NavLinkDef {
 export default function Sidebar({ role }: SidebarProps) {
     const navigate = useNavigate();
     const location = useLocation();
-    const dispatch = useDispatch(); // ✨ Add dispatch for logout
+    const dispatch = useDispatch(); // 
 
     // ─── STATE ───
     const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
@@ -41,7 +41,7 @@ export default function Sidebar({ role }: SidebarProps) {
     const isSettingsActive = location.pathname.includes('/dashboard/settings');
     const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
 
-    // ✨ THE FIX: Pull user safely from Redux!
+    // Pull user safely from Redux!
     const authState = useSelector((state: RootState) => state.auth);
     const user = authState?.user || {} as any;
 
@@ -73,7 +73,7 @@ export default function Sidebar({ role }: SidebarProps) {
         ? hrLinks.filter(link => isSuperAdmin || (link.perm && permissions.includes(link.perm)))
         : internLinks;
 
-    // ✨ sort mobile links so "Clock In" is in the dead center!
+   
     const mobileBottomLinks = role === 'hr'
         ? visibleLinks.filter(link => link.name !== 'Settings')
         : [
@@ -90,7 +90,7 @@ export default function Sidebar({ role }: SidebarProps) {
     };
     const cancelLogout = () => setShowLogoutModal(false);
     
-    // ✨ THE FIX: Trigger the Redux logout action
+    // Trigger the Redux logout action
     const confirmLogout = () => {
         setShowLogoutModal(false);
         dispatch(logoutRequest()); // Tell Redux Saga to clear everything

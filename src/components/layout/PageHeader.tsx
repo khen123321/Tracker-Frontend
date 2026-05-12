@@ -1,11 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-// ✨ REDUX IMPORTS ✨
+//  REDUX IMPORTS 
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 
-// ✨ Imported BOTH notification components
+//  Imported BOTH notification components
 import NotificationCenter from '../NotificationCenter';
 import NotificationBell from '../NotificationBell'; 
 import CustomCalendarIcon from "../icons/CustomCalendarIcon";
@@ -15,18 +15,18 @@ interface PageHeaderProps {
   title: string;
   subtitle?: string;
   onExportDTR?: () => void;
-  onNotificationClick?: () => void; // ✨ Added the missing prop here!
+  onNotificationClick?: () => void; // 
 }
 
 const PageHeader: React.FC<PageHeaderProps> = ({
   title,
   subtitle,
   onExportDTR,
-  onNotificationClick, // ✨ Destructured the new prop
+  onNotificationClick, // 
 }) => {
   const navigate = useNavigate();
 
-  // ✨ THE FIX: Pull the user safely from Redux instead of localStorage
+  //   Pull the user safely from Redux instead of localStorage
   const { user } = useSelector((state: RootState) => state.auth);
   
   // Safely grab the role (defaults to 'intern' if user is somehow null)
@@ -74,7 +74,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           </button>
         )}
 
-        {/* ✨ Wrapped in a div to attach the onNotificationClick event ✨ */}
+        {/* Wrapped in a div to attach the onNotificationClick event ✨ */}
         <div onClick={onNotificationClick} className={onNotificationClick ? "cursor-pointer" : ""}>
           {isHrOrAdmin ? (
             <NotificationBell />  

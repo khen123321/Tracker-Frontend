@@ -19,7 +19,7 @@ const api = axios.create({
 // ==========================================
 api.interceptors.request.use(
   (config) => {
-    // ✨ Uses the correct Redux token key
+    //  Uses the correct Redux token key
     const token = localStorage.getItem('cims_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -43,7 +43,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !isLoginRequest && !isVerifyPage) {
       console.warn("Session expired or Unauthorized. Redirecting to login...");
       
-      // ✨ THE FIX: Clear the correct Redux Saga keys to break the loop!
+      //  THE FIX: Clear the correct Redux Saga keys to break the loop!
       localStorage.removeItem('cims_token');
       localStorage.removeItem('cims_user'); 
       

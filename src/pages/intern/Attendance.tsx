@@ -398,8 +398,14 @@ const Attendance: React.FC = () => {
                             </button>
 
                             <h2 className="text-[18px] md:text-[20px] font-extrabold m-0 mb-3 text-slate-900">
-                                {selectedType.replace('_', ' ').toUpperCase()} VERIFICATION
-                            </h2>
+    {selectedType === 'lunch_in' 
+        ? 'PM IN' 
+        : selectedType === 'time_in' 
+            ? 'AM IN' 
+            : selectedType === 'time_out' 
+                ? 'PM OUT' 
+                : selectedType.replace('_', ' ').toUpperCase()} VERIFICATION
+</h2>
 
                             <div className="flex items-center justify-center gap-2.5">
                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-extrabold ${modalStep >= 1 ? 'bg-[#0B1EAE] text-white' : 'bg-slate-200 text-slate-500'}`}>1</div>

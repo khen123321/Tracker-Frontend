@@ -67,7 +67,18 @@ const Forms: React.FC = () => {
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
-            setAttachment(e.target.files[0]);
+            const file = e.target.files[0];
+            
+            //  THE FIX: Strictly enforce the 10MB limit
+            const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 Megabytes in bytes
+            if (file.size > MAX_FILE_SIZE) {
+                toast.error("File is too large! Please upload a file under 10MB.");
+                e.target.value = ''; // Reset the input
+                setAttachment(null);
+                return;
+            }
+            
+            setAttachment(file);
         }
     };
 

@@ -164,6 +164,14 @@ const InternProfile: React.FC<InternProfileProps> = ({ isHrView }) => {
         const file = event.target.files?.[0];
         if (!file) return;
 
+        // ✨ Check file size (Limit to 2MB for images)
+        const MAX_AVATAR_SIZE = 5 * 1024 * 1024; // 2 Megabytes
+        if (file.size > MAX_AVATAR_SIZE) {
+            toast.error("Profile picture is too large! Please select an image under 2MB.");
+            event.target.value = ''; // Reset the input so they can try again
+            return; // Stop the upload
+        }
+
         const formData = new FormData();
         formData.append('avatar', file);
 
@@ -179,17 +187,30 @@ const InternProfile: React.FC<InternProfileProps> = ({ isHrView }) => {
                 ...prev,
                 intern: { ...prev.intern, avatar_url: response.data.avatar_url }
             }) : null);
-        } catch (err) {
+        } catch (err: any) {
             console.error("Avatar upload error:", err);
-            toast.error("Failed to upload profile picture.");
+            if (err.response?.status === 422) {
+                toast.error("Invalid file type or size.");
+            } else {
+                toast.error("Failed to upload profile picture.");
+            }
         } finally {
             setUploadingAvatar(false);
+            event.target.value = ''; // Clear input on finish
         }
     };
 
     const handleDocumentUpload = async (docKey: string, event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
+
+        // ✨ Check file size (Limit to 5MB for documents like PDFs)
+        const MAX_DOC_SIZE = 5 * 1024 * 1024; // 5 Megabytes
+        if (file.size > MAX_DOC_SIZE) {
+            toast.error(`Document is too large! Please upload a file under 5MB.`);
+            event.target.value = ''; // Reset the input so they can try again
+            return; // Stop the upload
+        }
 
         const formData = new FormData();
         formData.append('document', file);
@@ -211,11 +232,16 @@ const InternProfile: React.FC<InternProfileProps> = ({ isHrView }) => {
                     [`${docKey}_url`]: response.data.document_url
                 }
             }) : null);
-        } catch (err) {
+        } catch (err: any) {
             console.error("Doc upload error:", err);
-            toast.error("Failed to upload document.");
+            if (err.response?.status === 422) {
+                toast.error("Invalid document type or size.");
+            } else {
+                toast.error("Failed to upload document.");
+            }
         } finally {
             setUploadingDoc(null);
+            event.target.value = ''; // Clear input on finish
         }
     };
 
@@ -499,7 +525,7 @@ const InternProfile: React.FC<InternProfileProps> = ({ isHrView }) => {
                             </div>
                         </div>
 
-                        {/* Emergency Contact Card (Moved directly underneath Progress) */}
+                        {/* Emergency Contact Card */}
                         <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col">
                             <div className="flex items-center gap-2 text-xs font-extrabold text-slate-500 tracking-widest uppercase mb-4">
                                 <ShieldCheck size={16} className="text-red-500" />

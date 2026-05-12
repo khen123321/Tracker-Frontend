@@ -7,7 +7,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
-  // ✨ THE FIX: Pull authentication state directly from Redux!
+  //  Pull authentication state directly from Redux!
   const { token, user } = useSelector((state: RootState) => state.auth);
 
   // 1. If no token or no user data, redirect to login page

@@ -9,7 +9,7 @@ interface PermissionGuardProps {
 }
 
 const PermissionGuard = ({ requiredPermission, children }: PermissionGuardProps) => {
-    // ✨ THE FIX: Get user and permissions directly from Redux!
+    //  Get user and permissions directly from Redux
     const { user } = useSelector((state: RootState) => state.auth);
 
     // 1. If no user is found, block access

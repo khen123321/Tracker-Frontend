@@ -34,10 +34,10 @@ import Forms from './pages/intern/Forms';
 import InternProfile from './pages/intern/InternProfile';
 
 
-// ✨ Dedicated Read-Only Intern Calendar
+//  Dedicated Read-Only Intern Calendar
 import InternCalendar from './pages/intern/InternCalendar'; 
 
-// ✨ REDUX GLOBAL DRAWER
+//  REDUX GLOBAL DRAWER
 import { GlobalDrawer } from './components/GlobalDrawer';
 
 // ─── TYPESCRIPT INTERFACES ───
@@ -171,7 +171,7 @@ const App: React.FC = () => {
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
 
-      {/* ✨ RENDER THE GLOBAL DRAWER AT THE ROOT LEVEL */}
+      {/*  RENDER THE GLOBAL DRAWER AT THE ROOT LEVEL */}
       <GlobalDrawer />
     </BrowserRouter>
   );

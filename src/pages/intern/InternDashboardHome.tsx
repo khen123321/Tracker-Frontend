@@ -9,14 +9,24 @@ import { RootState } from '../../store';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+interface ExtendedProps {
+    description?: string;
+    is_pinned?: boolean | number;
+    location?: string;
+}
+
 interface CalendarEvent {
     id: number | string;
     title: string;
     start?: string;
     date?: string;
     end?: string;
+    created_at?: string;
     location?: string;
     description?: string;
+    is_pinned?: boolean | number; 
+    pinned?: boolean | number;
+    extendedProps?: ExtendedProps;
 }
 
 interface TimelineLog {
@@ -45,6 +55,7 @@ interface AttendanceLog {
     date?: string;
     formatted_date?: string;
     raw_date?: string;
+    created_at?: string;
     status?: string;
     time_in_am?: string;
     time_out_am?: string;
@@ -55,7 +66,6 @@ interface AttendanceLog {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const InternDashboardHome: React.FC = () => {
-    // ✨ THE FIX: Pull the user from Redux instead of localStorage!
     const { user } = useSelector((state: RootState) => state.auth);
 
     const [upcomingEvents, setUpcomingEvents] = useState<CalendarEvent[]>([]);
@@ -77,17 +87,35 @@ const InternDashboardHome: React.FC = () => {
     useEffect(() => {
         const fetchDashboardData = async (): Promise<void> => {
             try {
-                // 1. Fetch Events
+                // 1. Fetch Events / Announcements
                 const eventsRes = await api.get('/events');
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
 
                 const activePinnedEvents = eventsRes.data.filter((event: CalendarEvent) => {
-                    const eventDateString = event.start || event.date;
+                    const isPinned = event.is_pinned || event.pinned || event.extendedProps?.is_pinned;
+                    if (isPinned) return true; // ALWAYS show pinned items
+
+                    const eventDateString = event.start || event.date || event.created_at;
                     if (!eventDateString) return true;
-                    const eventDate = new Date(eventDateString);
+                    
+                    const eventDate = new Date(eventDateString.replace(/-/g, '/'));
                     eventDate.setHours(0, 0, 0, 0);
+                    
                     return eventDate >= today;
+                });
+
+                activePinnedEvents.sort((a: CalendarEvent, b: CalendarEvent) => {
+                    const aPinned = a.is_pinned || a.pinned || a.extendedProps?.is_pinned ? 1 : 0;
+                    const bPinned = b.is_pinned || b.pinned || b.extendedProps?.is_pinned ? 1 : 0;
+                    
+                    if (aPinned !== bPinned) {
+                        return bPinned - aPinned;
+                    }
+
+                    const dateA = new Date(a.created_at || a.start || a.date || '').getTime();
+                    const dateB = new Date(b.created_at || b.start || b.date || '').getTime();
+                    return dateB - dateA;
                 });
 
                 setUpcomingEvents(activePinnedEvents.slice(0, 4));
@@ -108,63 +136,51 @@ const InternDashboardHome: React.FC = () => {
                 // 3. Fetch History Logs
                 const historyRes = await api.get('/attendance/history');
 
-                const now = new Date();
-                const dayOfWeek = now.getDay() || 7;
-                const thisMonday = new Date(now);
-                thisMonday.setHours(0, 0, 0, 0);
-                thisMonday.setDate(now.getDate() - (dayOfWeek - 1));
-
                 const timelineEvents: TimelineLog[] = [];
                 const calLogsMap: Record<string, string> = {};
 
                 historyRes.data.forEach((log: AttendanceLog) => {
-                    const logDateStr = log.date || log.formatted_date || log.raw_date;
+                    // ✨ THE FIX: Bulletproof date extraction
+                    const logDateStr = log.raw_date || log.date || log.formatted_date || log.created_at;
                     if (!logDateStr) return;
 
                     const logDate = new Date(logDateStr);
+                    if (isNaN(logDate.getTime())) return;
 
-                    if (!isNaN(logDate.getTime())) {
-                        const logYMD = logDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
-                        calLogsMap[logYMD] = (log.status || 'default').toLowerCase();
-                    }
+                    // Light up the calendar
+                    const logYMD = logDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+                    calLogsMap[logYMD] = (log.status || 'default').toLowerCase();
 
-                    if (logDate >= thisMonday) {
-                        const baseDate = log.date || log.formatted_date || '';
-                        const displayDate = logDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    // Process Recent Logs safely
+                    const displayDate = logDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    const dateOnlyForParsing = logDate.toLocaleDateString('en-US'); // "5/12/2026"
 
-                        const getTimestamp = (timeStr: string): number => {
-                            const parsed = new Date(`${baseDate} ${timeStr}`);
-                            return isNaN(parsed.getTime()) ? logDate.getTime() : parsed.getTime();
-                        };
+                    const getTimestamp = (timeStr: string): number => {
+                        const parsed = new Date(`${dateOnlyForParsing} ${timeStr}`);
+                        return isNaN(parsed.getTime()) ? logDate.getTime() : parsed.getTime();
+                    };
 
-                        if (log.time_in_am && log.time_in_am !== '-') {
+                    const addTimelineEvent = (timeVal: string | undefined | null, idSuffix: string, type: 'in' | 'out', title: string) => {
+                        if (timeVal && timeVal !== '-' && timeVal !== 'null') {
                             timelineEvents.push({
-                                id: `${log.id}-am-in`, type: 'in', title: 'AM Check-in',
-                                displayTime: `${displayDate} • ${log.time_in_am}`, timestamp: getTimestamp(log.time_in_am),
+                                id: `${log.id}-${idSuffix}`,
+                                type,
+                                title,
+                                displayTime: `${displayDate} • ${timeVal}`,
+                                timestamp: getTimestamp(timeVal),
                             });
                         }
-                        if (log.time_out_am && log.time_out_am !== '-') {
-                            timelineEvents.push({
-                                id: `${log.id}-am-out`, type: 'out', title: 'Lunch Check-out',
-                                displayTime: `${displayDate} • ${log.time_out_am}`, timestamp: getTimestamp(log.time_out_am),
-                            });
-                        }
-                        if (log.time_in_pm && log.time_in_pm !== '-') {
-                            timelineEvents.push({
-                                id: `${log.id}-pm-in`, type: 'in', title: 'PM Check-in',
-                                displayTime: `${displayDate} • ${log.time_in_pm}`, timestamp: getTimestamp(log.time_in_pm),
-                            });
-                        }
-                        if (log.time_out_pm && log.time_out_pm !== '-') {
-                            timelineEvents.push({
-                                id: `${log.id}-pm-out`, type: 'out', title: 'PM Check-out',
-                                displayTime: `${displayDate} • ${log.time_out_pm}`, timestamp: getTimestamp(log.time_out_pm),
-                            });
-                        }
-                    }
+                    };
+
+                    addTimelineEvent(log.time_in_am, 'am-in', 'in', 'AM Check-in');
+                    addTimelineEvent(log.time_out_am, 'am-out', 'out', 'Lunch Check-out');
+                    addTimelineEvent(log.time_in_pm, 'pm-in', 'in', 'PM Check-in');
+                    addTimelineEvent(log.time_out_pm, 'pm-out', 'out', 'PM Check-out');
                 });
 
                 setCalendarLogs(calLogsMap);
+                
+                // Sort exactly from newest to oldest
                 timelineEvents.sort((a, b) => b.timestamp - a.timestamp);
                 setTimeLogs(timelineEvents.slice(0, 4));
 
@@ -187,8 +203,8 @@ const InternDashboardHome: React.FC = () => {
 
     const formatEventDate = (dateString?: string): string => {
         if (!dateString) return 'No date specified';
-        return new Date(dateString).toLocaleDateString('en-US', {
-            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+        return new Date(dateString.replace(/-/g, '/')).toLocaleDateString('en-US', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
         });
     };
 
@@ -209,8 +225,6 @@ const InternDashboardHome: React.FC = () => {
     const hour = new Date().getHours();
     const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
     
-    // ✨ SAFETY CHECK: Safely extract the name from Redux
-    // Depending on what your backend sends, it might be in `first_name` or just `name`.
     const firstName = user?.first_name || user?.name?.split(' ')[0] || 'KHEN JOSHUA';
     const lastName = user?.last_name || user?.name?.split(' ').slice(1).join(' ') || 'VERSON';
     const fullName = `${firstName} ${lastName}`.trim().toUpperCase();
@@ -243,6 +257,7 @@ const InternDashboardHome: React.FC = () => {
     const calStateClasses: Record<string, string> = {
         default: 'bg-slate-50 text-slate-500',
         present: 'bg-blue-50 text-[#0B1EAE] border border-blue-200',
+        'half day': 'bg-cyan-50 text-cyan-700 border border-cyan-200',
         late:    'bg-amber-50 text-amber-700 border border-amber-200',
         absent:  'bg-red-50 text-red-700 border border-red-200',
     };
@@ -339,13 +354,13 @@ const InternDashboardHome: React.FC = () => {
                                 </div>
 
                                 <div className="flex flex-col justify-center">
-                                    <h2 className="text-[20px] sm:text-lg font-extrabold text-slate-900 m-0 mb-0.5 sm:mb-1 tracking-tight leading-tight">
+                                    <h2 className="text-[18px] sm:text-lg font-extrabold text-slate-900 m-0 mb-0.5 sm:mb-1 tracking-tight leading-tight">
                                         On-the-Job Training
                                     </h2>
                                     <p className="text-[16px] sm:text-sm text-slate-500 m-0 leading-tight">
                                         <span className="font-extrabold text-[#0B1EAE] text-[16px] sm:text-base">{displayHours}</span>
-                                        <span className="hidden sm:inline">{' '}of {internStats.totalHoursRequired} hours logged</span>
-                                        <span className="sm:hidden"><br/>of {internStats.totalHoursRequired} hrs</span>
+                                        <span className="hidden sm:inline">{' '}of {internStats.totalHoursRequired} {internStats.totalHoursRequired === 1 ? 'hour' : 'hours'} logged</span>
+                                        <span className="sm:hidden"><br/>of {internStats.totalHoursRequired} {internStats.totalHoursRequired === 1 ? 'hr' : 'hrs'}</span>
                                     </p>
                                 </div>
                             </div>
@@ -353,7 +368,7 @@ const InternDashboardHome: React.FC = () => {
                             <div className="flex flex-col items-center justify-center pl-9 sm:pl-6 ml-2 sm:ml-3 border-l-2 border-dashed border-slate-200">
                                 <span className="text-[36px] sm:text-[56px] font-black text-slate-900 leading-none tracking-tight">{tentativeDays}</span>
                                 <span className="text-[10px] sm:text-sm text-slate-500 font-extrabold uppercase mt-1 text-center leading-tight">
-                                    days<br className="sm:hidden" /> left
+                                    {tentativeDays === 1 ? 'day' : 'days'}<br className="sm:hidden" /> left
                                 </span>
                             </div>
                         </div>
@@ -405,7 +420,7 @@ const InternDashboardHome: React.FC = () => {
                                     <span className="text-[42px] sm:text-[46px] font-extrabold leading-none tracking-[-2px] text-[#0B1EAE]">
                                         {internStats.weekDaysPresent}
                                     </span>
-                                    <span className="text-sm text-slate-500 font-bold">days</span>
+                                    <span className="text-sm text-slate-500 font-bold">{internStats.weekDaysPresent === 1 ? 'day' : 'days'}</span>
                                 </div>
                                 <p className="text-[11px] sm:text-[12px] text-slate-400 mt-1 mb-0 font-semibold">this week</p>
                             </div>
@@ -428,8 +443,8 @@ const InternDashboardHome: React.FC = () => {
                                 <p className="text-[11px] sm:text-[12px] text-slate-400 mt-1 mb-0 font-semibold">this week</p>
                             </div>
                             <div className="px-2 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold text-center mt-2 w-full bg-blue-50 text-blue-800 border border-blue-100 truncate">
-                                <span className="hidden sm:inline">{displayHours}h total logged</span>
-                                <span className="sm:hidden">{displayHours}h logged</span>
+                                <span className="hidden sm:inline">{displayHours} {displayHours === 1 ? 'hour' : 'hours'} total logged</span>
+                                <span className="sm:hidden">{displayHours} {displayHours === 1 ? 'hour' : 'hours'} logged</span>
                             </div>
                         </div>
                     </div>
@@ -443,25 +458,31 @@ const InternDashboardHome: React.FC = () => {
                             <div className="flex-1 overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded">
                                 {upcomingEvents.length > 0 ? (
                                     <div className="flex flex-col gap-2.5">
-                                        {upcomingEvents.map(ev => (
-                                            <div
-                                                key={ev.id}
-                                                className={[
-                                                    'flex items-start gap-2.5 p-2.5 rounded-lg cursor-pointer',
-                                                    'bg-slate-50 border border-transparent',
-                                                    'transition-all duration-200 ease-in-out',
-                                                    'hover:bg-blue-50 hover:border-blue-200 hover:-translate-y-px',
-                                                ].join(' ')}
-                                                onClick={() => handleOpenAnnouncement(ev)}
-                                            >
-                                                <div className="flex items-center justify-center pt-0.5">
-                                                    <span className="text-[#0B1EAE] font-extrabold text-base leading-none">•</span>
+                                        {upcomingEvents.map(ev => {
+                                            const isPinned = ev.is_pinned || ev.pinned || ev.extendedProps?.is_pinned;
+
+                                            return (
+                                                <div
+                                                    key={ev.id}
+                                                    className={[
+                                                        'flex items-start gap-2.5 p-2.5 rounded-lg cursor-pointer',
+                                                        isPinned ? 'bg-amber-50 border border-amber-100' : 'bg-slate-50 border border-transparent',
+                                                        'transition-all duration-200 ease-in-out',
+                                                        isPinned ? 'hover:bg-amber-100' : 'hover:bg-blue-50 hover:border-blue-200',
+                                                        'hover:-translate-y-px',
+                                                    ].join(' ')}
+                                                    onClick={() => handleOpenAnnouncement(ev)}
+                                                >
+                                                    <div className="flex items-center justify-center pt-0.5">
+                                                        <span className={`${isPinned ? 'text-amber-500' : 'text-[#0B1EAE]'} font-extrabold text-base leading-none`}>•</span>
+                                                    </div>
+                                                    <span className="text-[13px] text-slate-800 font-semibold leading-relaxed line-clamp-3">
+                                                        {isPinned && <span className="text-[9px] font-bold bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded uppercase mr-1">Pinned</span>}
+                                                        {ev.title}
+                                                    </span>
                                                 </div>
-                                                <span className="text-[13px] text-slate-800 font-semibold leading-relaxed line-clamp-3">
-                                                    {ev.title}
-                                                </span>
-                                            </div>
-                                        ))}
+                                            )
+                                        })}
                                     </div>
                                 ) : (
                                     <div className="flex flex-col items-center justify-center text-slate-400 text-sm py-10 px-5 text-center h-full">
@@ -503,7 +524,7 @@ const InternDashboardHome: React.FC = () => {
                                 ) : (
                                     <div className="flex flex-col items-center justify-center text-slate-400 text-sm py-10 px-5 text-center h-full">
                                         <div className="mb-3 text-slate-300"><Clock size={28} /></div>
-                                        <p>No recent logs for this week.</p>
+                                        <p>No recent logs available.</p>
                                     </div>
                                 )}
                             </div>
@@ -546,12 +567,13 @@ const InternDashboardHome: React.FC = () => {
                             <div className="flex flex-col gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
                                 <div className="flex items-center gap-2.5 text-slate-700 text-sm font-semibold">
                                     <CalendarIcon size={16} className="text-[#0B1EAE]" />
-                                    <span>{formatEventDate(selectedAnnouncement.start || selectedAnnouncement.date)}</span>
+                                    <span>{formatEventDate(selectedAnnouncement.start || selectedAnnouncement.date || selectedAnnouncement.created_at)}</span>
                                 </div>
-                                {selectedAnnouncement.location && (
+                                
+                                {(selectedAnnouncement.location || selectedAnnouncement.extendedProps?.location) && (
                                     <div className="flex items-center gap-2.5 text-slate-700 text-sm font-semibold">
                                         <MapPin size={16} className="text-[#0B1EAE]" />
-                                        <span>{selectedAnnouncement.location}</span>
+                                        <span>{selectedAnnouncement.location || selectedAnnouncement.extendedProps?.location}</span>
                                     </div>
                                 )}
                             </div>
@@ -562,8 +584,8 @@ const InternDashboardHome: React.FC = () => {
                                     <AlignLeft size={16} /> Details
                                 </div>
                                 <div className="text-[15px] leading-[1.7] text-slate-500 [&>p]:m-0 [&>p]:mb-3 [&>p:last-child]:mb-0">
-                                    {selectedAnnouncement.description ? (
-                                        selectedAnnouncement.description.split('\n').map((paragraph, idx) => (
+                                    {(selectedAnnouncement.description || selectedAnnouncement.extendedProps?.description) ? (
+                                        (selectedAnnouncement.description || selectedAnnouncement.extendedProps?.description || "").split('\n').map((paragraph, idx) => (
                                             <p key={idx}>{paragraph}</p>
                                         ))
                                     ) : (

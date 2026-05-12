@@ -3,6 +3,7 @@ import api from '../../api/axios';
 import { Download, Eye, Check, X, FileText } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import PageHeader from '../../components/layout/PageHeader';
+import { useLocation } from 'react-router-dom'; // ✨ ADDED USELOCATION
 
 // ─── TYPES & INTERFACES ───
 interface InternUser {
@@ -32,7 +33,7 @@ interface RequestItem {
   attachment_path?: string;
   appeal_rejection_reason?: string;
   hr_remarks?: string;
-  [key: string]: any; // Catch-all for dynamic Laravel data
+  [key: string]: any; 
 }
 
 // ─── SKELETON PRIMITIVES ───
@@ -91,7 +92,7 @@ function FormsSkeleton() {
 }
 
 const FormsAndRequests: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<string>('appeals'); // 'appeals', 'leaves', 'overtime'
+  const [activeTab, setActiveTab] = useState<string>('appeals'); 
   
   const [appeals, setAppeals] = useState<RequestItem[]>([]);
   const [generalRequests, setGeneralRequests] = useState<RequestItem[]>([]);
@@ -105,44 +106,63 @@ const FormsAndRequests: React.FC = () => {
   const [processingId, setProcessingId] = useState<number | string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all'); 
 
+  const location = useLocation();
+
+  // ✨ THE FIX: We fetch ALL data at once on mount so the modal can find ANY request immediately
+  const fetchAllData = async () => {
+    setLoading(true);
+    try {
+      const [appealsRes, requestsRes] = await Promise.all([
+        api.get('/hr/appeals').catch(() => ({ data: { data: [] } })),
+        api.get('/hr/forms-requests').catch(() => ({ data: { data: [] } }))
+      ]);
+
+      setAppeals(appealsRes.data.data?.data || appealsRes.data.data || []);
+      setGeneralRequests(requestsRes.data.data || []);
+    } catch (err) {
+      console.error('Error fetching data:', err);
+    } finally {
+      setLoading(false);
+      setInitialLoad(false);
+    }
+  };
+
   useEffect(() => {
-    if (activeTab === 'appeals') {
-      fetchAppeals();
-    } else {
-      fetchGeneralRequests();
-    }
-  }, [activeTab]);
+    fetchAllData();
+  }, []);
 
-  const fetchAppeals = async () => {
-    setLoading(true);
-    try {
-      const response = await api.get('/hr/appeals');
-      const fetchedData = response.data.data?.data || response.data.data || [];
-      setAppeals(fetchedData);
-    } catch (err: any) {
-      console.error('Error fetching appeals:', err);
-      toast.error(`Failed to load appeals. Endpoint hit: ${err.config?.url || 'Unknown'}`);
-    } finally {
-      setLoading(false);
-      setInitialLoad(false);
-    }
-  };
+  // ✨ THE FIX: The Smart Modal Auto-Opener
+  useEffect(() => {
+    const openId = location.state?.openRequestId;
+    
+    if (openId && !loading && !initialLoad) {
+      // Look in both arrays
+      const targetAppeal = appeals.find(item => Number(item.id) === Number(openId));
+      const targetGeneral = generalRequests.find(item => Number(item.id) === Number(openId));
 
-  const fetchGeneralRequests = async () => {
-    setLoading(true);
-    try {
-      // 💡 If 404 persists, this is the endpoint you need to check in your Laravel routes/api.php file
-      const response = await api.get('/hr/forms-requests'); 
-      setGeneralRequests(response.data.data || []);
-    } catch (err: any) {
-      console.error('Error fetching requests:', err);
-      // 💡 Improved error message to specifically print out the URL it tried to hit
-      toast.error(`Failed to load requests (404). Tried hitting: ${err.config?.url || '/hr/forms-requests'}`);
-    } finally {
-      setLoading(false);
-      setInitialLoad(false);
+      if (targetAppeal) {
+        setActiveTab('appeals');
+        setFilterStatus('all');
+        handleViewDetails(targetAppeal);
+      } else if (targetGeneral) {
+        // Auto-switch to the correct tab based on the type
+        const type = targetGeneral.type?.toLowerCase();
+        if (type === 'absent' || type === 'half-day') {
+          setActiveTab('leaves');
+        } else {
+          setActiveTab('overtime');
+        }
+        setFilterStatus('all');
+        handleViewDetails(targetGeneral);
+      } else {
+         // ID not found
+         toast.error("Requested form could not be found.");
+      }
+      
+      // Erase the ID from history so it doesn't re-open if the page is refreshed
+      window.history.replaceState({}, document.title);
     }
-  };
+  }, [location.state, loading, initialLoad, appeals, generalRequests]);
 
   // ─── UNIFIED FILTERING ───
   const currentDataList = activeTab === 'appeals'
@@ -203,7 +223,7 @@ const FormsAndRequests: React.FC = () => {
 
       toast.success(action === 'approved' ? 'Approved successfully' : 'Rejected successfully');
       setShowModal(false);
-      isAppeal ? fetchAppeals() : fetchGeneralRequests();
+      fetchAllData(); // Refresh all data
     } catch (err: any) {
       console.error('Error processing:', err);
       toast.error(`Failed to process. Endpoint: ${err.config?.url}`);
@@ -275,10 +295,8 @@ const FormsAndRequests: React.FC = () => {
 
       <Toaster position="top-right" />
 
-      {/* ✨ REPLACED HEADER WITH YOUR NEW PAGEHEADER COMPONENT ✨ */}
       <PageHeader title="Forms & Requests" />
 
-      {/* ✨ MOVED STATS INTO A SEPARATE ROW TO MATCH DASHBOARD STYLE ✨ */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-[5px]">
         <div className="bg-white p-5 rounded-[10px] border border-slate-200 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-center">
           <span className="text-[28px] font-bold leading-none mb-1 text-amber-600">{getStatusCount('pending')}</span>
@@ -294,7 +312,6 @@ const FormsAndRequests: React.FC = () => {
         </div>
       </div>
 
-      {/* ✨ WRAPPED TABS & TABLE IN A MAIN UNIFIED CARD ✨ */}
       <div className="bg-white rounded-[10px] border border-slate-200 shadow-[0_1px_3px_rgba(0,0,0,0.02)] p-5 flex flex-col flex-1">
         
         {/* ─── TABS ─── */}

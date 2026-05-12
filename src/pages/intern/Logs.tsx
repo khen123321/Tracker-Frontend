@@ -7,6 +7,10 @@ import toast, { Toaster } from 'react-hot-toast';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 
+// ✨ REDUX IMPORTS ✨
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store';
+
 // @ts-ignore - Ignore missing types if climbs.png is not declared in a global d.ts
 import climbsLogo from "../../assets/climbs.png";
 
@@ -41,7 +45,6 @@ interface DtrDay {
     hours: string;
 }
 
-// ✨ CHANGED: Added 'blue' to DotColor
 type FilterValue = 'all' | 'present' | 'absent' | 'late' | 'half day';
 type DotColor = 'green' | 'red' | 'orange' | 'blue' | null;
 
@@ -51,7 +54,6 @@ interface FilterOption {
     dot: DotColor;
 }
 
-// ✨ CHANGED: Half Day dot is now 'blue'
 const FILTERS: FilterOption[] = [
     { label: 'All',      value: 'all',      dot: null },
     { label: 'Present',  value: 'present',  dot: 'green' },
@@ -61,34 +63,32 @@ const FILTERS: FilterOption[] = [
 ];
 
 const Logs: React.FC = () => {
-    // ─── ✨ EXACT LARAVEL DB SCHEMA SYNC ✨ ───────────────────────
-    const userStr = localStorage.getItem('user');
-    const user = userStr ? JSON.parse(userStr) : {};
+    // ─── ✨ REDUX SYNC FOR FRESH USER DATA ✨ ───────────────────────
+    const { user: authUser } = useSelector((state: RootState) => state.auth);
+    const user = authUser as any; // ✨ THE FIX: This tells TypeScript to ignore the missing type definitions!
 
-    // 1. Format Name
-    const rawFirstName = user.first_name || '';
-    const rawLastName = user.last_name || '';
-    const internName = `${rawFirstName} ${rawLastName}`.trim().toUpperCase() || 'INTERN NAME';
+    // 1. Format Name accurately from Redux
+    const rawFirstName = user?.first_name || '';
+    const rawLastName = user?.last_name || '';
+    const fallbackName = user?.name || '';
+    const internName = (fallbackName || `${rawFirstName} ${rawLastName}`).trim().toUpperCase() || 'INTERN NAME';
 
-    // 2. Expand School Name (No Abbreviations)
-    let rawSchool = user.school || 'University of Science and Technology of Southern Philippines';
+    // 2. Expand School Name (Checking nested intern data as fallback)
+    let rawSchool = user?.school || user?.intern?.school?.name || 'University of Science and Technology of Southern Philippines';
     if (rawSchool.toUpperCase() === 'USTP' || rawSchool.toUpperCase().includes('SOUTHERN PHILIPPINES')) {
         rawSchool = 'University of Science and Technology of Southern Philippines';
     }
     const school = rawSchool;
 
-    // 3. Department (Checking assigned_department first, then assigned_branch)
-    const department = user.assigned_department || user.assigned_branch || 'InsurTech';
+    // 3. Department 
+    const department = user?.assigned_department || user?.assigned_branch || user?.intern?.department?.name || 'InsurTech';
 
     // 4. Expand Course Name
-    let rawCourse = user.course || 'BS Information Technology';
+    let rawCourse = user?.course || user?.intern?.course || 'BS Information Technology';
     if (rawCourse.toUpperCase() === 'BSIT') {
         rawCourse = 'BS Information Technology';
     }
     const course = rawCourse;
-
-    // 5. Required Hours (Using fallback if not explicitly in user table)
-    const requiredHours = parseFloat(user.required_hours || 486);
 
     // ─── STATE ───────────────────────────────────────────────────────────────
     const [logs, setLogs]           = useState<Log[]>([]);
@@ -99,6 +99,11 @@ const Logs: React.FC = () => {
     
     const [showDtrPreview, setShowDtrPreview] = useState<boolean>(false);
     const [isGeneratingPdf, setIsGeneratingPdf] = useState<boolean>(false);
+
+    const [backendStats, setBackendStats] = useState({
+        totalRendered: 0,
+        requiredHours: 486
+    });
 
     const logsPerPage = 15;
     const navigate    = useNavigate();
@@ -125,7 +130,6 @@ const Logs: React.FC = () => {
         return null;
     };
 
-    // ✨ CHANGED: Half Day now returns blue styling
     const getStatusClass = (status?: string): string => {
         switch (status?.toLowerCase()) {
             case 'present':  return 'bg-green-600/10 text-green-600';
@@ -137,7 +141,6 @@ const Logs: React.FC = () => {
         }
     };
 
-    // ✨ CHANGED: Half Day dot is now blue
     const getDotClass = (status?: string): string => {
          switch (status?.toLowerCase()) {
             case 'present':  return 'bg-green-600';
@@ -183,10 +186,36 @@ const Logs: React.FC = () => {
         navigate('/intern-dashboard/forms');
     };
 
-    const fetchLogs = async () => {
+    const fetchLogsAndStats = async () => {
         try {
-            const response = await api.get('/attendance/history');
-            setLogs(response.data);
+            const [historyRes, statsRes] = await Promise.all([
+                api.get('/attendance/history'),
+                api.get('/intern/dashboard-stats')
+            ]);
+            
+            const processedLogs = historyRes.data.map((log: Log) => {
+                let currentStatus = log.status || 'Pending';
+                
+                const hasAmIn = log.time_in_am && log.time_in_am !== '-';
+                const hasPmIn = log.time_in_pm && log.time_in_pm !== '-';
+
+                if (!hasAmIn && hasPmIn && currentStatus.toLowerCase() !== 'leave') {
+                    currentStatus = 'Half Day';
+                }
+
+                return {
+                    ...log,
+                    status: currentStatus
+                };
+            });
+
+            setLogs(processedLogs);
+
+            setBackendStats({
+                totalRendered: statsRes.data.hoursRendered || 0,
+                requiredHours: statsRes.data.totalHoursRequired || 486
+            });
+
         } catch (err) {
             console.error('Error fetching logs:', err);
             toast.error('Could not load attendance history.');
@@ -195,7 +224,7 @@ const Logs: React.FC = () => {
         }
     };
 
-    useEffect(() => { fetchLogs(); }, []);
+    useEffect(() => { fetchLogsAndStats(); }, []);
 
     const stats = useMemo(() => {
         const presentDays = logs.filter(l => l.status?.toLowerCase() === 'present').length;
@@ -228,7 +257,7 @@ const Logs: React.FC = () => {
         const currentYear = today.getFullYear();
         const currentMonth = today.getMonth(); 
         const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-        const monthName = today.toLocaleDateString('en-US', { month: 'long' }); 
+        const monthName = today.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }); 
         const generationDate = today.toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true });
 
         const dtrDays: DtrDay[] = [];
@@ -266,14 +295,15 @@ const Logs: React.FC = () => {
             });
         }
         
-        const totalRenderedAllTime = stats.totalHours;
-        const remainingHours = Math.max(0, requiredHours - totalRenderedAllTime);
-        const completionPercentage = requiredHours > 0 ? ((totalRenderedAllTime / requiredHours) * 100).toFixed(1) : '0.0';
+        const totalRenderedAllTime = backendStats.totalRendered;
+        const reqHours = backendStats.requiredHours;
+        const remainingHours = Math.max(0, reqHours - totalRenderedAllTime);
+        const completionPercentage = reqHours > 0 ? ((totalRenderedAllTime / reqHours) * 100).toFixed(1) : '0.0';
 
-        return { dtrDays, monthName, totalMonthHours, generationDate, totalRenderedAllTime, remainingHours, completionPercentage };
+        return { dtrDays, monthName, totalMonthHours, generationDate, totalRenderedAllTime, remainingHours, completionPercentage, reqHours };
     };
 
-    const { dtrDays, monthName, totalMonthHours, generationDate, totalRenderedAllTime, remainingHours, completionPercentage } = useMemo(() => generateDtrData(), [logs, stats.totalHours, requiredHours]);
+    const { dtrDays, monthName, totalMonthHours, generationDate, totalRenderedAllTime, remainingHours, completionPercentage, reqHours } = useMemo(() => generateDtrData(), [logs, backendStats]);
 
     // ─── PDF DOWNLOAD HANDLER ────────────────────────────────────────────────
     const handleDownloadPdf = async () => {
@@ -316,7 +346,7 @@ const Logs: React.FC = () => {
             const xOffset = (pdfWidth - finalWidth) / 2;
             
             pdf.addImage(imgData, 'PNG', xOffset, 0, finalWidth, finalHeight);
-            pdf.save(`DTR_${internName.replace(/\s+/g, '_')}_${monthName}.pdf`);
+            pdf.save(`DTR_${internName.replace(/\s+/g, '_')}_${monthName.replace(/\s+/g, '_')}.pdf`);
             
             toast.success('DTR downloaded successfully!', { id: loadingToast });
             setShowDtrPreview(false);
@@ -391,7 +421,6 @@ const Logs: React.FC = () => {
                     <span className="text-[11px] md:text-[12px] text-slate-400 mt-[2px]">days present</span>
                 </div>
                 
-                {/* ✨ ADDED: Half Days Summary Card ✨ */}
                 <div className="bg-white border border-slate-200 rounded-[14px] p-4 md:p-5 md:px-6 flex flex-col gap-1 shadow-[0_1px_3px_rgba(0,0,0,0.05)] min-w-[130px] flex-1 shrink-0 snap-start">
                     <span className="text-[10px] md:text-[11px] font-semibold text-slate-400 uppercase tracking-[0.8px]">Half Days</span>
                     <span className="text-[24px] md:text-[30px] font-extrabold leading-none text-blue-500">{stats.halfDays}</span>
@@ -425,7 +454,6 @@ const Logs: React.FC = () => {
                             className={`bg-white border-[1.5px] border-slate-200 rounded-lg text-slate-500 text-[13px] font-semibold py-[7px] px-4 cursor-pointer transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:border-slate-300 hover:text-slate-900 hover:bg-slate-50 ${activeFilter === f.value ? '!bg-slate-900 !border-slate-900 !text-white' : ''}`}
                             onClick={() => setActiveFilter(f.value)}
                         >
-                            {/* ✨ CHANGED: Half Day now maps to blue-600 in the filters */}
                             {f.dot && <span className={`w-[7px] h-[7px] rounded-full shrink-0 ${
                                 f.value === 'present' ? 'bg-green-600' :
                                 f.value === 'absent' ? 'bg-red-600' :
@@ -586,7 +614,7 @@ const Logs: React.FC = () => {
                                     <div className="text-right flex flex-col gap-1.5">
                                         <p className="m-0"><strong>Department:</strong> {department}</p>
                                         <p className="m-0"><strong>Course:</strong> {course}</p>
-                                        <p className="m-0"><strong>Required Hours:</strong> {requiredHours}</p>
+                                        <p className="m-0"><strong>Required Hours:</strong> {reqHours}</p>
                                     </div>
                                 </div>
 
@@ -628,8 +656,8 @@ const Logs: React.FC = () => {
                                 </table>
 
                                 <div className="text-[11px] leading-[1.6] mb-[40px] text-slate-800 flex flex-col">
-                                    <p className="m-0"><strong>Total Rendered Hours:</strong> {totalRenderedAllTime.toFixed(2)} / {requiredHours} hours</p>
-                                    <p className="m-0"><strong>Remaining Hours:</strong> {remainingHours.toFixed(2)} hours</p>
+                                    <p className="m-0"><strong>Total Rendered Hours:</strong> {totalRenderedAllTime.toFixed(2)} / {reqHours} {reqHours === 1 ? 'hour' : 'hours'}</p>
+                                    <p className="m-0"><strong>Remaining Hours:</strong> {remainingHours.toFixed(2)} {remainingHours === 1 ? 'hour' : 'hours'}</p>
                                     <p className="m-0"><strong>Completion:</strong> {completionPercentage}%</p>
                                 </div>
 

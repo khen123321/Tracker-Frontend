@@ -3,7 +3,7 @@ import api from '../api/axios';
 import { AlertTriangle, X, CheckCircle, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-// ✨ REDUX IMPORTS ✨
+// REDUX IMPORTS 
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 
@@ -19,6 +19,10 @@ interface NotificationPayload {
     title?: string;
     message?: string;
     request_id?: number | string;
+    form_id?: number | string;
+    intern_request_id?: number | string;
+    id?: number | string;
+    [key: string]: any; // Catch-all for other Laravel notification shapes
 }
 
 interface NotificationItem {
@@ -36,7 +40,7 @@ interface NotificationItem {
 const NotificationBell: React.FC<NotificationBellProps> = ({
     onNotificationClick,
 }) => {
-    // ✨ THE FIX: Pull the user's role straight from Redux
+
     const { user } = useSelector((state: RootState) => state.auth);
     const role = user?.role?.toLowerCase() || 'intern'; // Default fallback
     const isHR = role === 'hr' || role === 'superadmin';
@@ -95,6 +99,8 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
         notification: NotificationItem,
         payload: NotificationPayload
     ): Promise<void> => {
+        
+        // 1. Mark as read in the background
         if (!notification.read_at) {
             try {
                 await api.put(`/notifications/${notification.id}/read`).catch(() => {});
@@ -111,8 +117,10 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
             }
         }
 
+        // 2. Close the drawer
         setIsOpen(false);
 
+        // 3. Handle Navigation
         if (role === 'intern') {
             const isRejection =
                 notification.type === 'rejection' ||
@@ -124,8 +132,22 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
             } else {
                 navigate('/intern-dashboard/announcements');
             }
-        } else if (onNotificationClick) {
-            onNotificationClick(payload.request_id ?? notification.id);
+        } else {
+            // ✨ THE FIX: Aggressively search the payload for the true Database ID
+            // HR notifications often package the ID under different keys depending on the Laravel Mailout
+            const targetId = payload.request_id || payload.form_id || payload.intern_request_id || payload.id;
+            
+            // We pass a Timestamp so React Router forces a re-render even if they are already on the page!
+            navigate('/hr-dashboard/requests', { 
+                state: { 
+                    openRequestId: targetId,
+                    _forceUpdate: Date.now() 
+                } 
+            }); 
+            
+            if (onNotificationClick) {
+                onNotificationClick(targetId);
+            }
         }
     };
 

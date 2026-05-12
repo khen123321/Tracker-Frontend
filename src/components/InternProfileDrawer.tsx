@@ -29,16 +29,15 @@ export default function InternProfileDrawer({ internId, isOpen, onClose }: Inter
                 setLoading(true);
                 setError(null);
                 
-                // ✨ STEP 1: Fetch Profile using the Intern ID
+                // Fetch Profile using the Intern ID
                 const profileRes = await api.get(`/hr/interns/${internId}?t=${Date.now()}`);
                 const internData = profileRes.data.intern || profileRes.data;
                 setData(internData);
 
-                // ✨ STEP 2: The Sneaky Bug Fix! 
                 // We grab the true user_id from the profile so the attendance route works perfectly.
                 const correctIdForAttendance = internData.user_id || internId;
 
-                // ✨ STEP 3: Fetch Attendance using the correct User ID
+                // Fetch Attendance using the correct User ID
                 const attendanceRes = await api.get(`/hr/interns/${correctIdForAttendance}/attendance?t=${Date.now()}`);
                 
                 setLogs(attendanceRes.data.logs || []);

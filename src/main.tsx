@@ -5,7 +5,7 @@ import App from './App';
 // This imports your Tailwind directives / global styles
 import './index.css'; 
 
-// ✨ Import Redux Provider and your Store
+//  Import Redux Provider and your Store
 import { Provider } from 'react-redux';
 import { store } from './store';
 
